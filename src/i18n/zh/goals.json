@@ -2,5 +2,9 @@
   "title": "我的目标",
   "addGoal": "添加目标",
   "milestone": "里程碑",
-  "task": "任务"
+  "task": "任务",
+  "noGoals": "还没有目标，点击 + 创建一个吧",
+  "noMilestones": "暂无里程碑",
+  "taskCount": "{{completed}}/{{total}}",
+  "completed": "已完成"
 }

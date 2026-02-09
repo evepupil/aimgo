@@ -2,5 +2,9 @@
   "title": "My Goals",
   "addGoal": "Add Goal",
   "milestone": "Milestone",
-  "task": "Task"
+  "task": "Task",
+  "noGoals": "No goals yet. Tap + to create one",
+  "noMilestones": "No milestones",
+  "taskCount": "{{completed}}/{{total}}",
+  "completed": "Completed"
 }

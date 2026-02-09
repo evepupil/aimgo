@@ -1,2 +1,1 @@
-// 工具函数
-// 在此编写通用工具函数
+export { formatDuration } from './time';

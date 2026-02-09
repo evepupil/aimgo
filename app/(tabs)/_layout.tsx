@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { Home, Target, Timer, BarChart3 } from 'lucide-react-native';
+import { Home, Target, Timer, User } from 'lucide-react-native';
 
 import { colors } from '@/src/constants/theme';
 
@@ -42,10 +42,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="stats"
+        name="me"
         options={{
-          title: '统计',
-          tabBarIcon: ({ color, size }) => <BarChart3 size={size} color={color} />,
+          title: '我的',
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
     </Tabs>

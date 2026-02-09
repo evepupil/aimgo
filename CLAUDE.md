@@ -80,3 +80,36 @@ aimgo/
 4. **`database/` 和 `services/` 是全局基础设施**：不属于任何单一 feature，与 features 平级。
 5. **新增 feature 时**，在 `features/` 下创建同结构目录：`components/`、`hooks/`、`store.ts`、`types.ts`。
 6. **路径别名**：使用 `@/src/features/goals/...` 形式引用。`@/` 指向项目根目录。
+
+## 代码规范
+
+### 命名
+
+| 类别 | 规则 | 示例 |
+|------|------|------|
+| 组件文件 | PascalCase | `GoalCard.tsx` |
+| 非组件文件 | camelCase | `store.ts`, `useGoals.ts` |
+| 目录 | kebab-case | `components/`, `goal-detail/` |
+| React 组件 | PascalCase | `export function GoalCard()` |
+| Hook | `use` 前缀 | `useGoals`, `useTimer` |
+| Zustand Store | `use...Store` | `useGoalStore`, `useTimerStore` |
+| 类型 | PascalCase，不加 `I` 前缀 | `type Goal = {...}` |
+| WatermelonDB Model | PascalCase 单数 | `Goal.ts`, `Milestone.ts` |
+| 常量 | UPPER_SNAKE_CASE | `DEFAULT_FOCUS_DURATION` |
+
+### 注释
+
+使用中文注释。
+
+### TypeScript（严格执行）
+
+- `strict: true` 始终开启，不允许关闭任何 strict 子选项
+- 优先用 `type` 而非 `interface`（除非需要 declaration merging）
+- **禁止 `any`**，用 `unknown` + 类型收窄
+- **减少 `as` 断言**，优先使用 `satisfies` 或类型守卫
+- `type` 导入必须用 `import type` 显式标注
+- WatermelonDB Model 类的 class + decorator 语法是唯一例外
+
+### AI 写码流程（强制）
+
+每次写完代码后，**必须**执行 `npx tsc --noEmit` 进行类型检查。类型报错必须修完，不允许跳过。

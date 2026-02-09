@@ -20,42 +20,44 @@
 
 ---
 
-## Phase 1：数据层
+## Phase 1：数据层 ✅ 已完成
 
 所有页面的基础。定义数据结构和关系。
 
 ### 1.1 WatermelonDB Schema & Models
-- [ ] Goal model（标题、描述、状态、优先级、颜色、截止日期）
-- [ ] Milestone model（归属 Goal、标题、描述、排序、完成状态、预计时间）
-- [ ] Task model（归属 Milestone、标题、排序、完成状态、预计番茄数/预计时间）
-- [ ] PomodoroSession model（归属 Task/Goal、时长、效率、有效时长、开始/结束时间、备注）
+- [x] Goal model（标题、描述、状态、颜色、截止日期、排序）
+- [x] Milestone model（归属 Goal、标题、描述、排序、截止日期）
+- [x] Task model（归属 Milestone、标题、排序、完成状态、预估时间）
+- [x] FocusSession model（归属 Task/Goal、时长、效率、有效时长、开始/结束时间、备注）
 
 ### 1.2 数据关系
-- [ ] Goal → has_many Milestones
-- [ ] Milestone → belongs_to Goal, has_many Tasks
-- [ ] Task → belongs_to Milestone
-- [ ] PomodoroSession → belongs_to Task, belongs_to Goal
+- [x] Goal → has_many Milestones
+- [x] Milestone → belongs_to Goal, has_many Tasks
+- [x] Task → belongs_to Milestone, has_many FocusSessions
+- [x] FocusSession → belongs_to Task, belongs_to Goal
 
-### 1.3 进度计算逻辑（需求 7.3）
-- [ ] 有效专注时间 = 专注时长 × 专注效率
-- [ ] 任务进度 = 有效时间 / 预期时间
-- [ ] 里程碑进度 = 子任务有效时间之和 / 子任务预期时间之和
-- [ ] 目标进度 = 子里程碑进度汇总
+### 1.3 进度计算逻辑（需求 1.3）
+- [x] 有效专注时间 = 专注时长 × 专注效率
+- [x] 任务进度 = 有效时间 / 预估时间
+- [x] 里程碑进度 = 子任务有效时间之和 / 里程碑预估时间
+- [x] 目标进度 = 目标累计有效时间 / 目标预估时间
+- [x] 里程碑完成判定 = 所有子任务已勾选
+- [x] 目标完成判定 = 所有子里程碑已完成
 
 ---
 
-## Phase 2：通用 UI 组件
+## Phase 2：通用 UI 组件 ✅ 已完成
 
 搭建各页面复用的积木。位于 `src/shared/components/ui/`。
 
-- [ ] ScreenHeader — 顶部栏（标题 + 左右操作按钮 + 滚动隐藏/显示动画）（需求 1, 2.1, 3.1, 4.1）
-- [ ] SearchHeader — 搜索态 header（搜索图标 + 输入框 + 关闭按钮）（需求 2.3）
-- [ ] Card — 通用卡片容器
-- [ ] ProgressBar — 进度条
-- [ ] FAB — 右下角悬浮按钮（需求 2.1）
-- [ ] BottomSheet — 底部抽屉（目标切换、时间选择等多处复用）（需求 2.2, 3.3）
-- [ ] EmptyState — 空状态占位
-- [ ] TabSwitcher — 页内 Tab 切换组件（番茄钟/自由专注、时间轴/日历）
+- [x] ScreenHeader — 顶部栏（标题 + 左右操作按钮）（需求 1, 2.1, 3.1, 4.1）
+- [x] SearchHeader — 搜索态 header（搜索图标 + 输入框 + 关闭按钮）（需求 2.3）
+- [x] Card — 通用卡片容器
+- [x] ProgressBar — 进度条（支持超 100% 渐变橙色）（需求 1.3.4）
+- [x] FAB — 右下角悬浮按钮（需求 2.1）
+- [x] BottomSheet — 底部抽屉（@gorhom/bottom-sheet）（需求 2.2, 3.3）
+- [x] EmptyState — 空状态占位
+- [x] TabSwitcher — 页内 Tab 切换组件（番茄钟/自由专注、时间轴/日历）
 
 ---
 
@@ -117,7 +119,7 @@
 - [ ] 后台计时保持
 - [ ] 专注完成提示
 - [ ] 跳转自评页面
-- [ ] 写入 PomodoroSession 记录
+- [ ] 写入 FocusSession 记录到数据库
 
 ---
 
@@ -157,7 +159,7 @@
 
 ## Phase 7：专注分析页面
 
-对应需求文档第 5 节。依赖 PomodoroSession 数据积累。
+对应需求文档第 5 节。依赖 FocusSession 数据积累。
 
 - [ ] 路由：`app/stats.tsx`
 - [ ] 时间范围选择器（日/周/月/年）

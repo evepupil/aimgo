@@ -1,6 +1,10 @@
 import { Database } from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import { schema } from './schema';
+import Goal from './models/Goal';
+import Milestone from './models/Milestone';
+import Task from './models/Task';
+import FocusSession from './models/FocusSession';
 
 const adapter = new SQLiteAdapter({
   schema,
@@ -12,7 +16,5 @@ const adapter = new SQLiteAdapter({
 
 export const database = new Database({
   adapter,
-  modelClasses: [
-    // 在此注册 Model 类
-  ],
+  modelClasses: [Goal, Milestone, Task, FocusSession],
 });

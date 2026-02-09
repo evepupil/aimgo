@@ -1,0 +1,17 @@
+{
+  "appName": "AimGo",
+  "confirm": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "search": "Search",
+  "loading": "Loading...",
+  "empty": "No data",
+  "tabs": {
+    "home": "Home",
+    "goals": "Goals",
+    "focus": "Focus",
+    "me": "Me"
+  }
+}

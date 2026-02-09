@@ -6,6 +6,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import '@/src/i18n';
 
 import tamaguiConfig from '../tamagui.config';
 import { database } from '@/src/database';

@@ -1,3 +1,14 @@
+// 目标计算后的展示数据（目标切换抽屉用）
+export type GoalDisplay = {
+  id: string;
+  title: string;
+  color: string;
+  effectiveTime: number; // 秒
+  estimatedTime: number; // 秒
+  progress: number; // 0~N
+  isCompleted: boolean;
+};
+
 // 里程碑计算后的展示数据
 export type MilestoneDisplay = {
   id: string;

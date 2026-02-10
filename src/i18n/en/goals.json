@@ -1,6 +1,8 @@
 {
   "title": "My Goals",
   "addGoal": "Add Goal",
+  "switchGoal": "Switch Goal",
+  "manageGoals": "Manage Goals",
   "milestone": "Milestone",
   "task": "Task",
   "noGoals": "No goals yet. Tap + to create one",

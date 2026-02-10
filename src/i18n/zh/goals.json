@@ -1,6 +1,8 @@
 {
   "title": "我的目标",
   "addGoal": "添加目标",
+  "switchGoal": "切换目标",
+  "manageGoals": "管理目标",
   "milestone": "里程碑",
   "task": "任务",
   "noGoals": "还没有目标，点击 + 创建一个吧",

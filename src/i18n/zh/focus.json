@@ -2,7 +2,17 @@
   "title": "专注",
   "start": "开始专注",
   "pause": "暂停",
+  "resume": "继续",
   "stop": "终止",
   "pomodoro": "番茄钟",
-  "freeMode": "自由专注"
+  "freeMode": "自由专注",
+  "remaining": "剩余",
+  "elapsed": "已专注",
+  "selectTarget": "选择专注目标",
+  "selectDuration": "选择专注时长",
+  "pickGoal": "选择目标",
+  "pickMilestone": "选择里程碑",
+  "pickTask": "选择任务",
+  "skipSelectGoalOnly": "仅选目标",
+  "skipSelectMilestoneOnly": "仅选里程碑"
 }

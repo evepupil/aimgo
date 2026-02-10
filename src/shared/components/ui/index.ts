@@ -6,3 +6,4 @@ export { FAB } from './FAB';
 export { BottomSheet } from './BottomSheet';
 export { EmptyState } from './EmptyState';
 export { TabSwitcher } from './TabSwitcher';
+export { DeleteConfirmDialog } from './DeleteConfirmDialog';

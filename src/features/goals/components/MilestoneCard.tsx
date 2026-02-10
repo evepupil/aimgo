@@ -6,7 +6,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import type { LayoutChangeEvent } from 'react-native';
-import { ChevronDown } from 'lucide-react-native';
+import { ChevronDown, Pencil, Trash2, Plus } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +14,7 @@ import { Card } from '@/src/shared/components/ui';
 import { ProgressBar } from '@/src/shared/components/ui';
 import { formatDuration } from '@/src/shared/utils';
 import { colors } from '@/src/constants/theme';
-import type { MilestoneDisplay } from '../types';
+import type { MilestoneDisplay, TaskDisplay } from '../types';
 import { useTasks } from '../hooks';
 import { TaskItem } from './TaskItem';
 
@@ -22,12 +22,22 @@ type MilestoneCardProps = {
   milestone: MilestoneDisplay;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  onEditMilestone?: (milestone: MilestoneDisplay) => void;
+  onDeleteMilestone?: (milestoneId: string) => void;
+  onAddTask?: (milestoneId: string) => void;
+  onEditTask?: (task: TaskDisplay) => void;
+  onDeleteTask?: (taskId: string) => void;
 };
 
 export function MilestoneCard({
   milestone,
   isExpanded,
   onToggleExpand,
+  onEditMilestone,
+  onDeleteMilestone,
+  onAddTask,
+  onEditTask,
+  onDeleteTask,
 }: MilestoneCardProps) {
   const { t } = useTranslation('goals');
   const colorScheme = useColorScheme();
@@ -93,6 +103,28 @@ export function MilestoneCard({
                 total: milestone.totalTaskCount,
               })}
             </Text>
+            {/* 编辑里程碑 */}
+            <YStack
+              padding="$1"
+              onPress={(e: { stopPropagation: () => void }) => {
+                e.stopPropagation();
+                onEditMilestone?.(milestone);
+              }}
+              pressStyle={{ opacity: 0.7 }}
+            >
+              <Pencil size={16} color={theme.textMuted} />
+            </YStack>
+            {/* 删除里程碑 */}
+            <YStack
+              padding="$1"
+              onPress={(e: { stopPropagation: () => void }) => {
+                e.stopPropagation();
+                onDeleteMilestone?.(milestone.id);
+              }}
+              pressStyle={{ opacity: 0.7 }}
+            >
+              <Trash2 size={16} color={theme.error} />
+            </YStack>
             <Animated.View style={chevronStyle}>
               <ChevronDown size={18} color={theme.textMuted} />
             </Animated.View>
@@ -131,9 +163,27 @@ export function MilestoneCard({
               key={task.id}
               task={task}
               onToggle={toggleTask}
-              isLast={index === tasks.length - 1}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
+              isLast={index === tasks.length - 1 && !onAddTask}
             />
           ))}
+          {/* 添加任务按钮 */}
+          {onAddTask && (
+            <XStack
+              paddingVertical="$2"
+              paddingHorizontal="$3"
+              gap="$2"
+              alignItems="center"
+              onPress={() => onAddTask(milestone.id)}
+              pressStyle={{ opacity: 0.7 }}
+            >
+              <Plus size={16} color={theme.accent} />
+              <Text fontSize="$3" color={theme.accent}>
+                {t('addTask')}
+              </Text>
+            </XStack>
+          )}
         </YStack>
       </Animated.View>
     </Card>

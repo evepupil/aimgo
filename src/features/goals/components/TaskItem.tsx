@@ -8,10 +8,12 @@ import { colors } from '@/src/constants/theme';
 type TaskItemProps = {
   task: TaskDisplay;
   onToggle: (taskId: string) => void;
+  onEdit?: (task: TaskDisplay) => void;
+  onDelete?: (taskId: string) => void;
   isLast?: boolean;
 };
 
-export function TaskItem({ task, onToggle, isLast }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onEdit, onDelete, isLast }: TaskItemProps) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? colors.dark : colors.light;
 
@@ -22,6 +24,8 @@ export function TaskItem({ task, onToggle, isLast }: TaskItemProps) {
         paddingVertical="$2.5"
         paddingHorizontal="$3"
         gap="$3"
+        onLongPress={() => onEdit?.(task)}
+        pressStyle={{ opacity: 0.8 }}
       >
         <TaskProgressCircle
           progress={task.progress}

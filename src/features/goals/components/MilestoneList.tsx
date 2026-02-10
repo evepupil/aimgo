@@ -6,15 +6,27 @@ import { useColorScheme } from 'react-native';
 
 import { EmptyState } from '@/src/shared/components/ui';
 import { colors } from '@/src/constants/theme';
-import type { MilestoneDisplay } from '../types';
+import type { MilestoneDisplay, TaskDisplay } from '../types';
 import { useGoalStore } from '../store';
 import { MilestoneCard } from './MilestoneCard';
 
 type MilestoneListProps = {
   milestones: MilestoneDisplay[];
+  onEditMilestone?: (milestone: MilestoneDisplay) => void;
+  onDeleteMilestone?: (milestoneId: string) => void;
+  onAddTask?: (milestoneId: string) => void;
+  onEditTask?: (task: TaskDisplay) => void;
+  onDeleteTask?: (taskId: string) => void;
 };
 
-export function MilestoneList({ milestones }: MilestoneListProps) {
+export function MilestoneList({
+  milestones,
+  onEditMilestone,
+  onDeleteMilestone,
+  onAddTask,
+  onEditTask,
+  onDeleteTask,
+}: MilestoneListProps) {
   const { t } = useTranslation('goals');
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? colors.dark : colors.light;
@@ -26,6 +38,11 @@ export function MilestoneList({ milestones }: MilestoneListProps) {
       milestone={item}
       isExpanded={expandedMilestoneIds.has(item.id)}
       onToggleExpand={() => toggleMilestone(item.id)}
+      onEditMilestone={onEditMilestone}
+      onDeleteMilestone={onDeleteMilestone}
+      onAddTask={onAddTask}
+      onEditTask={onEditTask}
+      onDeleteTask={onDeleteTask}
     />
   );
 

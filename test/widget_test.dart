@@ -22,13 +22,13 @@ void main() {
         child: const AimGoApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(4));
 
     await tester.tap(find.byIcon(Icons.person_outline));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byIcon(Icons.settings_outlined), findsAtLeastNWidgets(1));
   });

@@ -8,7 +8,37 @@
   "homeTitle": "Home",
   "goalsTitle": "Goals",
   "focusTitle": "Focus",
+  "focusHistory": "History",
+  "focusModePomodoro": "Pomodoro",
+  "focusModeFree": "Free Focus",
+  "focusRemaining": "Remaining",
+  "focusElapsed": "Elapsed",
+  "focusPomodoroPreset": "{minutes} min preset",
+  "@focusPomodoroPreset": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "focusPickDuration": "Select pomodoro duration",
+  "focusStart": "Start Focus",
+  "focusPause": "Pause",
+  "focusResume": "Resume",
+  "focusTerminate": "End",
+  "focusEndTitle": "End this focus session?",
+  "focusEndMessage": "You can continue to self-evaluation and record this session.",
+  "focusCompletedTitle": "Focus Completed",
+  "focusCompletedMessage": "Great work. Continue to self-evaluation?",
+  "focusGoEvaluation": "Go Evaluate",
+  "focusContextTitle": "Focus Context",
+  "focusContextEmpty": "No focus target selected",
   "profileTitle": "My",
+  "historyTitle": "Focus History",
+  "phase3HistoryPlaceholder": "Phase 3 provides route entry; full history view arrives in Phase 6.",
+  "evaluationTitle": "Focus Evaluation",
+  "evaluationNoDraft": "No pending focus session found.",
+  "evaluationPhase3Placeholder": "Phase 3 has routed here; full evaluation form arrives in Phase 4.",
   "settingsTitle": "Settings",
   "goalsMyGoalsTitle": "My Goals",
   "goalsSearchHint": "Search goals, milestones, tasks...",

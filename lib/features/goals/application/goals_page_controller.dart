@@ -1,4 +1,5 @@
 import 'package:aimgo/features/goals/application/progress_sync_service.dart';
+import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:aimgo/shared/repositories/drift_aimgo_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -144,6 +145,7 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
     if (current == null) {
       return;
     }
+    ref.read(selectedGoalIdProvider.notifier).state = goalId;
     state = AsyncData(current.copyWith(selectedGoalId: goalId));
   }
 
@@ -376,6 +378,7 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
       selectedGoalId = null;
     }
     selectedGoalId ??= tree.isNotEmpty ? tree.first.goal.id : null;
+    ref.read(selectedGoalIdProvider.notifier).state = selectedGoalId;
 
     final normalizedExpanded = <int>{};
     final availableMilestoneIds =

@@ -8,7 +8,37 @@
   "homeTitle": "首页",
   "goalsTitle": "目标",
   "focusTitle": "专注",
+  "focusHistory": "历史",
+  "focusModePomodoro": "番茄钟",
+  "focusModeFree": "自由专注",
+  "focusRemaining": "剩余时间",
+  "focusElapsed": "已专注",
+  "focusPomodoroPreset": "{minutes} 分钟预设",
+  "@focusPomodoroPreset": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "focusPickDuration": "选择番茄钟时长",
+  "focusStart": "开始专注",
+  "focusPause": "暂停",
+  "focusResume": "继续",
+  "focusTerminate": "终止",
+  "focusEndTitle": "结束本次专注？",
+  "focusEndMessage": "结束后可进入自评并记录本次专注。",
+  "focusCompletedTitle": "专注完成",
+  "focusCompletedMessage": "做得不错，是否进入专注自评？",
+  "focusGoEvaluation": "去自评",
+  "focusContextTitle": "专注上下文",
+  "focusContextEmpty": "尚未选择专注对象",
   "profileTitle": "我的",
+  "historyTitle": "专注历史",
+  "phase3HistoryPlaceholder": "Phase 3 已打通入口，完整历史页面将在 Phase 6 实现。",
+  "evaluationTitle": "专注自评",
+  "evaluationNoDraft": "暂无待自评的专注会话。",
+  "evaluationPhase3Placeholder": "Phase 3 已完成跳转，完整自评表单将在 Phase 4 实现。",
   "settingsTitle": "设置",
   "goalsMyGoalsTitle": "我的目标",
   "goalsSearchHint": "搜索目标、里程碑、任务…",

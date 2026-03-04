@@ -4,4 +4,8 @@ final class RoutePaths {
   static const focus = '/focus';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const evaluation = '/evaluation';
+  static const history = '/history';
+  static const analytics = '/analytics';
+  static const about = '/about';
 }

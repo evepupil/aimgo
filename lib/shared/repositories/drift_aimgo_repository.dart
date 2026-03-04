@@ -286,6 +286,15 @@ final class DriftAimGoRepository implements AimGoRepository {
   }
 
   @override
+  Future<List<model.FocusSessionModel>> listFocusSessions() async {
+    final rows =
+        await (_database.select(_database.focusSessions)..orderBy([
+          (table) => OrderingTerm(expression: table.startedAt),
+        ])).get();
+    return rows.map(_mapFocusSession).toList(growable: false);
+  }
+
+  @override
   Future<void> updateTaskAggregate(
     model.TaskProgressAggregate aggregate,
   ) async {

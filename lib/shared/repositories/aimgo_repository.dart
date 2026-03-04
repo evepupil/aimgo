@@ -40,6 +40,8 @@ abstract interface class AimGoRepository {
 
   Future<List<FocusSessionModel>> listFocusSessionsByTaskId(int taskId);
 
+  Future<List<FocusSessionModel>> listFocusSessions();
+
   Future<void> updateTaskAggregate(TaskProgressAggregate aggregate);
 
   Future<void> updateMilestoneAggregate(MilestoneProgressAggregate aggregate);

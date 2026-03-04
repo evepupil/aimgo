@@ -10,6 +10,8 @@ final class LocalStorageService {
 
   static const _themePreferenceKey = 'theme.preference';
   static const _localePreferenceKey = 'locale.preference';
+  static const _notificationEnabledKey = 'settings.notification.enabled';
+  static const _soundEnabledKey = 'settings.sound.enabled';
 
   final SharedPreferences _sharedPreferences;
 
@@ -32,5 +34,26 @@ final class LocalStorageService {
 
   Future<bool> setLocalePreference(String value) {
     return _sharedPreferences.setString(_localePreferenceKey, value);
+  }
+
+  bool getNotificationEnabled() {
+    return _sharedPreferences.getBool(_notificationEnabledKey) ?? true;
+  }
+
+  Future<bool> setNotificationEnabled(bool value) {
+    return _sharedPreferences.setBool(_notificationEnabledKey, value);
+  }
+
+  bool getSoundEnabled() {
+    return _sharedPreferences.getBool(_soundEnabledKey) ?? true;
+  }
+
+  Future<bool> setSoundEnabled(bool value) {
+    return _sharedPreferences.setBool(_soundEnabledKey, value);
+  }
+
+  Future<void> clearTransientCache() async {
+    await _sharedPreferences.remove(_notificationEnabledKey);
+    await _sharedPreferences.remove(_soundEnabledKey);
   }
 }

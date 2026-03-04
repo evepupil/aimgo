@@ -1,6 +1,7 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/l10n/locale_controller.dart';
 import 'package:aimgo/app/theme/theme_mode_controller.dart';
+import 'package:aimgo/features/settings/application/settings_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,17 +13,19 @@ class SettingsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final localePreference = ref.watch(localePreferenceProvider);
     final themePreference = ref.watch(themePreferenceProvider);
+    final settingsState = ref.watch(settingsControllerProvider);
+    final settingsController = ref.read(settingsControllerProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.settingsLanguage),
-            subtitle: const SizedBox(height: 12),
+          Text(
+            l10n.settingsLanguage,
+            style: Theme.of(context).textTheme.titleSmall,
           ),
+          const SizedBox(height: 10),
           SegmentedButton<AppLocalePreference>(
             segments: [
               ButtonSegment(
@@ -40,18 +43,17 @@ class SettingsPage extends ConsumerWidget {
             ],
             selected: {localePreference},
             onSelectionChanged: (selection) {
-              final selectedPreference = selection.first;
               ref
                   .read(localeControllerProvider.notifier)
-                  .setPreference(selectedPreference);
+                  .setPreference(selection.first);
             },
           ),
-          const SizedBox(height: 24),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.settingsTheme),
-            subtitle: const SizedBox(height: 12),
+          const SizedBox(height: 20),
+          Text(
+            l10n.settingsTheme,
+            style: Theme.of(context).textTheme.titleSmall,
           ),
+          const SizedBox(height: 10),
           SegmentedButton<AppThemePreference>(
             segments: [
               ButtonSegment(
@@ -69,14 +71,57 @@ class SettingsPage extends ConsumerWidget {
             ],
             selected: {themePreference},
             onSelectionChanged: (selection) {
-              final selectedPreference = selection.first;
               ref
                   .read(themeModeControllerProvider.notifier)
-                  .setPreference(selectedPreference);
+                  .setPreference(selection.first);
+            },
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.settingsOtherSection,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: settingsState.notificationsEnabled,
+            title: Text(l10n.settingsNotification),
+            onChanged: settingsController.setNotificationEnabled,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: settingsState.soundEnabled,
+            title: Text(l10n.settingsSound),
+            onChanged: settingsController.setSoundEnabled,
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.backup_outlined),
+            title: Text(l10n.settingsBackupRestore),
+            subtitle: Text(l10n.settingsBackupRestoreHint),
+            onTap: () {
+              _showMessage(context, l10n.settingsActionPlaceholder);
+            },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.cleaning_services_outlined),
+            title: Text(l10n.settingsClearCache),
+            onTap: () async {
+              await settingsController.clearCache();
+              if (context.mounted) {
+                _showMessage(context, l10n.settingsCacheCleared);
+              }
             },
           ),
         ],
       ),
     );
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

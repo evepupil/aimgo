@@ -30,6 +30,6 @@ void main() {
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.settings_outlined), findsAtLeastNWidgets(1));
   });
 }

@@ -4,8 +4,10 @@ import 'package:aimgo/features/focus/presentation/focus_page.dart';
 import 'package:aimgo/features/goals/presentation/goals_page.dart';
 import 'package:aimgo/features/home/presentation/home_page.dart';
 import 'package:aimgo/features/history/presentation/history_page.dart';
+import 'package:aimgo/features/analytics/presentation/analytics_page.dart';
 import 'package:aimgo/features/profile/presentation/profile_page.dart';
 import 'package:aimgo/features/evaluation/presentation/evaluation_page.dart';
+import 'package:aimgo/features/profile/presentation/about_page.dart';
 import 'package:aimgo/features/settings/presentation/settings_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -64,6 +66,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.evaluation,
         builder: (context, state) => const EvaluationPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.analytics,
+        builder: (context, state) => const AnalyticsPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.about,
+        builder: (context, state) => const AboutPage(),
       ),
     ],
   );

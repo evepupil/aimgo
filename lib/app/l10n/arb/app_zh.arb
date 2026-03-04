@@ -38,7 +38,22 @@
   "phase3HistoryPlaceholder": "Phase 3 已打通入口，完整历史页面将在 Phase 6 实现。",
   "evaluationTitle": "专注自评",
   "evaluationNoDraft": "暂无待自评的专注会话。",
-  "evaluationPhase3Placeholder": "Phase 3 已完成跳转，完整自评表单将在 Phase 4 实现。",
+  "evaluationSummaryTitle": "会话摘要",
+  "evaluationDuration": "专注时长",
+  "evaluationEfficiencyLabel": "专注效率：{percent}%",
+  "@evaluationEfficiencyLabel": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "evaluationEffectiveDuration": "有效专注时间",
+  "evaluationNoteLabel": "备注",
+  "evaluationSubmit": "提交自评",
+  "evaluationSkip": "跳过（按 60%）",
+  "evaluationSaved": "自评已提交。",
+  "evaluationSaveFailed": "提交失败，请稍后重试。",
   "settingsTitle": "设置",
   "goalsMyGoalsTitle": "我的目标",
   "goalsSearchHint": "搜索目标、里程碑、任务…",

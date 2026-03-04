@@ -38,7 +38,22 @@
   "phase3HistoryPlaceholder": "Phase 3 provides route entry; full history view arrives in Phase 6.",
   "evaluationTitle": "Focus Evaluation",
   "evaluationNoDraft": "No pending focus session found.",
-  "evaluationPhase3Placeholder": "Phase 3 has routed here; full evaluation form arrives in Phase 4.",
+  "evaluationSummaryTitle": "Session Summary",
+  "evaluationDuration": "Duration",
+  "evaluationEfficiencyLabel": "Efficiency: {percent}%",
+  "@evaluationEfficiencyLabel": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "evaluationEffectiveDuration": "Effective Focus Time",
+  "evaluationNoteLabel": "Notes",
+  "evaluationSubmit": "Submit Evaluation",
+  "evaluationSkip": "Skip (Use 60%)",
+  "evaluationSaved": "Evaluation submitted successfully.",
+  "evaluationSaveFailed": "Failed to submit evaluation. Please retry.",
   "settingsTitle": "Settings",
   "goalsMyGoalsTitle": "My Goals",
   "goalsSearchHint": "Search goals, milestones, tasks...",

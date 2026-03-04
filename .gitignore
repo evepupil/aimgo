@@ -1,0 +1,36 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+.pub-cache/
+build/
+
+# Generated localization output
+lib/app/l10n/generated/
+
+# Flutter generated / temporary
+**/doc/api/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/ephemeral/
+
+# Android
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# iOS / macOS build artifacts
+**/Pods/
+**/.symlinks/
+**/DerivedData/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS / misc
+.DS_Store
+*.log
+*.swp

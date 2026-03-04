@@ -1,0 +1,22 @@
+{
+  "@@locale": "en",
+  "appTitle": "AimGo",
+  "tabHome": "Home",
+  "tabGoals": "Goals",
+  "tabFocus": "Focus",
+  "tabProfile": "Profile",
+  "homeTitle": "Home",
+  "goalsTitle": "Goals",
+  "focusTitle": "Focus",
+  "profileTitle": "My",
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "settingsTheme": "Theme",
+  "langSystem": "System",
+  "langZh": "中文",
+  "langEn": "English",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "phase0ReadyDescription": "Phase 0 scaffold is ready. Core features will be implemented in upcoming phases."
+}

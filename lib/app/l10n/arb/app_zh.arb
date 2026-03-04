@@ -1,0 +1,22 @@
+{
+  "@@locale": "zh",
+  "appTitle": "AimGo",
+  "tabHome": "首页",
+  "tabGoals": "目标",
+  "tabFocus": "专注",
+  "tabProfile": "我的",
+  "homeTitle": "首页",
+  "goalsTitle": "目标",
+  "focusTitle": "专注",
+  "profileTitle": "我的",
+  "settingsTitle": "设置",
+  "settingsLanguage": "语言",
+  "settingsTheme": "主题",
+  "langSystem": "跟随系统",
+  "langZh": "中文",
+  "langEn": "英文",
+  "themeSystem": "跟随系统",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+  "phase0ReadyDescription": "Phase 0 工程基建已完成，核心业务功能将在后续阶段实现。"
+}

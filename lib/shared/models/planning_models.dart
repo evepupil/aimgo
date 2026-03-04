@@ -138,6 +138,24 @@ final class CreateGoalInput {
   final DateTime? dueAt;
 }
 
+final class UpdateGoalInput {
+  const UpdateGoalInput({
+    required this.id,
+    required this.title,
+    this.description,
+    this.sortOrder = 0,
+    this.colorHex,
+    this.dueAt,
+  });
+
+  final int id;
+  final String title;
+  final String? description;
+  final int sortOrder;
+  final String? colorHex;
+  final DateTime? dueAt;
+}
+
 final class CreateMilestoneInput {
   const CreateMilestoneInput({
     required this.goalId,
@@ -147,6 +165,24 @@ final class CreateMilestoneInput {
     this.dueAt,
   });
 
+  final int goalId;
+  final String title;
+  final String? description;
+  final int sortOrder;
+  final DateTime? dueAt;
+}
+
+final class UpdateMilestoneInput {
+  const UpdateMilestoneInput({
+    required this.id,
+    required this.goalId,
+    required this.title,
+    this.description,
+    this.sortOrder = 0,
+    this.dueAt,
+  });
+
+  final int id;
   final int goalId;
   final String title;
   final String? description;
@@ -164,6 +200,26 @@ final class CreateTaskInput {
     this.dueAt,
   });
 
+  final int milestoneId;
+  final String title;
+  final String? description;
+  final int estimateMinutes;
+  final int sortOrder;
+  final DateTime? dueAt;
+}
+
+final class UpdateTaskInput {
+  const UpdateTaskInput({
+    required this.id,
+    required this.milestoneId,
+    required this.title,
+    required this.estimateMinutes,
+    this.description,
+    this.sortOrder = 0,
+    this.dueAt,
+  });
+
+  final int id;
   final int milestoneId;
   final String title;
   final String? description;

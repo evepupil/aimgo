@@ -17,6 +17,16 @@ final class DriftAimGoRepository implements AimGoRepository {
   final AppDatabase _database;
 
   @override
+  Future<List<model.GoalModel>> listGoals() async {
+    final rows =
+        await (_database.select(_database.goals)..orderBy([
+          (table) => OrderingTerm(expression: table.sortOrder),
+          (table) => OrderingTerm(expression: table.id),
+        ])).get();
+    return rows.map(_mapGoal).toList(growable: false);
+  }
+
+  @override
   Future<model.GoalModel> createGoal(model.CreateGoalInput input) async {
     final now = DateTime.now();
     final row = await _database
@@ -34,6 +44,32 @@ final class DriftAimGoRepository implements AimGoRepository {
         );
 
     return _mapGoal(row);
+  }
+
+  @override
+  Future<model.GoalModel> updateGoal(model.UpdateGoalInput input) async {
+    await (_database.update(_database.goals)
+      ..where((table) => table.id.equals(input.id))).write(
+      GoalsCompanion(
+        title: Value(input.title),
+        description: Value(input.description),
+        sortOrder: Value(input.sortOrder),
+        colorHex: Value(input.colorHex),
+        dueAt: Value(input.dueAt),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    final updated = await getGoalById(input.id);
+    if (updated == null) {
+      throw StateError('Goal not found after update: ${input.id}');
+    }
+    return updated;
+  }
+
+  @override
+  Future<void> deleteGoal(int goalId) async {
+    await (_database.delete(_database.goals)
+      ..where((table) => table.id.equals(goalId))).go();
   }
 
   @override
@@ -59,6 +95,34 @@ final class DriftAimGoRepository implements AimGoRepository {
   }
 
   @override
+  Future<model.MilestoneModel> updateMilestone(
+    model.UpdateMilestoneInput input,
+  ) async {
+    await (_database.update(_database.milestones)
+      ..where((table) => table.id.equals(input.id))).write(
+      MilestonesCompanion(
+        goalId: Value(input.goalId),
+        title: Value(input.title),
+        description: Value(input.description),
+        sortOrder: Value(input.sortOrder),
+        dueAt: Value(input.dueAt),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    final updated = await getMilestoneById(input.id);
+    if (updated == null) {
+      throw StateError('Milestone not found after update: ${input.id}');
+    }
+    return updated;
+  }
+
+  @override
+  Future<void> deleteMilestone(int milestoneId) async {
+    await (_database.delete(_database.milestones)
+      ..where((table) => table.id.equals(milestoneId))).go();
+  }
+
+  @override
   Future<model.TaskModel> createTask(model.CreateTaskInput input) async {
     final now = DateTime.now();
     final row = await _database
@@ -77,6 +141,33 @@ final class DriftAimGoRepository implements AimGoRepository {
         );
 
     return _mapTask(row);
+  }
+
+  @override
+  Future<model.TaskModel> updateTask(model.UpdateTaskInput input) async {
+    await (_database.update(_database.tasks)
+      ..where((table) => table.id.equals(input.id))).write(
+      TasksCompanion(
+        milestoneId: Value(input.milestoneId),
+        title: Value(input.title),
+        description: Value(input.description),
+        estimateMinutes: Value(input.estimateMinutes),
+        sortOrder: Value(input.sortOrder),
+        dueAt: Value(input.dueAt),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    final updated = await getTaskById(input.id);
+    if (updated == null) {
+      throw StateError('Task not found after update: ${input.id}');
+    }
+    return updated;
+  }
+
+  @override
+  Future<void> deleteTask(int taskId) async {
+    await (_database.delete(_database.tasks)
+      ..where((table) => table.id.equals(taskId))).go();
   }
 
   @override

@@ -1,11 +1,25 @@
 import 'package:aimgo/shared/models/planning_models.dart';
 
 abstract interface class AimGoRepository {
+  Future<List<GoalModel>> listGoals();
+
   Future<GoalModel> createGoal(CreateGoalInput input);
+
+  Future<GoalModel> updateGoal(UpdateGoalInput input);
+
+  Future<void> deleteGoal(int goalId);
 
   Future<MilestoneModel> createMilestone(CreateMilestoneInput input);
 
+  Future<MilestoneModel> updateMilestone(UpdateMilestoneInput input);
+
+  Future<void> deleteMilestone(int milestoneId);
+
   Future<TaskModel> createTask(CreateTaskInput input);
+
+  Future<TaskModel> updateTask(UpdateTaskInput input);
+
+  Future<void> deleteTask(int taskId);
 
   Future<void> setTaskCompletion({
     required int taskId,

@@ -10,8 +10,9 @@
 
 - [x] 需求文档已确认
 - [x] 项目规范已切换为 Flutter
-- [ ] Flutter 工程尚未初始化
-- [ ] 业务代码尚未开始
+- [x] Flutter 工程已初始化
+- [x] Phase 0 已完成（应用壳、主题、多语言、质量门禁）
+- [x] Phase 1 已完成（Drift + Repository + 进度规则 + 测试）
 
 ---
 
@@ -29,13 +30,13 @@
 
 ## Phase 0：Flutter 基建（对应需求 1）
 
-- [ ] 初始化 Flutter 项目（Android/iOS）
-- [ ] 接入 `go_router` + `flutter_riverpod` + Drift
-- [ ] 建立 Feature First 目录结构（按 `CLAUDE.md`）
-- [ ] 搭建 4 Tab 基础导航：首页/目标/专注/我的
-- [ ] 建立主题系统（light/dark/system）
-- [ ] 建立 i18n 骨架（中文/英文 + 跟随系统）
-- [ ] 配置基础质量门禁：`dart format`、`flutter analyze`、`flutter test`
+- [x] 初始化 Flutter 项目（Android/iOS）
+- [x] 接入 `go_router` + `flutter_riverpod` + Drift
+- [x] 建立 Feature First 目录结构（按 `CLAUDE.md`）
+- [x] 搭建 4 Tab 基础导航：首页/目标/专注/我的
+- [x] 建立主题系统（light/dark/system）
+- [x] 建立 i18n 骨架（中文/英文 + 跟随系统）
+- [x] 配置基础质量门禁：`dart format`、`flutter analyze`、`flutter test`
 
 **完成标准**
 - App 在真机/模拟器可启动
@@ -46,12 +47,12 @@
 
 ## Phase 1：数据模型与规则引擎（对应需求 1.3）
 
-- [ ] 设计并落地 Drift 表：`goals` / `milestones` / `tasks` / `focus_sessions`
-- [ ] 建立 Repository 接口与实现
-- [ ] 实现进度计算服务（任务/里程碑/目标）
-- [ ] 实现完成状态自动推导（里程碑、目标）
-- [ ] 实现默认效率 60% 逻辑
-- [ ] 覆盖核心单元测试（计算规则与边界）
+- [x] 设计并落地 Drift 表：`goals` / `milestones` / `tasks` / `focus_sessions`
+- [x] 建立 Repository 接口与实现
+- [x] 实现进度计算服务（任务/里程碑/目标）
+- [x] 实现完成状态自动推导（里程碑、目标）
+- [x] 实现默认效率 60% 逻辑
+- [x] 覆盖核心单元测试（计算规则与边界）
 
 **完成标准**
 - 任意 FocusSession 写入后可正确回写层级进度

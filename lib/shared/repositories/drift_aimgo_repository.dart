@@ -1,0 +1,333 @@
+import 'package:aimgo/core/services/database/app_database.dart';
+import 'package:aimgo/shared/models/planning_models.dart' as model;
+import 'package:aimgo/shared/repositories/aimgo_repository.dart';
+import 'package:drift/drift.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final aimGoRepositoryProvider = Provider<AimGoRepository>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  return DriftAimGoRepository(database);
+});
+
+final class DriftAimGoRepository implements AimGoRepository {
+  DriftAimGoRepository(this._database);
+
+  static const int _defaultEfficiencyPercent = 60;
+
+  final AppDatabase _database;
+
+  @override
+  Future<model.GoalModel> createGoal(model.CreateGoalInput input) async {
+    final now = DateTime.now();
+    final row = await _database
+        .into(_database.goals)
+        .insertReturning(
+          GoalsCompanion.insert(
+            title: input.title,
+            description: Value(input.description),
+            sortOrder: Value(input.sortOrder),
+            colorHex: Value(input.colorHex),
+            dueAt: Value(input.dueAt),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+
+    return _mapGoal(row);
+  }
+
+  @override
+  Future<model.MilestoneModel> createMilestone(
+    model.CreateMilestoneInput input,
+  ) async {
+    final now = DateTime.now();
+    final row = await _database
+        .into(_database.milestones)
+        .insertReturning(
+          MilestonesCompanion.insert(
+            goalId: input.goalId,
+            title: input.title,
+            description: Value(input.description),
+            sortOrder: Value(input.sortOrder),
+            dueAt: Value(input.dueAt),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+
+    return _mapMilestone(row);
+  }
+
+  @override
+  Future<model.TaskModel> createTask(model.CreateTaskInput input) async {
+    final now = DateTime.now();
+    final row = await _database
+        .into(_database.tasks)
+        .insertReturning(
+          TasksCompanion.insert(
+            milestoneId: input.milestoneId,
+            title: input.title,
+            description: Value(input.description),
+            estimateMinutes: Value(input.estimateMinutes),
+            sortOrder: Value(input.sortOrder),
+            dueAt: Value(input.dueAt),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+
+    return _mapTask(row);
+  }
+
+  @override
+  Future<void> setTaskCompletion({
+    required int taskId,
+    required bool isCompleted,
+  }) async {
+    await (_database.update(_database.tasks)
+      ..where((table) => table.id.equals(taskId))).write(
+      TasksCompanion(
+        isCompleted: Value(isCompleted),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  @override
+  Future<model.FocusSessionModel> createFocusSession(
+    model.CreateFocusSessionInput input,
+  ) async {
+    final resolvedEfficiency =
+        input.efficiencyPercent ?? _defaultEfficiencyPercent;
+    if (resolvedEfficiency < 0 || resolvedEfficiency > 100) {
+      throw ArgumentError.value(
+        resolvedEfficiency,
+        'efficiencyPercent',
+        'efficiencyPercent must be between 0 and 100',
+      );
+    }
+
+    final effectiveMinutes = input.durationMinutes * (resolvedEfficiency / 100);
+    final now = DateTime.now();
+
+    final row = await _database
+        .into(_database.focusSessions)
+        .insertReturning(
+          FocusSessionsCompanion.insert(
+            goalId: Value(input.goalId),
+            milestoneId: Value(input.milestoneId),
+            taskId: Value(input.taskId),
+            durationMinutes: Value(input.durationMinutes),
+            efficiencyPercent: Value(resolvedEfficiency),
+            effectiveMinutes: Value(effectiveMinutes),
+            focusTargetLevel: _focusTargetLevelToDb(input.focusTargetLevel),
+            startedAt: input.startedAt,
+            endedAt: input.endedAt,
+            note: Value(input.note),
+            isAbandoned: Value(input.isAbandoned),
+            createdAt: Value(now),
+          ),
+        );
+
+    return _mapFocusSession(row);
+  }
+
+  @override
+  Future<model.GoalModel?> getGoalById(int goalId) async {
+    final query = _database.select(_database.goals)
+      ..where((table) => table.id.equals(goalId));
+    final row = await query.getSingleOrNull();
+    return row == null ? null : _mapGoal(row);
+  }
+
+  @override
+  Future<model.MilestoneModel?> getMilestoneById(int milestoneId) async {
+    final query = _database.select(_database.milestones)
+      ..where((table) => table.id.equals(milestoneId));
+    final row = await query.getSingleOrNull();
+    return row == null ? null : _mapMilestone(row);
+  }
+
+  @override
+  Future<model.TaskModel?> getTaskById(int taskId) async {
+    final query = _database.select(_database.tasks)
+      ..where((table) => table.id.equals(taskId));
+    final row = await query.getSingleOrNull();
+    return row == null ? null : _mapTask(row);
+  }
+
+  @override
+  Future<List<model.MilestoneModel>> listMilestonesByGoalId(int goalId) async {
+    final rows =
+        await (_database.select(_database.milestones)
+              ..where((table) => table.goalId.equals(goalId))
+              ..orderBy([
+                (table) => OrderingTerm(expression: table.sortOrder),
+                (table) => OrderingTerm(expression: table.id),
+              ]))
+            .get();
+    return rows.map(_mapMilestone).toList(growable: false);
+  }
+
+  @override
+  Future<List<model.TaskModel>> listTasksByMilestoneId(int milestoneId) async {
+    final rows =
+        await (_database.select(_database.tasks)
+              ..where((table) => table.milestoneId.equals(milestoneId))
+              ..orderBy([
+                (table) => OrderingTerm(expression: table.sortOrder),
+                (table) => OrderingTerm(expression: table.id),
+              ]))
+            .get();
+    return rows.map(_mapTask).toList(growable: false);
+  }
+
+  @override
+  Future<List<model.FocusSessionModel>> listFocusSessionsByTaskId(
+    int taskId,
+  ) async {
+    final rows =
+        await (_database.select(_database.focusSessions)
+              ..where((table) => table.taskId.equals(taskId))
+              ..orderBy([(table) => OrderingTerm(expression: table.startedAt)]))
+            .get();
+    return rows.map(_mapFocusSession).toList(growable: false);
+  }
+
+  @override
+  Future<void> updateTaskAggregate(
+    model.TaskProgressAggregate aggregate,
+  ) async {
+    await (_database.update(_database.tasks)
+      ..where((table) => table.id.equals(aggregate.taskId))).write(
+      TasksCompanion(
+        effectiveMinutes: Value(aggregate.effectiveMinutes),
+        progressRatio: Value(aggregate.progressRatio),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateMilestoneAggregate(
+    model.MilestoneProgressAggregate aggregate,
+  ) async {
+    await (_database.update(_database.milestones)
+      ..where((table) => table.id.equals(aggregate.milestoneId))).write(
+      MilestonesCompanion(
+        estimateMinutes: Value(aggregate.estimateMinutes),
+        effectiveMinutes: Value(aggregate.effectiveMinutes),
+        progressRatio: Value(aggregate.progressRatio),
+        isCompleted: Value(aggregate.isCompleted),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateGoalAggregate(
+    model.GoalProgressAggregate aggregate,
+  ) async {
+    await (_database.update(_database.goals)
+      ..where((table) => table.id.equals(aggregate.goalId))).write(
+      GoalsCompanion(
+        estimateMinutes: Value(aggregate.estimateMinutes),
+        effectiveMinutes: Value(aggregate.effectiveMinutes),
+        progressRatio: Value(aggregate.progressRatio),
+        isCompleted: Value(aggregate.isCompleted),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  @override
+  Future<T> transaction<T>(Future<T> Function() action) {
+    return _database.transaction(action);
+  }
+
+  model.GoalModel _mapGoal(Goal row) {
+    return model.GoalModel(
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      estimateMinutes: row.estimateMinutes,
+      effectiveMinutes: row.effectiveMinutes,
+      progressRatio: row.progressRatio,
+      isCompleted: row.isCompleted,
+      sortOrder: row.sortOrder,
+      colorHex: row.colorHex,
+      dueAt: row.dueAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    );
+  }
+
+  model.MilestoneModel _mapMilestone(Milestone row) {
+    return model.MilestoneModel(
+      id: row.id,
+      goalId: row.goalId,
+      title: row.title,
+      description: row.description,
+      estimateMinutes: row.estimateMinutes,
+      effectiveMinutes: row.effectiveMinutes,
+      progressRatio: row.progressRatio,
+      isCompleted: row.isCompleted,
+      sortOrder: row.sortOrder,
+      dueAt: row.dueAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    );
+  }
+
+  model.TaskModel _mapTask(Task row) {
+    return model.TaskModel(
+      id: row.id,
+      milestoneId: row.milestoneId,
+      title: row.title,
+      description: row.description,
+      estimateMinutes: row.estimateMinutes,
+      effectiveMinutes: row.effectiveMinutes,
+      progressRatio: row.progressRatio,
+      isCompleted: row.isCompleted,
+      sortOrder: row.sortOrder,
+      dueAt: row.dueAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    );
+  }
+
+  model.FocusSessionModel _mapFocusSession(FocusSession row) {
+    return model.FocusSessionModel(
+      id: row.id,
+      goalId: row.goalId,
+      milestoneId: row.milestoneId,
+      taskId: row.taskId,
+      durationMinutes: row.durationMinutes,
+      efficiencyPercent: row.efficiencyPercent,
+      effectiveMinutes: row.effectiveMinutes,
+      focusTargetLevel: _focusTargetLevelFromDb(row.focusTargetLevel),
+      startedAt: row.startedAt,
+      endedAt: row.endedAt,
+      isAbandoned: row.isAbandoned,
+      createdAt: row.createdAt,
+      note: row.note,
+    );
+  }
+
+  String _focusTargetLevelToDb(model.FocusTargetLevel level) {
+    return switch (level) {
+      model.FocusTargetLevel.goal => 'goal',
+      model.FocusTargetLevel.milestone => 'milestone',
+      model.FocusTargetLevel.task => 'task',
+    };
+  }
+
+  model.FocusTargetLevel _focusTargetLevelFromDb(String value) {
+    return switch (value) {
+      'goal' => model.FocusTargetLevel.goal,
+      'milestone' => model.FocusTargetLevel.milestone,
+      'task' => model.FocusTargetLevel.task,
+      _ => model.FocusTargetLevel.goal,
+    };
+  }
+}

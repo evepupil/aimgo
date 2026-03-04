@@ -5,6 +5,8 @@
 .pub/
 .pub-cache/
 build/
+/.gradle-local/
+/.tmp/
 
 # Generated localization output
 lib/app/l10n/generated/

@@ -49,7 +49,7 @@ class _GoalSwitcherSheetState extends State<GoalSwitcherSheet> {
               height: 4,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
             const SizedBox(height: 14),
@@ -63,12 +63,12 @@ class _GoalSwitcherSheetState extends State<GoalSwitcherSheet> {
                   final goal = node.goal;
                   final selected = goal.id == widget.selectedGoalId;
                   return InkWell(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     onTap: () => widget.onSelectGoal(goal.id),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color:
                               selected

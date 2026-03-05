@@ -27,98 +27,100 @@ class TaskItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDone = task.isCompleted;
+    final effectiveRatio =
+        task.progressRatio.isNaN
+            ? 0.0
+            : task.progressRatio.clamp(0, 1).toDouble();
 
-    return InkWell(
-      onTap: onTapToggle,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            GestureDetector(
+    final titleStyle = theme.textTheme.bodyMedium?.copyWith(
+      decoration: isDone ? TextDecoration.lineThrough : null,
+      color:
+          isDone
+              ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55)
+              : null,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: GestureDetector(
               onTap: onTapToggle,
-              child: _TaskStatusIcon(task: task),
+              behavior: HitTestBehavior.opaque,
+              child: _TaskStatusIcon(task: task, progressRatio: effectiveRatio),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: HighlightText(
-                text: task.title,
-                query: searchQuery,
-                baseStyle: theme.textTheme.bodyLarge?.copyWith(
-                  decoration: isDone ? TextDecoration.lineThrough : null,
-                  color:
-                      isDone
-                          ? theme.textTheme.bodyLarge?.color?.withValues(
-                            alpha: 0.55,
-                          )
-                          : null,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 100),
-              child: Text(
-                '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
-                style: theme.textTheme.labelSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.right,
-              ),
-            ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'edit') {
-                  onEdit();
-                } else if (value == 'delete') {
-                  onDelete();
-                }
-              },
-              itemBuilder:
-                  (context) => [
-                    PopupMenuItem(value: 'edit', child: Text(editLabel)),
-                    PopupMenuItem(value: 'delete', child: Text(deleteLabel)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(4),
+              onTap: onEdit,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HighlightText(
+                      text: task.title,
+                      query: searchQuery,
+                      baseStyle: titleStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _TaskStatusIcon extends StatelessWidget {
-  const _TaskStatusIcon({required this.task});
+  const _TaskStatusIcon({required this.task, required this.progressRatio});
 
   final TaskModel task;
+  final double progressRatio;
 
   @override
   Widget build(BuildContext context) {
+    const baseBorder = Color(0xFFB0B0B0);
+    const activeColor = Color(0xFF2E7D32);
     if (task.isCompleted) {
-      return const Icon(Icons.check_circle, color: Color(0xFF2E7D32));
+      return const Icon(Icons.check_circle, color: activeColor, size: 22);
     }
-    return SizedBox(
+
+    final borderColor = Color.lerp(baseBorder, activeColor, progressRatio)!;
+    final fillColor = activeColor.withValues(
+      alpha: 0.03 + (0.14 * progressRatio),
+    );
+    final iconColor = activeColor.withValues(
+      alpha: 0.12 + (0.5 * progressRatio),
+    );
+
+    return Container(
       width: 22,
       height: 22,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Icon(Icons.circle_outlined, size: 20),
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              value: task.progressRatio.clamp(0, 1).toDouble(),
-              strokeWidth: 2.2,
-              backgroundColor: Colors.transparent,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF2E7D32),
-              ),
-            ),
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: fillColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: borderColor, width: 1.3),
       ),
+      child: Center(child: Icon(Icons.check, size: 14, color: iconColor)),
     );
   }
 }

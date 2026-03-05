@@ -39,86 +39,114 @@ class MilestoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dividerColor =
+        theme.brightness == Brightness.dark
+            ? Colors.white.withValues(alpha: 0.14)
+            : const Color(0xFFE4E4E4);
     final milestone = milestoneNode.milestone;
     final tasks = milestoneNode.tasks;
     final completedCount = tasks.where((task) => task.isCompleted).length;
+    final progressPercent = (milestone.progressRatio * 100).toStringAsFixed(0);
+    final timeProgressText =
+        '${formatMinutes(milestone.effectiveMinutes)} / ${formatMinutes(milestone.estimateMinutes)}';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: dividerColor, width: 1)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: onToggleExpanded,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: HighlightText(
-                      text: milestone.title,
-                      query: searchQuery,
-                      baseStyle: Theme.of(context).textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(4),
+                    onTap: onEditMilestone,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: HighlightText(
+                        text: milestone.title,
+                        query: searchQuery,
+                        baseStyle: theme.textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text('$completedCount/${tasks.length}'),
-                  IconButton(
-                    onPressed: onToggleExpanded,
-                    icon: Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(4),
+                  onTap: onToggleExpanded,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$completedCount/${tasks.length}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          expanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'add_task':
-                          onAddTask();
-                          break;
-                        case 'edit':
-                          onEditMilestone();
-                          break;
-                        case 'delete':
-                          onDeleteMilestone();
-                          break;
-                      }
-                    },
-                    itemBuilder:
-                        (context) => [
-                          PopupMenuItem(
-                            value: 'add_task',
-                            child: Text(addTaskLabel),
-                          ),
-                          PopupMenuItem(value: 'edit', child: Text(editLabel)),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(deleteLabel),
-                          ),
-                        ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
-            TimeProgressBar(progressRatio: milestone.progressRatio),
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '${formatMinutes(milestone.effectiveMinutes)} / ${formatMinutes(milestone.estimateMinutes)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+            Row(
+              children: [
+                Text(
+                  '$progressPercent%',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TimeProgressBar(
+                    progressRatio: milestone.progressRatio,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 118),
+                  child: Text(
+                    timeProgressText,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
             ),
             AnimatedCrossFade(
               firstChild: const SizedBox.shrink(),
               secondChild: Column(
                 children: [
-                  const SizedBox(height: 8),
-                  const Divider(height: 1),
+                  const SizedBox(height: 4),
+                  Divider(height: 1, color: dividerColor),
                   for (var index = 0; index < tasks.length; index++) ...[
                     TaskItemTile(
                       task: tasks[index],
@@ -134,7 +162,8 @@ class MilestoneCard extends StatelessWidget {
                       onEdit: () => onEditTask(tasks[index].id),
                       onDelete: () => onDeleteTask(tasks[index].id),
                     ),
-                    if (index != tasks.length - 1) const Divider(height: 1),
+                    if (index != tasks.length - 1)
+                      Divider(height: 1, color: dividerColor),
                   ],
                 ],
               ),

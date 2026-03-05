@@ -18,13 +18,13 @@ class TimeProgressBar extends StatelessWidget {
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
         final normalWidth = maxWidth * normalPart;
-        final overflowWidth = maxWidth * overflowPart.clamp(0, 0.35);
-        final borderRadius = BorderRadius.circular(8);
+        final overflowWidth = maxWidth * overflowPart.clamp(0, 0.5);
+        final borderRadius = BorderRadius.circular(2);
 
         return ClipRRect(
           borderRadius: borderRadius,
           child: Container(
-            height: 8,
+            height: 6,
             color: theme.colorScheme.surfaceContainerHighest.withValues(
               alpha: 0.6,
             ),

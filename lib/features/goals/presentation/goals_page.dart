@@ -26,7 +26,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isCompactHeader = MediaQuery.sizeOf(context).width < 390;
     final asyncState = ref.watch(goalsPageControllerProvider);
     final controller = ref.read(goalsPageControllerProvider.notifier);
     final data = asyncState.valueOrNull;
@@ -34,8 +33,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     if (asyncState.isLoading && data == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
-    final selectedGoal = data?.selectedGoalTree?.goal;
 
     return Scaffold(
       appBar:
@@ -68,31 +65,18 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                 ],
               )
               : AppBar(
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.goalsMyGoalsTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed:
-                          data == null ? null : () => _openGoalSwitcher(data),
-                      icon: const Icon(Icons.swap_vert),
-                      label: Text(
-                        isCompactHeader
-                            ? l10n.goalsSwitchTooltip
-                            : (selectedGoal?.title ?? l10n.goalsSwitchTooltip),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                title: Text(
+                  data?.selectedGoalTree?.goal.title ?? l10n.goalsMyGoalsTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 actions: [
+                  IconButton(
+                    onPressed:
+                        data == null ? null : () => _openGoalSwitcher(data),
+                    icon: const Icon(Icons.swap_vert),
+                    tooltip: l10n.goalsSwitchTooltip,
+                  ),
                   IconButton(
                     onPressed: () {
                       setState(() {
@@ -171,7 +155,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     return RefreshIndicator(
       onRefresh: controller.refresh,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 84),
+        padding: const EdgeInsets.fromLTRB(0, 6, 0, 84),
         itemCount: milestones.length,
         itemBuilder: (context, index) {
           final node = milestones[index];

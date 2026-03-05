@@ -26,27 +26,30 @@ class SettingsPage extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 10),
-          SegmentedButton<AppLocalePreference>(
-            segments: [
-              ButtonSegment(
-                value: AppLocalePreference.system,
-                label: Text(l10n.langSystem),
-              ),
-              ButtonSegment(
-                value: AppLocalePreference.zh,
-                label: Text(l10n.langZh),
-              ),
-              ButtonSegment(
-                value: AppLocalePreference.en,
-                label: Text(l10n.langEn),
-              ),
-            ],
-            selected: {localePreference},
-            onSelectionChanged: (selection) {
-              ref
-                  .read(localeControllerProvider.notifier)
-                  .setPreference(selection.first);
-            },
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<AppLocalePreference>(
+              segments: [
+                ButtonSegment(
+                  value: AppLocalePreference.system,
+                  label: Text(l10n.langSystem),
+                ),
+                ButtonSegment(
+                  value: AppLocalePreference.zh,
+                  label: Text(l10n.langZh),
+                ),
+                ButtonSegment(
+                  value: AppLocalePreference.en,
+                  label: Text(l10n.langEn),
+                ),
+              ],
+              selected: {localePreference},
+              onSelectionChanged: (selection) {
+                ref
+                    .read(localeControllerProvider.notifier)
+                    .setPreference(selection.first);
+              },
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -54,27 +57,30 @@ class SettingsPage extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 10),
-          SegmentedButton<AppThemePreference>(
-            segments: [
-              ButtonSegment(
-                value: AppThemePreference.system,
-                label: Text(l10n.themeSystem),
-              ),
-              ButtonSegment(
-                value: AppThemePreference.light,
-                label: Text(l10n.themeLight),
-              ),
-              ButtonSegment(
-                value: AppThemePreference.dark,
-                label: Text(l10n.themeDark),
-              ),
-            ],
-            selected: {themePreference},
-            onSelectionChanged: (selection) {
-              ref
-                  .read(themeModeControllerProvider.notifier)
-                  .setPreference(selection.first);
-            },
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<AppThemePreference>(
+              segments: [
+                ButtonSegment(
+                  value: AppThemePreference.system,
+                  label: Text(l10n.themeSystem),
+                ),
+                ButtonSegment(
+                  value: AppThemePreference.light,
+                  label: Text(l10n.themeLight),
+                ),
+                ButtonSegment(
+                  value: AppThemePreference.dark,
+                  label: Text(l10n.themeDark),
+                ),
+              ],
+              selected: {themePreference},
+              onSelectionChanged: (selection) {
+                ref
+                    .read(themeModeControllerProvider.notifier)
+                    .setPreference(selection.first);
+              },
+            ),
           ),
           const SizedBox(height: 20),
           Text(

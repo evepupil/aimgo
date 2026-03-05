@@ -26,6 +26,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isCompactHeader = MediaQuery.sizeOf(context).width < 390;
     final asyncState = ref.watch(goalsPageControllerProvider);
     final controller = ref.read(goalsPageControllerProvider.notifier);
     final data = asyncState.valueOrNull;
@@ -82,7 +83,9 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                           data == null ? null : () => _openGoalSwitcher(data),
                       icon: const Icon(Icons.swap_vert),
                       label: Text(
-                        selectedGoal?.title ?? l10n.goalsSwitchTooltip,
+                        isCompactHeader
+                            ? l10n.goalsSwitchTooltip
+                            : (selectedGoal?.title ?? l10n.goalsSwitchTooltip),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

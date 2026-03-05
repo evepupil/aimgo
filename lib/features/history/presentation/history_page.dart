@@ -101,23 +101,26 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(12),
-                    child: SegmentedButton<HistoryViewMode>(
-                      selected: {data.viewMode},
-                      segments: [
-                        ButtonSegment(
-                          value: HistoryViewMode.timeline,
-                          icon: const Icon(Icons.timeline),
-                          label: Text(l10n.historyTimelineTab),
-                        ),
-                        ButtonSegment(
-                          value: HistoryViewMode.calendar,
-                          icon: const Icon(Icons.calendar_month_outlined),
-                          label: Text(l10n.historyCalendarTab),
-                        ),
-                      ],
-                      onSelectionChanged: (selection) {
-                        controller.setViewMode(selection.first);
-                      },
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<HistoryViewMode>(
+                        selected: {data.viewMode},
+                        segments: [
+                          ButtonSegment(
+                            value: HistoryViewMode.timeline,
+                            icon: const Icon(Icons.timeline),
+                            label: Text(l10n.historyTimelineTab),
+                          ),
+                          ButtonSegment(
+                            value: HistoryViewMode.calendar,
+                            icon: const Icon(Icons.calendar_month_outlined),
+                            label: Text(l10n.historyCalendarTab),
+                          ),
+                        ],
+                        onSelectionChanged: (selection) {
+                          controller.setViewMode(selection.first);
+                        },
+                      ),
                     ),
                   ),
                   Expanded(

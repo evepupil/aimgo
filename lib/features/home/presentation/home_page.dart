@@ -14,6 +14,7 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final asyncState = ref.watch(homeDashboardControllerProvider);
     final controller = ref.read(homeDashboardControllerProvider.notifier);
     final state = asyncState.valueOrNull;
@@ -84,7 +85,7 @@ class HomePage extends ConsumerWidget {
                               DateFormat(
                                 'E',
                               ).format(state.weekTrend[index].date),
-                              style: const TextStyle(fontSize: 10),
+                              style: theme.textTheme.labelSmall,
                             );
                           },
                         ),
@@ -109,8 +110,12 @@ class HomePage extends ConsumerWidget {
                               (_, __) => const SizedBox(width: 10),
                           itemBuilder: (context, index) {
                             final goal = state.activeGoals[index];
+                            final goalCardWidth =
+                                ((MediaQuery.sizeOf(context).width - 32) * 0.62)
+                                    .clamp(180.0, 240.0)
+                                    .toDouble();
                             return Container(
-                              width: 220,
+                              width: goalCardWidth,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 border: Border.all(
@@ -119,14 +124,14 @@ class HomePage extends ConsumerWidget {
                                         context,
                                       ).colorScheme.outlineVariant,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     goal.title,
-                                    maxLines: 2,
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 10),
@@ -153,24 +158,44 @@ class HomePage extends ConsumerWidget {
             const SizedBox(height: 12),
             _SectionCard(
               title: l10n.homeQuickActions,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => context.go(RoutePaths.focus),
-                      icon: const Icon(Icons.play_arrow),
-                      label: Text(l10n.homeContinueFocus),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final stackVertical = constraints.maxWidth < 380;
+                  final continueButton = FilledButton.icon(
+                    onPressed: () => context.go(RoutePaths.focus),
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(
+                      l10n.homeContinueFocus,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.go(RoutePaths.goals),
-                      icon: const Icon(Icons.flag_outlined),
-                      label: Text(l10n.homeOpenGoals),
+                  );
+                  final goalsButton = OutlinedButton.icon(
+                    onPressed: () => context.go(RoutePaths.goals),
+                    icon: const Icon(Icons.flag_outlined),
+                    label: Text(
+                      l10n.homeOpenGoals,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  );
+                  if (stackVertical) {
+                    return Column(
+                      children: [
+                        SizedBox(width: double.infinity, child: continueButton),
+                        const SizedBox(height: 8),
+                        SizedBox(width: double.infinity, child: goalsButton),
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: continueButton),
+                      const SizedBox(width: 10),
+                      Expanded(child: goalsButton),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 12),

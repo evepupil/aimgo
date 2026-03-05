@@ -38,7 +38,7 @@ class TaskItemTile extends StatelessWidget {
               onTap: onTapToggle,
               child: _TaskStatusIcon(task: task),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: HighlightText(
                 text: task.title,
@@ -52,14 +52,20 @@ class TaskItemTile extends StatelessWidget {
                           )
                           : null,
                 ),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
-              style: theme.textTheme.bodySmall,
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 100),
+              child: Text(
+                '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
+                style: theme.textTheme.labelSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+              ),
             ),
             PopupMenuButton<String>(
               onSelected: (value) {

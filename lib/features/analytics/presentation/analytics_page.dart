@@ -12,6 +12,7 @@ class AnalyticsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final asyncState = ref.watch(analyticsPageControllerProvider);
     final controller = ref.read(analyticsPageControllerProvider.notifier);
     final state = asyncState.valueOrNull;
@@ -41,29 +42,32 @@ class AnalyticsPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            SegmentedButton<AnalyticsRange>(
-              selected: {state.range},
-              segments: [
-                ButtonSegment(
-                  value: AnalyticsRange.day,
-                  label: Text(l10n.analyticsRangeDay),
-                ),
-                ButtonSegment(
-                  value: AnalyticsRange.week,
-                  label: Text(l10n.analyticsRangeWeek),
-                ),
-                ButtonSegment(
-                  value: AnalyticsRange.month,
-                  label: Text(l10n.analyticsRangeMonth),
-                ),
-                ButtonSegment(
-                  value: AnalyticsRange.year,
-                  label: Text(l10n.analyticsRangeYear),
-                ),
-              ],
-              onSelectionChanged: (selection) {
-                controller.setRange(selection.first);
-              },
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SegmentedButton<AnalyticsRange>(
+                selected: {state.range},
+                segments: [
+                  ButtonSegment(
+                    value: AnalyticsRange.day,
+                    label: Text(l10n.analyticsRangeDay),
+                  ),
+                  ButtonSegment(
+                    value: AnalyticsRange.week,
+                    label: Text(l10n.analyticsRangeWeek),
+                  ),
+                  ButtonSegment(
+                    value: AnalyticsRange.month,
+                    label: Text(l10n.analyticsRangeMonth),
+                  ),
+                  ButtonSegment(
+                    value: AnalyticsRange.year,
+                    label: Text(l10n.analyticsRangeYear),
+                  ),
+                ],
+                onSelectionChanged: (selection) {
+                  controller.setRange(selection.first);
+                },
+              ),
             ),
             const SizedBox(height: 14),
             Card(
@@ -115,7 +119,7 @@ class AnalyticsPage extends ConsumerWidget {
                                       DateFormat(
                                         'MM/dd',
                                       ).format(dailyEntries[index].key),
-                                      style: const TextStyle(fontSize: 10),
+                                      style: theme.textTheme.labelSmall,
                                     );
                                   },
                                 ),
@@ -187,6 +191,10 @@ class AnalyticsPage extends ConsumerWidget {
                             centerSpaceRadius: 30,
                             sections: _buildGoalSections(
                               context,
+                              labelStyle: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                               state: state,
                               contribution: goalContribution,
                             ),
@@ -202,6 +210,7 @@ class AnalyticsPage extends ConsumerWidget {
 
   List<PieChartSectionData> _buildGoalSections(
     BuildContext context, {
+    required TextStyle? labelStyle,
     required AnalyticsPageState state,
     required Map<int, double> contribution,
   }) {
@@ -223,7 +232,7 @@ class AnalyticsPage extends ConsumerWidget {
           title: state.labelForGoal(entries[i].key),
           color: colors[i % colors.length],
           radius: 68,
-          titleStyle: const TextStyle(fontSize: 10, color: Colors.white),
+          titleStyle: labelStyle,
         ),
     ];
   }
@@ -273,7 +282,7 @@ class _HeatCell extends StatelessWidget {
       ),
       child: Text(
         hour.toString().padLeft(2, '0'),
-        style: const TextStyle(fontSize: 10),
+        style: Theme.of(context).textTheme.labelSmall,
       ),
     );
   }
@@ -287,11 +296,20 @@ class _EfficiencyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          SizedBox(width: 72, child: Text(label)),
+          SizedBox(
+            width: 86,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
           Expanded(
             child: LinearProgressIndicator(
               value: (value / 100).clamp(0, 1).toDouble(),

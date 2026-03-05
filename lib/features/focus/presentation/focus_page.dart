@@ -75,23 +75,26 @@ class _FocusPageState extends ConsumerState<FocusPage>
           ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             children: [
-              SegmentedButton<FocusMode>(
-                segments: [
-                  ButtonSegment(
-                    value: FocusMode.pomodoro,
-                    icon: const Icon(Icons.timer_outlined),
-                    label: Text(l10n.focusModePomodoro),
-                  ),
-                  ButtonSegment(
-                    value: FocusMode.free,
-                    icon: const Icon(Icons.timelapse_outlined),
-                    label: Text(l10n.focusModeFree),
-                  ),
-                ],
-                selected: {focusState.mode},
-                onSelectionChanged: (selection) {
-                  focusController.setMode(selection.first);
-                },
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<FocusMode>(
+                  segments: [
+                    ButtonSegment(
+                      value: FocusMode.pomodoro,
+                      icon: const Icon(Icons.timer_outlined),
+                      label: Text(l10n.focusModePomodoro),
+                    ),
+                    ButtonSegment(
+                      value: FocusMode.free,
+                      icon: const Icon(Icons.timelapse_outlined),
+                      label: Text(l10n.focusModeFree),
+                    ),
+                  ],
+                  selected: {focusState.mode},
+                  onSelectionChanged: (selection) {
+                    focusController.setMode(selection.first);
+                  },
+                ),
               ),
               const SizedBox(height: 12),
               _FocusContextSection(

@@ -57,142 +57,149 @@ class _FocusPageState extends ConsumerState<FocusPage>
         hierarchyAsync.valueOrNull ?? const <FocusHierarchyItem>[];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.focusTitle),
-        actions: [
-          IconButton(
-            onPressed: () {
-              final goalId = focusState.selectedGoalId;
-              if (goalId == null) {
-                context.push(RoutePaths.history);
-                return;
-              }
-              context.push('${RoutePaths.history}?goalId=$goalId');
-            },
-            icon: const Icon(Icons.history),
-            tooltip: l10n.focusHistory,
-          ),
-          IconButton(
-            onPressed: () => context.push(RoutePaths.settings),
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.settingsTitle,
-          ),
-        ],
-      ),
       body: Stack(
         children: [
-          ListView(
-            padding: EdgeInsets.fromLTRB(
-              layoutMetrics.horizontalPadding,
-              layoutMetrics.topPadding,
-              layoutMetrics.horizontalPadding,
-              layoutMetrics.bottomPadding,
-            ),
-            children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SegmentedButton<FocusMode>(
-                  segments: [
-                    ButtonSegment(
-                      value: FocusMode.pomodoro,
-                      icon: const Icon(Icons.timer_outlined),
-                      label: Text(l10n.focusModePomodoro),
-                    ),
-                    ButtonSegment(
-                      value: FocusMode.free,
-                      icon: const Icon(Icons.timelapse_outlined),
-                      label: Text(l10n.focusModeFree),
-                    ),
-                  ],
-                  selected: {focusState.mode},
-                  onSelectionChanged: (selection) {
-                    focusController.setMode(selection.first);
-                  },
+          NestedScrollView(
+            headerSliverBuilder:
+                (context, innerBoxIsScrolled) => [
+                  SliverAppBar(
+                    floating: true,
+                    snap: true,
+                    title: Text(l10n.focusTitle),
+                    actions: [
+                      IconButton(
+                        onPressed: () {
+                          final goalId = focusState.selectedGoalId;
+                          if (goalId == null) {
+                            context.push(RoutePaths.history);
+                            return;
+                          }
+                          context.push('${RoutePaths.history}?goalId=$goalId');
+                        },
+                        icon: const Icon(Icons.history),
+                        tooltip: l10n.focusHistory,
+                      ),
+                      IconButton(
+                        onPressed: () => context.push(RoutePaths.settings),
+                        icon: const Icon(Icons.settings_outlined),
+                        tooltip: l10n.settingsTitle,
+                      ),
+                    ],
+                  ),
+                ],
+            body: ListView(
+              padding: EdgeInsets.fromLTRB(
+                layoutMetrics.horizontalPadding,
+                layoutMetrics.topPadding,
+                layoutMetrics.horizontalPadding,
+                layoutMetrics.bottomPadding,
+              ),
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<FocusMode>(
+                    segments: [
+                      ButtonSegment(
+                        value: FocusMode.pomodoro,
+                        icon: const Icon(Icons.timer_outlined),
+                        label: Text(l10n.focusModePomodoro),
+                      ),
+                      ButtonSegment(
+                        value: FocusMode.free,
+                        icon: const Icon(Icons.timelapse_outlined),
+                        label: Text(l10n.focusModeFree),
+                      ),
+                    ],
+                    selected: {focusState.mode},
+                    onSelectionChanged: (selection) {
+                      focusController.setMode(selection.first);
+                    },
+                  ),
                 ),
-              ),
-              SizedBox(height: layoutMetrics.sectionSpacing),
-              _FocusContextSection(
-                hierarchy: hierarchy,
-                state: focusState,
-                onGoalChanged: focusController.selectGoal,
-                onMilestoneChanged: focusController.selectMilestone,
-                onTaskChanged: focusController.selectTask,
-                contentPadding: layoutMetrics.contextPadding,
-                fieldSpacing: layoutMetrics.fieldSpacing,
-              ),
-              SizedBox(height: layoutMetrics.sectionSpacing),
-              Center(
-                child: GestureDetector(
-                  onTap:
-                      focusState.mode == FocusMode.pomodoro
-                          ? _openPomodoroDurationPicker
-                          : null,
-                  child: SizedBox(
-                    width: layoutMetrics.timerSize,
-                    height: layoutMetrics.timerSize,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value:
-                              focusState.mode == FocusMode.pomodoro
-                                  ? focusState.progressRatio
-                                  : null,
-                          strokeWidth: layoutMetrics.timerStrokeWidth,
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              focusState.mode == FocusMode.pomodoro
-                                  ? formatClockFromSeconds(
-                                    focusState.remainingSeconds,
-                                  )
-                                  : formatClockFromSeconds(
-                                    focusState.displayElapsedSeconds,
-                                  ),
-                              style: timerTextStyle,
-                            ),
-                            SizedBox(height: layoutMetrics.timerLabelSpacing),
-                            Text(
-                              focusState.mode == FocusMode.pomodoro
-                                  ? l10n.focusRemaining
-                                  : l10n.focusElapsed,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            if (focusState.mode == FocusMode.pomodoro) ...[
-                              SizedBox(
-                                height: layoutMetrics.timerPresetTopSpacing,
-                              ),
+                SizedBox(height: layoutMetrics.sectionSpacing),
+                _FocusContextSection(
+                  hierarchy: hierarchy,
+                  state: focusState,
+                  onGoalChanged: focusController.selectGoal,
+                  onMilestoneChanged: focusController.selectMilestone,
+                  onTaskChanged: focusController.selectTask,
+                  contentPadding: layoutMetrics.contextPadding,
+                  fieldSpacing: layoutMetrics.fieldSpacing,
+                ),
+                SizedBox(height: layoutMetrics.sectionSpacing),
+                Center(
+                  child: GestureDetector(
+                    onTap:
+                        focusState.mode == FocusMode.pomodoro
+                            ? _openPomodoroDurationPicker
+                            : null,
+                    child: SizedBox(
+                      width: layoutMetrics.timerSize,
+                      height: layoutMetrics.timerSize,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value:
+                                focusState.mode == FocusMode.pomodoro
+                                    ? focusState.progressRatio
+                                    : null,
+                            strokeWidth: layoutMetrics.timerStrokeWidth,
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                               Text(
-                                l10n.focusPomodoroPreset(
-                                  focusState.pomodoroMinutes.toString(),
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall,
+                                focusState.mode == FocusMode.pomodoro
+                                    ? formatClockFromSeconds(
+                                      focusState.remainingSeconds,
+                                    )
+                                    : formatClockFromSeconds(
+                                      focusState.displayElapsedSeconds,
+                                    ),
+                                style: timerTextStyle,
                               ),
+                              SizedBox(height: layoutMetrics.timerLabelSpacing),
+                              Text(
+                                focusState.mode == FocusMode.pomodoro
+                                    ? l10n.focusRemaining
+                                    : l10n.focusElapsed,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              if (focusState.mode == FocusMode.pomodoro) ...[
+                                SizedBox(
+                                  height: layoutMetrics.timerPresetTopSpacing,
+                                ),
+                                Text(
+                                  l10n.focusPomodoroPreset(
+                                    focusState.pomodoroMinutes.toString(),
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: layoutMetrics.controlTopSpacing),
-              _FocusControlSection(
-                state: focusState,
-                canStart: focusState.hasSelection,
-                onStart: focusController.startOrResume,
-                onPause: focusController.pause,
-                onTerminate: () async {
-                  final confirm = await _confirmTerminate();
-                  if (confirm) {
-                    focusController.terminate(isAbandoned: false);
-                  }
-                },
-                l10n: l10n,
-              ),
-            ],
+                SizedBox(height: layoutMetrics.controlTopSpacing),
+                _FocusControlSection(
+                  state: focusState,
+                  canStart: focusState.hasSelection,
+                  onStart: focusController.startOrResume,
+                  onPause: focusController.pause,
+                  onTerminate: () async {
+                    final confirm = await _confirmTerminate();
+                    if (confirm) {
+                      focusController.terminate(isAbandoned: false);
+                    }
+                  },
+                  l10n: l10n,
+                ),
+              ],
+            ),
           ),
           if (hierarchyAsync.isLoading)
             const Positioned(

@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
 import 'package:aimgo/features/goals/presentation/widgets/milestone_card.dart';
@@ -64,45 +65,55 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   ),
                 ],
               )
-              : AppBar(
-                title: Text(
-                  data?.selectedGoalTree?.goal.title ?? l10n.goalsMyGoalsTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                actions: [
-                  IconButton(
-                    onPressed:
-                        data == null ? null : () => _openGoalSwitcher(data),
-                    icon: const Icon(Icons.swap_vert),
-                    tooltip: l10n.goalsSwitchTooltip,
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _isSearching = true;
-                        _searchController.text = data?.searchQuery ?? '';
-                      });
-                    },
-                    icon: const Icon(Icons.search),
-                    tooltip: l10n.goalsSearchHint,
-                  ),
-                  IconButton(
-                    onPressed:
-                        data == null ? null : () => _openFilterSheet(data),
-                    icon: const Icon(Icons.filter_list),
-                    tooltip: l10n.goalsFilterTooltip,
-                  ),
-                  IconButton(
-                    onPressed: data == null ? null : () => _openMenuSheet(data),
-                    icon: const Icon(Icons.more_vert),
-                    tooltip: l10n.goalsMenuTooltip,
-                  ),
-                ],
-              ),
+              : null,
       body: Stack(
         children: [
-          if (data != null) _buildBody(data),
+          if (data != null)
+            _isSearching
+                ? _buildBody(data)
+                : NestedScrollView(
+                  headerSliverBuilder:
+                      (context, innerBoxIsScrolled) => [
+                        SliverAppBar(
+                          floating: true,
+                          snap: true,
+                          title: Text(
+                            data.selectedGoalTree?.goal.title ??
+                                l10n.goalsMyGoalsTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          actions: [
+                            IconButton(
+                              onPressed: () => _openGoalSwitcher(data),
+                              icon: const Icon(Icons.swap_vert),
+                              tooltip: l10n.goalsSwitchTooltip,
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isSearching = true;
+                                  _searchController.text = data.searchQuery;
+                                });
+                              },
+                              icon: const Icon(Icons.search),
+                              tooltip: l10n.goalsSearchHint,
+                            ),
+                            IconButton(
+                              onPressed: () => _openFilterSheet(data),
+                              icon: const Icon(Icons.filter_list),
+                              tooltip: l10n.goalsFilterTooltip,
+                            ),
+                            IconButton(
+                              onPressed: () => _openMenuSheet(data),
+                              icon: const Icon(Icons.more_vert),
+                              tooltip: l10n.goalsMenuTooltip,
+                            ),
+                          ],
+                        ),
+                      ],
+                  body: _buildBody(data),
+                ),
           if (asyncState.isLoading)
             const Positioned(
               left: 0,
@@ -126,7 +137,9 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     if (state.goalTree.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: LayoutTokens.pageHorizontal * 2,
+          ),
           child: Text(l10n.goalsNoGoal, textAlign: TextAlign.center),
         ),
       );
@@ -141,7 +154,9 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     if (milestones.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: LayoutTokens.pageHorizontal * 2,
+          ),
           child: Text(
             hasSearchQuery ? l10n.goalsNoSearchResult : l10n.goalsNoMilestone,
             textAlign: TextAlign.center,
@@ -155,7 +170,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     return RefreshIndicator(
       onRefresh: controller.refresh,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(0, 6, 0, 84),
+        padding: const EdgeInsets.fromLTRB(0, LayoutTokens.pageTop, 0, 84),
         itemCount: milestones.length,
         itemBuilder: (context, index) {
           final node = milestones[index];

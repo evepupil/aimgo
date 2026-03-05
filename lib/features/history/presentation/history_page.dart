@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/history/application/history_page_controller.dart';
 import 'package:flutter/material.dart';
@@ -74,33 +75,20 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                   ),
                 ],
               )
-              : AppBar(
-                title: Text(l10n.historyTitle),
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _searchMode = true;
-                        _searchController.text = data?.searchQuery ?? '';
-                      });
-                    },
-                    icon: const Icon(Icons.search),
-                    tooltip: l10n.goalsSearchHint,
-                  ),
-                  IconButton(
-                    onPressed: () => _openFilterSheet(data),
-                    icon: const Icon(Icons.filter_list),
-                    tooltip: l10n.goalsFilterTooltip,
-                  ),
-                ],
-              ),
+              : null,
       body:
           data == null
               ? const SizedBox.shrink()
-              : Column(
+              : _searchMode
+              ? Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.fromLTRB(
+                      LayoutTokens.pageHorizontal,
+                      LayoutTokens.pageTop,
+                      LayoutTokens.pageHorizontal,
+                      LayoutTokens.compactGap,
+                    ),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: SegmentedButton<HistoryViewMode>(
@@ -137,6 +125,79 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     ),
                   ),
                 ],
+              )
+              : NestedScrollView(
+                headerSliverBuilder:
+                    (context, innerBoxIsScrolled) => [
+                      SliverAppBar(
+                        floating: true,
+                        snap: true,
+                        title: Text(l10n.historyTitle),
+                        actions: [
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _searchMode = true;
+                                _searchController.text = data.searchQuery;
+                              });
+                            },
+                            icon: const Icon(Icons.search),
+                            tooltip: l10n.goalsSearchHint,
+                          ),
+                          IconButton(
+                            onPressed: () => _openFilterSheet(data),
+                            icon: const Icon(Icons.filter_list),
+                            tooltip: l10n.goalsFilterTooltip,
+                          ),
+                        ],
+                      ),
+                    ],
+                body: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        LayoutTokens.pageHorizontal,
+                        LayoutTokens.pageTop,
+                        LayoutTokens.pageHorizontal,
+                        LayoutTokens.compactGap,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SegmentedButton<HistoryViewMode>(
+                          selected: {data.viewMode},
+                          segments: [
+                            ButtonSegment(
+                              value: HistoryViewMode.timeline,
+                              icon: const Icon(Icons.timeline),
+                              label: Text(l10n.historyTimelineTab),
+                            ),
+                            ButtonSegment(
+                              value: HistoryViewMode.calendar,
+                              icon: const Icon(Icons.calendar_month_outlined),
+                              label: Text(l10n.historyCalendarTab),
+                            ),
+                          ],
+                          onSelectionChanged: (selection) {
+                            controller.setViewMode(selection.first);
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: controller.refresh,
+                        child:
+                            data.viewMode == HistoryViewMode.timeline
+                                ? _TimelineView(state: data)
+                                : _CalendarView(
+                                  state: data,
+                                  onDateSelected:
+                                      controller.setSelectedCalendarDate,
+                                ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
     );
   }
@@ -154,14 +215,14 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(LayoutTokens.cardPadding),
             child: Wrap(
               children: [
                 Text(
                   l10n.historyGoalFilter,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: LayoutTokens.compactGap),
                 DropdownButtonFormField<int?>(
                   value: data.goalFilterId,
                   items: [
@@ -174,12 +235,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                   ],
                   onChanged: controller.setGoalFilter,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: LayoutTokens.sectionGap),
                 Text(
                   l10n.historyRangeFilter,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: LayoutTokens.compactGap),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -293,7 +354,7 @@ class _TimelineView extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+      padding: LayoutTokens.listPagePadding,
       itemCount: sections.length,
       itemBuilder: (context, index) {
         final section = sections[index];
@@ -301,7 +362,9 @@ class _TimelineView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                vertical: LayoutTokens.compactGap,
+              ),
               child: Text(
                 _timelineSectionTitle(context, section.groupKey),
                 style: Theme.of(context).textTheme.titleSmall,
@@ -358,7 +421,7 @@ class _TimelineSessionItem extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: LayoutTokens.compactGap),
           Expanded(child: _HistorySessionCard(entry: entry)),
         ],
       ),
@@ -422,7 +485,7 @@ class _CalendarViewState extends State<_CalendarView> {
             .toSet();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: LayoutTokens.listPagePadding,
       children: [
         _MonthCalendar(
           visibleMonth: _visibleMonth,
@@ -432,15 +495,17 @@ class _CalendarViewState extends State<_CalendarView> {
           onNextMonth: () => _changeMonth(1),
           onDateSelected: widget.onDateSelected,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: LayoutTokens.sectionGap),
         Text(
           DateFormat('yyyy-MM-dd').format(widget.state.selectedCalendarDate),
           style: Theme.of(context).textTheme.titleSmall,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: LayoutTokens.compactGap),
         if (sessions.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+            padding: const EdgeInsets.symmetric(
+              vertical: LayoutTokens.pageBottom,
+            ),
             child: Text(AppLocalizations.of(context)!.goalsNoSearchResult),
           ),
         for (final session in sessions) _HistorySessionCard(entry: session),
@@ -508,7 +573,7 @@ class _MonthCalendar extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
           children: [
             Row(
@@ -530,7 +595,7 @@ class _MonthCalendar extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: LayoutTokens.compactGap),
             Row(
               children: [
                 for (final label in weekDayLabels)
@@ -544,7 +609,7 @@ class _MonthCalendar extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: LayoutTokens.compactGap),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -645,9 +710,9 @@ class _HistorySessionCard extends StatelessWidget {
     final session = entry.session;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -658,13 +723,13 @@ class _HistorySessionCard extends StatelessWidget {
                   l10n.focusContextEmpty,
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: LayoutTokens.compactGap),
             if (entry.pathLabel.isNotEmpty)
               Text(
                 entry.pathLabel,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-            const SizedBox(height: 6),
+            const SizedBox(height: LayoutTokens.compactGap),
             Text(
               '${DateFormat('HH:mm').format(session.startedAt)} - ${DateFormat('HH:mm').format(session.endedAt)}',
             ),

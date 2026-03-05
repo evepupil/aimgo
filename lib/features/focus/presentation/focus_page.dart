@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
+import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/focus/application/focus_timer_controller.dart';
@@ -20,6 +21,8 @@ class FocusPage extends ConsumerStatefulWidget {
 
 class _FocusPageState extends ConsumerState<FocusPage>
     with WidgetsBindingObserver {
+  final List<int> _pomodoroOptions = <int>[15, 25, 40, 60];
+
   @override
   void initState() {
     super.initState();
@@ -52,9 +55,12 @@ class _FocusPageState extends ConsumerState<FocusPage>
       fontSize: layoutMetrics.timerTextSize,
       height: 1.05,
     );
-
     final hierarchy =
         hierarchyAsync.valueOrNull ?? const <FocusHierarchyItem>[];
+    final selectedTarget = _resolveSelectedTarget(
+      hierarchy: hierarchy,
+      state: focusState,
+    );
 
     return Scaffold(
       body: Stack(
@@ -80,9 +86,30 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         tooltip: l10n.focusHistory,
                       ),
                       IconButton(
-                        onPressed: () => context.push(RoutePaths.settings),
-                        icon: const Icon(Icons.settings_outlined),
-                        tooltip: l10n.settingsTitle,
+                        onPressed:
+                            focusState.status == FocusTimerStatus.running
+                                ? null
+                                : () => _openFocusTargetPicker(
+                                  hierarchy: hierarchy,
+                                  state: focusState,
+                                ),
+                        icon: const Icon(Icons.add),
+                        tooltip: l10n.focusContextTitle,
+                      ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) {
+                          if (value == 'settings') {
+                            context.push(RoutePaths.settings);
+                          }
+                        },
+                        itemBuilder:
+                            (context) => [
+                              PopupMenuItem<String>(
+                                value: 'settings',
+                                child: Text(l10n.settingsTitle),
+                              ),
+                            ],
                       ),
                     ],
                   ),
@@ -95,38 +122,26 @@ class _FocusPageState extends ConsumerState<FocusPage>
                 layoutMetrics.bottomPadding,
               ),
               children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SegmentedButton<FocusMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: FocusMode.pomodoro,
-                        icon: const Icon(Icons.timer_outlined),
-                        label: Text(l10n.focusModePomodoro),
-                      ),
-                      ButtonSegment(
-                        value: FocusMode.free,
-                        icon: const Icon(Icons.timelapse_outlined),
-                        label: Text(l10n.focusModeFree),
-                      ),
-                    ],
-                    selected: {focusState.mode},
-                    onSelectionChanged: (selection) {
-                      focusController.setMode(selection.first);
-                    },
-                  ),
+                _FocusModeTabSwitch(
+                  mode: focusState.mode,
+                  onChange: focusController.setMode,
+                  pomodoroLabel: l10n.focusModePomodoro,
+                  freeLabel: l10n.focusModeFree,
                 ),
-                SizedBox(height: layoutMetrics.sectionSpacing),
-                _FocusContextSection(
-                  hierarchy: hierarchy,
-                  state: focusState,
-                  onGoalChanged: focusController.selectGoal,
-                  onMilestoneChanged: focusController.selectMilestone,
-                  onTaskChanged: focusController.selectTask,
-                  contentPadding: layoutMetrics.contextPadding,
-                  fieldSpacing: layoutMetrics.fieldSpacing,
+                SizedBox(height: layoutMetrics.modeToTargetSpacing),
+                _FocusTargetEntry(
+                  enabled: focusState.status != FocusTimerStatus.running,
+                  title:
+                      selectedTarget?.title ??
+                      AppLocalizations.of(context)!.focusContextEmpty,
+                  subtitle: selectedTarget?.subtitle,
+                  onTap:
+                      () => _openFocusTargetPicker(
+                        hierarchy: hierarchy,
+                        state: focusState,
+                      ),
                 ),
-                SizedBox(height: layoutMetrics.sectionSpacing),
+                SizedBox(height: layoutMetrics.targetToTimerSpacing),
                 Center(
                   child: GestureDetector(
                     onTap:
@@ -139,12 +154,48 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          CircularProgressIndicator(
-                            value:
-                                focusState.mode == FocusMode.pomodoro
-                                    ? focusState.progressRatio
-                                    : null,
-                            strokeWidth: layoutMetrics.timerStrokeWidth,
+                          SizedBox(
+                            width: layoutMetrics.timerSize,
+                            height: layoutMetrics.timerSize,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
+                                  width: layoutMetrics.timerStrokeWidth,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (focusState.mode == FocusMode.pomodoro)
+                            CircularProgressIndicator(
+                              value: focusState.progressRatio,
+                              strokeWidth: layoutMetrics.timerStrokeWidth,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          if (focusState.mode == FocusMode.free &&
+                              focusState.status != FocusTimerStatus.idle)
+                            CircularProgressIndicator(
+                              value: 1,
+                              strokeWidth: layoutMetrics.timerStrokeWidth,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          SizedBox(
+                            width:
+                                layoutMetrics.timerSize -
+                                (layoutMetrics.timerStrokeWidth * 2),
+                            height:
+                                layoutMetrics.timerSize -
+                                (layoutMetrics.timerStrokeWidth * 2),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                            ),
                           ),
                           Column(
                             mainAxisSize: MainAxisSize.min,
@@ -184,10 +235,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
                     ),
                   ),
                 ),
-                SizedBox(height: layoutMetrics.controlTopSpacing),
+                SizedBox(height: layoutMetrics.timerToControlSpacing),
                 _FocusControlSection(
                   state: focusState,
-                  canStart: focusState.hasSelection,
+                  canStart: focusState.selectedTaskId != null,
                   onStart: focusController.startOrResume,
                   onPause: focusController.pause,
                   onTerminate: () async {
@@ -196,6 +247,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       focusController.terminate(isAbandoned: false);
                     }
                   },
+                  onChangeDuration: _openPomodoroDurationPicker,
                   l10n: l10n,
                 ),
               ],
@@ -215,27 +267,168 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   Future<void> _openPomodoroDurationPicker() async {
     final l10n = AppLocalizations.of(context)!;
-    final options = [25, 45, 60, 90];
     await showModalBottomSheet<void>(
       context: context,
-      builder: (context) {
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
         return SafeArea(
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              ListTile(title: Text(l10n.focusPickDuration)),
-              for (final value in options)
-                ListTile(
-                  leading: const Icon(Icons.timer),
-                  title: Text(l10n.focusPomodoroPreset(value.toString())),
-                  onTap: () {
-                    ref
-                        .read(focusTimerControllerProvider.notifier)
-                        .setPomodoroMinutes(value);
-                    Navigator.of(context).pop();
-                  },
-                ),
-            ],
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
+                final theme = Theme.of(context);
+                final options = _pomodoroOptions.toList()..sort();
+                final selectedMinutes =
+                    ref.read(focusTimerControllerProvider).pomodoroMinutes;
+                final itemWidth =
+                    ((MediaQuery.sizeOf(context).width - 32 - 24) / 2)
+                        .clamp(120.0, 180.0)
+                        .toDouble();
+
+                return Material(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.focusPickDuration,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final value in options)
+                              _DurationChoiceButton(
+                                width: itemWidth,
+                                label: formatClockFromSeconds(value * 60),
+                                selected: value == selectedMinutes,
+                                onTap: () {
+                                  ref
+                                      .read(
+                                        focusTimerControllerProvider.notifier,
+                                      )
+                                      .setPomodoroMinutes(value);
+                                  Navigator.of(sheetContext).pop();
+                                },
+                              ),
+                            _DurationChoiceButton(
+                              width: itemWidth,
+                              label: '+',
+                              selected: false,
+                              onTap: () async {
+                                final customValue =
+                                    await _showAddPomodoroDurationDialog();
+                                if (!mounted || customValue == null) {
+                                  return;
+                                }
+                                setState(() {
+                                  if (!_pomodoroOptions.contains(customValue)) {
+                                    _pomodoroOptions.add(customValue);
+                                  }
+                                });
+                                setModalState(() {});
+                                ref
+                                    .read(focusTimerControllerProvider.notifier)
+                                    .setPomodoroMinutes(customValue);
+                                if (sheetContext.mounted) {
+                                  Navigator.of(sheetContext).pop();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<int?> _showAddPomodoroDurationDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final textController = TextEditingController();
+    final value = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.focusPickDuration),
+          content: TextField(
+            controller: textController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: l10n.goalsEntryEstimateMinutes,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final parsed = int.tryParse(textController.text.trim());
+                if (parsed == null || parsed < 1 || parsed > 240) {
+                  return;
+                }
+                Navigator.of(dialogContext).pop(parsed);
+              },
+              child: Text(l10n.commonConfirm),
+            ),
+          ],
+        );
+      },
+    );
+    textController.dispose();
+    return value;
+  }
+
+  Future<void> _openFocusTargetPicker({
+    required List<FocusHierarchyItem> hierarchy,
+    required FocusTimerState state,
+  }) async {
+    if (state.status == FocusTimerStatus.running) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context)!;
+    if (hierarchy.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.goalsNoGoal)));
+      return;
+    }
+
+    final controller = ref.read(focusTimerControllerProvider.notifier);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.93,
+          child: _FocusTargetPickerSheet(
+            hierarchy: hierarchy,
+            selectedGoalId: state.selectedGoalId,
+            selectedMilestoneId: state.selectedMilestoneId,
+            selectedTaskId: state.selectedTaskId,
+            onSelectTask: (goalId, milestoneId, taskId) {
+              controller.selectGoal(goalId);
+              controller.selectMilestone(milestoneId);
+              controller.selectTask(taskId);
+              Navigator.of(sheetContext).pop();
+            },
           ),
         );
       },
@@ -267,270 +460,67 @@ class _FocusPageState extends ConsumerState<FocusPage>
   }
 }
 
-class _FocusControlSection extends StatelessWidget {
-  const _FocusControlSection({
-    required this.state,
-    required this.canStart,
-    required this.onStart,
-    required this.onPause,
-    required this.onTerminate,
-    required this.l10n,
+class _FocusTargetEntry extends StatelessWidget {
+  const _FocusTargetEntry({
+    required this.enabled,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   });
 
-  final FocusTimerState state;
-  final bool canStart;
-  final VoidCallback onStart;
-  final VoidCallback onPause;
-  final VoidCallback onTerminate;
-  final AppLocalizations l10n;
+  final bool enabled;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    switch (state.status) {
-      case FocusTimerStatus.idle:
-        return FilledButton.icon(
-          onPressed: canStart ? onStart : null,
-          icon: const Icon(Icons.play_arrow),
-          label: Text(l10n.focusStart),
-        );
-      case FocusTimerStatus.running:
-        return Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onPause,
-                icon: const Icon(Icons.pause),
-                label: Text(l10n.focusPause),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.tonalIcon(
-                onPressed: onTerminate,
-                icon: const Icon(Icons.stop),
-                label: Text(l10n.focusTerminate),
-              ),
-            ),
-          ],
-        );
-      case FocusTimerStatus.paused:
-        return Row(
-          children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: onStart,
-                icon: const Icon(Icons.play_arrow),
-                label: Text(l10n.focusResume),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onTerminate,
-                icon: const Icon(Icons.stop),
-                label: Text(l10n.focusTerminate),
-              ),
-            ),
-          ],
-        );
-    }
-  }
-}
-
-class _FocusLayoutMetrics {
-  const _FocusLayoutMetrics({
-    required this.horizontalPadding,
-    required this.topPadding,
-    required this.bottomPadding,
-    required this.sectionSpacing,
-    required this.contextPadding,
-    required this.fieldSpacing,
-    required this.timerSize,
-    required this.timerStrokeWidth,
-    required this.timerTextSize,
-    required this.timerLabelSpacing,
-    required this.timerPresetTopSpacing,
-    required this.controlTopSpacing,
-  });
-
-  final double horizontalPadding;
-  final double topPadding;
-  final double bottomPadding;
-  final double sectionSpacing;
-  final double contextPadding;
-  final double fieldSpacing;
-  final double timerSize;
-  final double timerStrokeWidth;
-  final double timerTextSize;
-  final double timerLabelSpacing;
-  final double timerPresetTopSpacing;
-  final double controlTopSpacing;
-
-  factory _FocusLayoutMetrics.fromSize(Size size) {
-    final compactWidth = size.width <= 360;
-    final compactHeight = size.height <= 720;
-    final widthBasedTimer = size.width - (compactWidth ? 28 : 40);
-    final targetTimer = compactHeight ? 178.0 : 220.0;
-    final timerSize = math.max(156.0, math.min(widthBasedTimer, targetTimer));
-
-    return _FocusLayoutMetrics(
-      horizontalPadding: compactWidth ? 12 : 16,
-      topPadding: compactHeight ? 8 : 12,
-      bottomPadding: 20,
-      sectionSpacing: compactHeight ? 8 : 12,
-      contextPadding: compactWidth ? 8 : 10,
-      fieldSpacing: compactHeight ? 6 : 8,
-      timerSize: timerSize,
-      timerStrokeWidth: compactWidth ? 8 : 10,
-      timerTextSize: compactWidth ? 32 : 36,
-      timerLabelSpacing: compactHeight ? 4 : 6,
-      timerPresetTopSpacing: compactHeight ? 2 : 4,
-      controlTopSpacing: compactHeight ? 10 : 16,
+    final theme = Theme.of(context);
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+    final titleStyle = theme.textTheme.titleMedium?.copyWith(
+      color: enabled ? null : mutedColor,
     );
-  }
-}
-
-class _FocusContextSection extends StatelessWidget {
-  const _FocusContextSection({
-    required this.hierarchy,
-    required this.state,
-    required this.onGoalChanged,
-    required this.onMilestoneChanged,
-    required this.onTaskChanged,
-    required this.contentPadding,
-    required this.fieldSpacing,
-  });
-
-  final List<FocusHierarchyItem> hierarchy;
-  final FocusTimerState state;
-  final void Function(int?) onGoalChanged;
-  final void Function(int?) onMilestoneChanged;
-  final void Function(int?) onTaskChanged;
-  final double contentPadding;
-  final double fieldSpacing;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final selectedGoal = _findGoal(hierarchy, state.selectedGoalId);
-
-    final milestones = selectedGoal?.milestones ?? const <FocusMilestoneItem>[];
-    final selectedMilestone = _findMilestone(
-      milestones,
-      state.selectedMilestoneId,
+    final subtitleStyle = theme.textTheme.bodySmall?.copyWith(
+      color: mutedColor.withValues(alpha: enabled ? 1 : 0.75),
     );
-    final tasks = selectedMilestone?.tasks ?? const <TaskModel>[];
-    final selectedTask = _findTask(tasks, state.selectedTaskId);
 
-    final pathSegments = <String>[];
-    if (selectedGoal != null) {
-      pathSegments.add(selectedGoal.goal.title);
-    }
-    if (selectedMilestone != null) {
-      pathSegments.add(selectedMilestone.milestone.title);
-    }
-    if (selectedTask != null) {
-      pathSegments.add(selectedTask.title);
-    }
-
-    return Card(
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: EdgeInsets.all(contentPadding),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.focusTitle,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: mutedColor,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right, size: 18, color: mutedColor),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(
-              l10n.focusContextTitle,
-              style: Theme.of(context).textTheme.titleSmall,
+              title,
+              style: titleStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: fieldSpacing),
-            DropdownButtonFormField<int>(
-              value: state.selectedGoalId,
-              decoration: InputDecoration(
-                labelText: l10n.goalsCreateTypeGoal,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: fieldSpacing + 2,
-                ),
-              ),
-              items: [
-                for (final item in hierarchy)
-                  DropdownMenuItem<int>(
-                    value: item.goal.id,
-                    child: Text(
-                      item.goal.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged:
-                  state.status == FocusTimerStatus.running
-                      ? null
-                      : onGoalChanged,
-            ),
-            SizedBox(height: fieldSpacing),
-            DropdownButtonFormField<int>(
-              value: state.selectedMilestoneId,
-              decoration: InputDecoration(
-                labelText: l10n.goalsCreateTypeMilestone,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: fieldSpacing + 2,
-                ),
-              ),
-              items: [
-                for (final item in milestones)
-                  DropdownMenuItem<int>(
-                    value: item.milestone.id,
-                    child: Text(
-                      item.milestone.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged:
-                  state.status == FocusTimerStatus.running
-                      ? null
-                      : onMilestoneChanged,
-            ),
-            SizedBox(height: fieldSpacing),
-            DropdownButtonFormField<int>(
-              value: state.selectedTaskId,
-              decoration: InputDecoration(
-                labelText: l10n.goalsCreateTypeTask,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: fieldSpacing + 2,
-                ),
-              ),
-              items: [
-                for (final item in tasks)
-                  DropdownMenuItem<int>(
-                    value: item.id,
-                    child: Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged:
-                  state.status == FocusTimerStatus.running
-                      ? null
-                      : onTaskChanged,
-            ),
-            if (pathSegments.isNotEmpty) ...[
-              SizedBox(height: fieldSpacing),
+            if (subtitle != null) ...[
+              const SizedBox(height: 2),
               Text(
-                pathSegments.join(' > '),
+                subtitle!,
+                style: subtitleStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
               ),
             ],
           ],
@@ -540,41 +530,611 @@ class _FocusContextSection extends StatelessWidget {
   }
 }
 
-FocusHierarchyItem? _findGoal(List<FocusHierarchyItem> items, int? goalId) {
-  if (goalId == null) {
-    return null;
+class _FocusModeTabSwitch extends StatelessWidget {
+  const _FocusModeTabSwitch({
+    required this.mode,
+    required this.onChange,
+    required this.pomodoroLabel,
+    required this.freeLabel,
+  });
+
+  final FocusMode mode;
+  final void Function(FocusMode mode) onChange;
+  final String pomodoroLabel;
+  final String freeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final activeColor = theme.colorScheme.onSurface;
+    final inactiveColor = theme.colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        _FocusModeTabItem(
+          label: pomodoroLabel,
+          selected: mode == FocusMode.pomodoro,
+          activeColor: activeColor,
+          inactiveColor: inactiveColor,
+          onTap: () => onChange(FocusMode.pomodoro),
+        ),
+        const SizedBox(width: 14),
+        _FocusModeTabItem(
+          label: freeLabel,
+          selected: mode == FocusMode.free,
+          activeColor: activeColor,
+          inactiveColor: inactiveColor,
+          onTap: () => onChange(FocusMode.free),
+        ),
+      ],
+    );
   }
-  for (final item in items) {
-    if (item.goal.id == goalId) {
-      return item;
-    }
-  }
-  return null;
 }
 
-FocusMilestoneItem? _findMilestone(
-  List<FocusMilestoneItem> items,
-  int? milestoneId,
-) {
-  if (milestoneId == null) {
-    return null;
+class _FocusModeTabItem extends StatelessWidget {
+  const _FocusModeTabItem({
+    required this.label,
+    required this.selected,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color activeColor;
+  final Color inactiveColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: selected ? activeColor : inactiveColor,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              height: 2.5,
+              width: 52,
+              decoration: BoxDecoration(
+                color:
+                    selected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-  for (final item in items) {
-    if (item.milestone.id == milestoneId) {
-      return item;
-    }
-  }
-  return null;
 }
 
-TaskModel? _findTask(List<TaskModel> items, int? taskId) {
-  if (taskId == null) {
-    return null;
+class _DurationChoiceButton extends StatelessWidget {
+  const _DurationChoiceButton({
+    required this.width,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final double width;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Ink(
+        width: width,
+        height: 44,
+        decoration: BoxDecoration(
+          color:
+              selected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                  : theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.55,
+                  ),
+          borderRadius: BorderRadius.circular(12),
+          border:
+              selected
+                  ? Border.all(color: theme.colorScheme.primary, width: 1.2)
+                  : null,
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: selected ? theme.colorScheme.primary : null,
+            ),
+          ),
+        ),
+      ),
+    );
   }
-  for (final item in items) {
-    if (item.id == taskId) {
-      return item;
+}
+
+class _FocusControlSection extends StatelessWidget {
+  const _FocusControlSection({
+    required this.state,
+    required this.canStart,
+    required this.onStart,
+    required this.onPause,
+    required this.onTerminate,
+    required this.onChangeDuration,
+    required this.l10n,
+  });
+
+  final FocusTimerState state;
+  final bool canStart;
+  final VoidCallback onStart;
+  final VoidCallback onPause;
+  final VoidCallback onTerminate;
+  final VoidCallback onChangeDuration;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (state.status) {
+      case FocusTimerStatus.idle:
+        return Center(
+          child: SizedBox(
+            width: 190,
+            height: 46,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                shape: const StadiumBorder(),
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              onPressed: canStart ? onStart : null,
+              child: Text(l10n.focusStart),
+            ),
+          ),
+        );
+      case FocusTimerStatus.running:
+        return _FocusRunningControlRow(
+          showDurationAction: state.mode == FocusMode.pomodoro,
+          centerIcon: Icons.pause_rounded,
+          centerTooltip: l10n.focusPause,
+          onCenterTap: onPause,
+          onSideTap: onTerminate,
+          onDurationTap: onChangeDuration,
+          sideTooltip: l10n.focusTerminate,
+          durationTooltip: l10n.focusPickDuration,
+        );
+      case FocusTimerStatus.paused:
+        return _FocusRunningControlRow(
+          showDurationAction: state.mode == FocusMode.pomodoro,
+          centerIcon: Icons.play_arrow_rounded,
+          centerTooltip: l10n.focusResume,
+          onCenterTap: onStart,
+          onSideTap: onTerminate,
+          onDurationTap: onChangeDuration,
+          sideTooltip: l10n.focusTerminate,
+          durationTooltip: l10n.focusPickDuration,
+        );
     }
   }
-  return null;
+}
+
+class _FocusRunningControlRow extends StatelessWidget {
+  const _FocusRunningControlRow({
+    required this.showDurationAction,
+    required this.centerIcon,
+    required this.centerTooltip,
+    required this.onCenterTap,
+    required this.onSideTap,
+    required this.onDurationTap,
+    required this.sideTooltip,
+    required this.durationTooltip,
+  });
+
+  final bool showDurationAction;
+  final IconData centerIcon;
+  final String centerTooltip;
+  final VoidCallback onCenterTap;
+  final VoidCallback onSideTap;
+  final VoidCallback onDurationTap;
+  final String sideTooltip;
+  final String durationTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _FocusOutlineCircleButton(
+          icon: Icons.timer_outlined,
+          tooltip: durationTooltip,
+          onPressed: showDurationAction ? onDurationTap : null,
+          size: 62,
+        ),
+        const SizedBox(width: 24),
+        _FocusPrimaryCircleButton(
+          icon: centerIcon,
+          tooltip: centerTooltip,
+          onPressed: onCenterTap,
+          size: 90,
+        ),
+        const SizedBox(width: 24),
+        _FocusOutlineCircleButton(
+          icon: Icons.stop_rounded,
+          tooltip: sideTooltip,
+          onPressed: onSideTap,
+          size: 62,
+        ),
+      ],
+    );
+  }
+}
+
+class _FocusPrimaryCircleButton extends StatelessWidget {
+  const _FocusPrimaryCircleButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    required this.size,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Tooltip(
+        message: tooltip,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            shape: const CircleBorder(),
+            padding: EdgeInsets.zero,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          ),
+          onPressed: onPressed,
+          child: Icon(icon, size: size * 0.42),
+        ),
+      ),
+    );
+  }
+}
+
+class _FocusOutlineCircleButton extends StatelessWidget {
+  const _FocusOutlineCircleButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    required this.size,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Tooltip(
+        message: tooltip,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            shape: const CircleBorder(),
+            padding: EdgeInsets.zero,
+            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+          ),
+          onPressed: onPressed,
+          child: Icon(icon, size: size * 0.38),
+        ),
+      ),
+    );
+  }
+}
+
+class _FocusLayoutMetrics {
+  const _FocusLayoutMetrics({
+    required this.horizontalPadding,
+    required this.topPadding,
+    required this.bottomPadding,
+    required this.modeToTargetSpacing,
+    required this.targetToTimerSpacing,
+    required this.timerToControlSpacing,
+    required this.timerSize,
+    required this.timerStrokeWidth,
+    required this.timerTextSize,
+    required this.timerLabelSpacing,
+    required this.timerPresetTopSpacing,
+  });
+
+  final double horizontalPadding;
+  final double topPadding;
+  final double bottomPadding;
+  final double modeToTargetSpacing;
+  final double targetToTimerSpacing;
+  final double timerToControlSpacing;
+  final double timerSize;
+  final double timerStrokeWidth;
+  final double timerTextSize;
+  final double timerLabelSpacing;
+  final double timerPresetTopSpacing;
+
+  factory _FocusLayoutMetrics.fromSize(Size size) {
+    final compactWidth = size.width <= 360;
+    final compactHeight = size.height <= 720;
+    final widthBasedTimer = size.width - (compactWidth ? 30 : 44);
+    final targetTimer = compactHeight ? 182.0 : 224.0;
+    final timerSize = math.max(164.0, math.min(widthBasedTimer, targetTimer));
+
+    return _FocusLayoutMetrics(
+      horizontalPadding: compactWidth ? 12 : 16,
+      topPadding: compactHeight ? 8 : 12,
+      bottomPadding: 20,
+      modeToTargetSpacing: compactHeight ? 14 : 20,
+      targetToTimerSpacing: compactHeight ? 26 : 52,
+      timerToControlSpacing: compactHeight ? 26 : 54,
+      timerSize: timerSize,
+      timerStrokeWidth: compactWidth ? 8 : 10,
+      timerTextSize: compactWidth ? 32 : 36,
+      timerLabelSpacing: compactHeight ? 4 : 6,
+      timerPresetTopSpacing: compactHeight ? 2 : 4,
+    );
+  }
+}
+
+typedef _TaskSelectCallback =
+    void Function(int goalId, int milestoneId, int taskId);
+
+class _FocusTargetPickerSheet extends StatelessWidget {
+  const _FocusTargetPickerSheet({
+    required this.hierarchy,
+    required this.selectedGoalId,
+    required this.selectedMilestoneId,
+    required this.selectedTaskId,
+    required this.onSelectTask,
+  });
+
+  final List<FocusHierarchyItem> hierarchy;
+  final int? selectedGoalId;
+  final int? selectedMilestoneId;
+  final int? selectedTaskId;
+  final _TaskSelectCallback onSelectTask;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final dividerColor = Theme.of(context).colorScheme.outlineVariant;
+
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+                tooltip: l10n.commonClose,
+              ),
+              Expanded(
+                child: Text(
+                  l10n.focusContextTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+          Divider(height: 1, color: dividerColor),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 20),
+              children: [
+                for (final goalNode in hierarchy) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                    child: Text(
+                      goalNode.goal.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  if (goalNode.milestones.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                      child: Text(
+                        l10n.goalsNoMilestone,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  for (final milestoneNode in goalNode.milestones)
+                    Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        initiallyExpanded:
+                            milestoneNode.milestone.id == selectedMilestoneId ||
+                            milestoneNode.tasks.any(
+                              (task) => task.id == selectedTaskId,
+                            ),
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                        childrenPadding: EdgeInsets.zero,
+                        title: Text(
+                          milestoneNode.milestone.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${formatMinutes(milestoneNode.milestone.effectiveMinutes)} / ${formatMinutes(milestoneNode.milestone.estimateMinutes)}',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                        children:
+                            milestoneNode.tasks.isEmpty
+                                ? [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      24,
+                                      0,
+                                      16,
+                                      10,
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        l10n.goalsNoSearchResult,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                      ),
+                                    ),
+                                  ),
+                                ]
+                                : [
+                                  for (final task in milestoneNode.tasks)
+                                    ListTile(
+                                      contentPadding: const EdgeInsets.fromLTRB(
+                                        24,
+                                        0,
+                                        12,
+                                        0,
+                                      ),
+                                      leading: Icon(
+                                        selectedTaskId == task.id
+                                            ? Icons.check_circle
+                                            : Icons.radio_button_unchecked,
+                                        color:
+                                            selectedTaskId == task.id
+                                                ? Theme.of(
+                                                  context,
+                                                ).colorScheme.primary
+                                                : Theme.of(
+                                                  context,
+                                                ).colorScheme.outline,
+                                      ),
+                                      title: Text(
+                                        task.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      subtitle: Text(
+                                        '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
+                                      ),
+                                      onTap:
+                                          () => onSelectTask(
+                                            goalNode.goal.id,
+                                            milestoneNode.milestone.id,
+                                            task.id,
+                                          ),
+                                    ),
+                                ],
+                      ),
+                    ),
+                  Divider(height: 1, color: dividerColor),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+_FocusSelectedTarget? _resolveSelectedTarget({
+  required List<FocusHierarchyItem> hierarchy,
+  required FocusTimerState state,
+}) {
+  GoalModel? selectedGoal;
+  FocusMilestoneItem? selectedMilestone;
+  TaskModel? selectedTask;
+
+  for (final goalNode in hierarchy) {
+    if (goalNode.goal.id == state.selectedGoalId) {
+      selectedGoal = goalNode.goal;
+    }
+    for (final milestoneNode in goalNode.milestones) {
+      if (milestoneNode.milestone.id == state.selectedMilestoneId) {
+        selectedMilestone = milestoneNode;
+        selectedGoal ??= goalNode.goal;
+      }
+      for (final task in milestoneNode.tasks) {
+        if (task.id == state.selectedTaskId) {
+          selectedTask = task;
+          selectedMilestone = milestoneNode;
+          selectedGoal = goalNode.goal;
+        }
+      }
+    }
+  }
+
+  if (selectedGoal == null &&
+      selectedMilestone == null &&
+      selectedTask == null) {
+    return null;
+  }
+
+  return _FocusSelectedTarget(
+    goal: selectedGoal,
+    milestone: selectedMilestone?.milestone,
+    task: selectedTask,
+  );
+}
+
+final class _FocusSelectedTarget {
+  const _FocusSelectedTarget({
+    required this.goal,
+    required this.milestone,
+    required this.task,
+  });
+
+  final GoalModel? goal;
+  final MilestoneModel? milestone;
+  final TaskModel? task;
+
+  String get title {
+    return task?.title ?? milestone?.title ?? goal?.title ?? '';
+  }
+
+  String? get subtitle {
+    final parts = <String>[];
+    if (goal != null) {
+      parts.add(goal!.title);
+    }
+    if (milestone != null) {
+      parts.add(milestone!.title);
+    }
+    if (parts.isEmpty) {
+      return null;
+    }
+    return parts.join(' > ');
+  }
 }

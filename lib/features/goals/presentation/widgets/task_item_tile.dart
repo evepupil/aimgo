@@ -41,7 +41,7 @@ class TaskItemTile extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.fromLTRB(2, 6, 0, 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

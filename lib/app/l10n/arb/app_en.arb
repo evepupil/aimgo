@@ -34,7 +34,7 @@
   "focusResume": "Resume",
   "focusTerminate": "End",
   "focusEndTitle": "End this focus session?",
-  "focusEndMessage": "You can continue to self-evaluation and record this session.",
+  "focusEndMessage": "This session will be saved automatically when ended.",
   "focusCompletedTitle": "Focus Completed",
   "focusCompletedMessage": "Great work. Continue to self-evaluation?",
   "focusGoEvaluation": "Go Evaluate",

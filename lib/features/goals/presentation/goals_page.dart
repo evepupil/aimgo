@@ -102,13 +102,12 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   ),
                   IconButton(
                     onPressed:
-                        () => _showInfoToast(l10n.goalsActionNotImplemented),
+                        data == null ? null : () => _openFilterSheet(data),
                     icon: const Icon(Icons.filter_list),
                     tooltip: l10n.goalsFilterTooltip,
                   ),
                   IconButton(
-                    onPressed:
-                        () => _showInfoToast(l10n.goalsActionNotImplemented),
+                    onPressed: data == null ? null : () => _openMenuSheet(data),
                     icon: const Icon(Icons.more_vert),
                     tooltip: l10n.goalsMenuTooltip,
                   ),
@@ -268,6 +267,284 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         );
       },
     );
+  }
+
+  Future<void> _openFilterSheet(GoalsPageState state) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(goalsPageControllerProvider.notifier);
+
+    var completionFilter = state.completionFilter;
+    var progressFilter = state.progressFilter;
+    var updatedFilter = state.updatedFilter;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+                child: Wrap(
+                  children: [
+                    Text(
+                      l10n.goalsFilterCompletionTitle,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final filter in GoalCompletionFilter.values)
+                          ChoiceChip(
+                            label: Text(_completionFilterLabel(l10n, filter)),
+                            selected: completionFilter == filter,
+                            onSelected: (_) {
+                              setSheetState(() {
+                                completionFilter = filter;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      l10n.goalsFilterProgressTitle,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final filter in GoalProgressFilter.values)
+                          ChoiceChip(
+                            label: Text(_progressFilterLabel(l10n, filter)),
+                            selected: progressFilter == filter,
+                            onSelected: (_) {
+                              setSheetState(() {
+                                progressFilter = filter;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      l10n.goalsFilterUpdatedTitle,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final filter in GoalUpdatedFilter.values)
+                          ChoiceChip(
+                            label: Text(_updatedFilterLabel(l10n, filter)),
+                            selected: updatedFilter == filter,
+                            onSelected: (_) {
+                              setSheetState(() {
+                                updatedFilter = filter;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              await controller.clearFilters();
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: Text(l10n.goalsFilterReset),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () async {
+                              await controller.setFilters(
+                                completionFilter: completionFilter,
+                                progressFilter: progressFilter,
+                                updatedFilter: updatedFilter,
+                              );
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: Text(l10n.commonConfirm),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openMenuSheet(GoalsPageState state) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(goalsPageControllerProvider.notifier);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+            child: Wrap(
+              children: [
+                Text(
+                  l10n.goalsMenuSortTitle,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 6),
+                for (final mode in GoalSortMode.values)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      state.sortMode == mode
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                    ),
+                    title: Text(_sortModeLabel(l10n, mode)),
+                    onTap: () async {
+                      await controller.setSortMode(mode);
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                const Divider(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.done_all_outlined),
+                  title: Text(l10n.goalsMenuBatchManage),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _openBatchManageSheet();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openBatchManageSheet() async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(goalsPageControllerProvider.notifier);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                title: Text(l10n.goalsBatchTitle),
+                leading: const Icon(Icons.tune_outlined),
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+                title: Text(l10n.goalsBatchCompleteVisible),
+                onTap: () async {
+                  final changed = await controller
+                      .bulkSetVisibleTasksCompletion(completed: true);
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    _showInfoToast(l10n.goalsBatchResult(changed.toString()));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.remove_circle_outline),
+                title: Text(l10n.goalsBatchUncompleteVisible),
+                onTap: () async {
+                  final changed = await controller
+                      .bulkSetVisibleTasksCompletion(completed: false);
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    _showInfoToast(l10n.goalsBatchResult(changed.toString()));
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _completionFilterLabel(
+    AppLocalizations l10n,
+    GoalCompletionFilter filter,
+  ) {
+    switch (filter) {
+      case GoalCompletionFilter.all:
+        return l10n.goalsFilterCompletionAll;
+      case GoalCompletionFilter.completed:
+        return l10n.goalsFilterCompletionCompleted;
+      case GoalCompletionFilter.inProgress:
+        return l10n.goalsFilterCompletionInProgress;
+    }
+  }
+
+  String _progressFilterLabel(
+    AppLocalizations l10n,
+    GoalProgressFilter filter,
+  ) {
+    switch (filter) {
+      case GoalProgressFilter.all:
+        return l10n.goalsFilterProgressAll;
+      case GoalProgressFilter.below50:
+        return l10n.goalsFilterProgressBelow50;
+      case GoalProgressFilter.between50And100:
+        return l10n.goalsFilterProgress50To100;
+      case GoalProgressFilter.over100:
+        return l10n.goalsFilterProgressOver100;
+    }
+  }
+
+  String _updatedFilterLabel(AppLocalizations l10n, GoalUpdatedFilter filter) {
+    switch (filter) {
+      case GoalUpdatedFilter.all:
+        return l10n.historyRangeAll;
+      case GoalUpdatedFilter.today:
+        return l10n.historyRangeToday;
+      case GoalUpdatedFilter.thisWeek:
+        return l10n.historyRangeThisWeek;
+      case GoalUpdatedFilter.thisMonth:
+        return l10n.historyRangeThisMonth;
+    }
+  }
+
+  String _sortModeLabel(AppLocalizations l10n, GoalSortMode mode) {
+    switch (mode) {
+      case GoalSortMode.manual:
+        return l10n.goalsMenuSortManual;
+      case GoalSortMode.updatedDesc:
+        return l10n.goalsMenuSortUpdated;
+      case GoalSortMode.progressDesc:
+        return l10n.goalsMenuSortProgressHigh;
+      case GoalSortMode.progressAsc:
+        return l10n.goalsMenuSortProgressLow;
+    }
   }
 
   Future<void> _onTapAdd(GoalsPageState? state) async {

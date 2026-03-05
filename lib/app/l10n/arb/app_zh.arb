@@ -104,7 +104,35 @@
   "goalsMyGoalsTitle": "我的目标",
   "goalsSearchHint": "搜索目标、里程碑、任务…",
   "goalsFilterTooltip": "筛选",
+  "goalsFilterCompletionTitle": "完成状态",
+  "goalsFilterCompletionAll": "全部",
+  "goalsFilterCompletionCompleted": "已完成",
+  "goalsFilterCompletionInProgress": "进行中",
+  "goalsFilterProgressTitle": "时间进度",
+  "goalsFilterProgressAll": "全部",
+  "goalsFilterProgressBelow50": "< 50%",
+  "goalsFilterProgress50To100": "50% ~ 100%",
+  "goalsFilterProgressOver100": "> 100%",
+  "goalsFilterUpdatedTitle": "更新时间",
+  "goalsFilterReset": "重置筛选",
   "goalsMenuTooltip": "菜单",
+  "goalsMenuSortTitle": "排序方式",
+  "goalsMenuSortManual": "默认排序",
+  "goalsMenuSortUpdated": "最近更新优先",
+  "goalsMenuSortProgressHigh": "进度高到低",
+  "goalsMenuSortProgressLow": "进度低到高",
+  "goalsMenuBatchManage": "批量管理",
+  "goalsBatchTitle": "批量操作",
+  "goalsBatchCompleteVisible": "将当前筛选任务标记为完成",
+  "goalsBatchUncompleteVisible": "将当前筛选任务标记为未完成",
+  "goalsBatchResult": "已更新 {count} 个任务。",
+  "@goalsBatchResult": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "goalsSwitchTooltip": "切换目标",
   "goalsManage": "管理目标",
   "goalsNoGoal": "暂无目标，点击 + 创建第一个目标。",

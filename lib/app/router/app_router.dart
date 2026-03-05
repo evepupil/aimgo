@@ -61,7 +61,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.history,
-        builder: (context, state) => const HistoryPage(),
+        builder: (context, state) {
+          final initialGoalFilterId = int.tryParse(
+            state.uri.queryParameters['goalId'] ?? '',
+          );
+          return HistoryPage(initialGoalFilterId: initialGoalFilterId);
+        },
       ),
       GoRoute(
         path: RoutePaths.evaluation,

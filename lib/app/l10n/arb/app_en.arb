@@ -104,7 +104,35 @@
   "goalsMyGoalsTitle": "My Goals",
   "goalsSearchHint": "Search goals, milestones, tasks...",
   "goalsFilterTooltip": "Filter",
+  "goalsFilterCompletionTitle": "Completion",
+  "goalsFilterCompletionAll": "All",
+  "goalsFilterCompletionCompleted": "Completed",
+  "goalsFilterCompletionInProgress": "In Progress",
+  "goalsFilterProgressTitle": "Time Progress",
+  "goalsFilterProgressAll": "All",
+  "goalsFilterProgressBelow50": "< 50%",
+  "goalsFilterProgress50To100": "50% ~ 100%",
+  "goalsFilterProgressOver100": "> 100%",
+  "goalsFilterUpdatedTitle": "Updated Time",
+  "goalsFilterReset": "Reset Filters",
   "goalsMenuTooltip": "Menu",
+  "goalsMenuSortTitle": "Sort By",
+  "goalsMenuSortManual": "Default Order",
+  "goalsMenuSortUpdated": "Recently Updated",
+  "goalsMenuSortProgressHigh": "Progress High to Low",
+  "goalsMenuSortProgressLow": "Progress Low to High",
+  "goalsMenuBatchManage": "Batch Manage",
+  "goalsBatchTitle": "Batch Actions",
+  "goalsBatchCompleteVisible": "Mark visible filtered tasks completed",
+  "goalsBatchUncompleteVisible": "Mark visible filtered tasks incomplete",
+  "goalsBatchResult": "{count} tasks updated.",
+  "@goalsBatchResult": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "goalsSwitchTooltip": "Switch Goal",
   "goalsManage": "Manage Goals",
   "goalsNoGoal": "No goals yet, tap + to create one.",

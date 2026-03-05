@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
-  const HistoryPage({super.key});
+  const HistoryPage({this.initialGoalFilterId, super.key});
+
+  final int? initialGoalFilterId;
 
   @override
   ConsumerState<HistoryPage> createState() => _HistoryPageState();
@@ -15,6 +17,7 @@ class HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<HistoryPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _searchMode = false;
+  bool _initialFilterApplied = false;
 
   @override
   void dispose() {
@@ -28,6 +31,18 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     final asyncState = ref.watch(historyPageControllerProvider);
     final controller = ref.read(historyPageControllerProvider.notifier);
     final data = asyncState.valueOrNull;
+
+    if (!_initialFilterApplied &&
+        data != null &&
+        widget.initialGoalFilterId != null) {
+      _initialFilterApplied = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        controller.setGoalFilter(widget.initialGoalFilterId);
+      });
+    }
 
     if (asyncState.isLoading && data == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -289,11 +304,61 @@ class _TimelineView extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
-            for (final session in section.sessions)
-              _HistorySessionCard(entry: session),
+            for (var i = 0; i < section.sessions.length; i++)
+              _TimelineSessionItem(
+                entry: section.sessions[i],
+                isLast: i == section.sessions.length - 1,
+              ),
           ],
         );
       },
+    );
+  }
+}
+
+class _TimelineSessionItem extends StatelessWidget {
+  const _TimelineSessionItem({required this.entry, required this.isLast});
+
+  final HistorySessionEntry entry;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    final lineColor = Theme.of(
+      context,
+    ).colorScheme.outlineVariant.withValues(alpha: 0.8);
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.only(top: 4),
+                      color: lineColor,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: _HistorySessionCard(entry: entry)),
+        ],
+      ),
     );
   }
 }
@@ -317,27 +382,56 @@ String _timelineSectionTitle(BuildContext context, String groupKey) {
   }
 }
 
-class _CalendarView extends StatelessWidget {
+class _CalendarView extends StatefulWidget {
   const _CalendarView({required this.state, required this.onDateSelected});
 
   final HistoryPageState state;
   final void Function(DateTime date) onDateSelected;
 
   @override
+  State<_CalendarView> createState() => _CalendarViewState();
+}
+
+class _CalendarViewState extends State<_CalendarView> {
+  late DateTime _visibleMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleMonth = _monthStartOf(widget.state.selectedCalendarDate);
+  }
+
+  @override
+  void didUpdateWidget(covariant _CalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final selectedMonth = _monthStartOf(widget.state.selectedCalendarDate);
+    if (!_isSameMonth(selectedMonth, _visibleMonth)) {
+      _visibleMonth = selectedMonth;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final sessions = state.sessionsOfSelectedDate();
+    final sessions = widget.state.sessionsOfSelectedDate();
+    final recordDates =
+        widget.state.filteredSessions
+            .map((entry) => _dayStart(entry.session.startedAt))
+            .toSet();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
-        CalendarDatePicker(
-          initialDate: state.selectedCalendarDate,
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2100),
-          onDateChanged: onDateSelected,
+        _MonthCalendar(
+          visibleMonth: _visibleMonth,
+          selectedDate: widget.state.selectedCalendarDate,
+          recordDates: recordDates,
+          onPrevMonth: () => _changeMonth(-1),
+          onNextMonth: () => _changeMonth(1),
+          onDateSelected: widget.onDateSelected,
         ),
         const SizedBox(height: 12),
         Text(
-          DateFormat('yyyy-MM-dd').format(state.selectedCalendarDate),
+          DateFormat('yyyy-MM-dd').format(widget.state.selectedCalendarDate),
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
@@ -350,6 +444,191 @@ class _CalendarView extends StatelessWidget {
       ],
     );
   }
+
+  void _changeMonth(int monthDelta) {
+    final updatedMonth = DateTime(
+      _visibleMonth.year,
+      _visibleMonth.month + monthDelta,
+      1,
+    );
+    setState(() {
+      _visibleMonth = updatedMonth;
+    });
+    if (!_isSameMonth(widget.state.selectedCalendarDate, updatedMonth)) {
+      widget.onDateSelected(updatedMonth);
+    }
+  }
+
+  static DateTime _monthStartOf(DateTime value) {
+    return DateTime(value.year, value.month, 1);
+  }
+
+  static DateTime _dayStart(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
+  static bool _isSameMonth(DateTime left, DateTime right) {
+    return left.year == right.year && left.month == right.month;
+  }
+}
+
+class _MonthCalendar extends StatelessWidget {
+  const _MonthCalendar({
+    required this.visibleMonth,
+    required this.selectedDate,
+    required this.recordDates,
+    required this.onPrevMonth,
+    required this.onNextMonth,
+    required this.onDateSelected,
+  });
+
+  final DateTime visibleMonth;
+  final DateTime selectedDate;
+  final Set<DateTime> recordDates;
+  final VoidCallback onPrevMonth;
+  final VoidCallback onNextMonth;
+  final void Function(DateTime date) onDateSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final firstDay = DateTime(visibleMonth.year, visibleMonth.month, 1);
+    final leadingEmptyCells = firstDay.weekday - 1;
+    final daysInMonth =
+        DateTime(visibleMonth.year, visibleMonth.month + 1, 0).day;
+    final totalCells = ((leadingEmptyCells + daysInMonth + 6) ~/ 7) * 7;
+    final today = DateTime.now();
+    final weekDayLabels = [
+      for (var i = 0; i < 7; i++)
+        DateFormat.E(locale).format(DateTime(2024, 1, 1 + i)),
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed: onPrevMonth,
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                Expanded(
+                  child: Text(
+                    DateFormat('yyyy-MM', locale).format(visibleMonth),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                IconButton(
+                  onPressed: onNextMonth,
+                  icon: const Icon(Icons.chevron_right),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                for (final label in weekDayLabels)
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: totalCells,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1.08,
+              ),
+              itemBuilder: (context, index) {
+                if (index < leadingEmptyCells) {
+                  return const SizedBox.shrink();
+                }
+
+                final day = index - leadingEmptyCells + 1;
+                if (day > daysInMonth) {
+                  return const SizedBox.shrink();
+                }
+
+                final date = DateTime(
+                  visibleMonth.year,
+                  visibleMonth.month,
+                  day,
+                );
+                final isToday = _isSameDay(date, today);
+                final isSelected = _isSameDay(date, selectedDate);
+                final hasRecord = recordDates.contains(date);
+                final colorScheme = Theme.of(context).colorScheme;
+
+                return InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => onDateSelected(date),
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color:
+                            isSelected
+                                ? colorScheme.primary
+                                : isToday
+                                ? colorScheme.outline
+                                : Colors.transparent,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      color:
+                          isSelected
+                              ? colorScheme.primary.withValues(alpha: 0.08)
+                              : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          day.toString(),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 2),
+                        SizedBox(
+                          width: 6,
+                          height: 6,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color:
+                                  hasRecord
+                                      ? colorScheme.primary
+                                      : Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+bool _isSameDay(DateTime left, DateTime right) {
+  return left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 }
 
 class _HistorySessionCard extends StatelessWidget {

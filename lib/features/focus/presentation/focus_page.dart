@@ -84,7 +84,14 @@ class _FocusPageState extends ConsumerState<FocusPage>
         title: Text(l10n.focusTitle),
         actions: [
           IconButton(
-            onPressed: () => context.push(RoutePaths.history),
+            onPressed: () {
+              final goalId = focusState.selectedGoalId;
+              if (goalId == null) {
+                context.push(RoutePaths.history);
+                return;
+              }
+              context.push('${RoutePaths.history}?goalId=$goalId');
+            },
             icon: const Icon(Icons.history),
             tooltip: l10n.focusHistory,
           ),
@@ -129,9 +136,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
               const SizedBox(height: 12),
               Center(
                 child: GestureDetector(
-                  onTap: focusState.mode == FocusMode.pomodoro
-                      ? _openPomodoroDurationPicker
-                      : null,
+                  onTap:
+                      focusState.mode == FocusMode.pomodoro
+                          ? _openPomodoroDurationPicker
+                          : null,
                   child: SizedBox(
                     width: 220,
                     height: 220,
@@ -139,9 +147,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       alignment: Alignment.center,
                       children: [
                         CircularProgressIndicator(
-                          value: focusState.mode == FocusMode.pomodoro
-                              ? focusState.progressRatio
-                              : null,
+                          value:
+                              focusState.mode == FocusMode.pomodoro
+                                  ? focusState.progressRatio
+                                  : null,
                           strokeWidth: 10,
                         ),
                         Column(
@@ -150,11 +159,11 @@ class _FocusPageState extends ConsumerState<FocusPage>
                             Text(
                               focusState.mode == FocusMode.pomodoro
                                   ? formatClockFromSeconds(
-                                      focusState.remainingSeconds,
-                                    )
+                                    focusState.remainingSeconds,
+                                  )
                                   : formatClockFromSeconds(
-                                      focusState.displayElapsedSeconds,
-                                    ),
+                                    focusState.displayElapsedSeconds,
+                                  ),
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             const SizedBox(height: 6),
@@ -403,9 +412,10 @@ class _FocusContextSection extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged: state.status == FocusTimerStatus.running
-                  ? null
-                  : onGoalChanged,
+              onChanged:
+                  state.status == FocusTimerStatus.running
+                      ? null
+                      : onGoalChanged,
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
@@ -429,9 +439,10 @@ class _FocusContextSection extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged: state.status == FocusTimerStatus.running
-                  ? null
-                  : onMilestoneChanged,
+              onChanged:
+                  state.status == FocusTimerStatus.running
+                      ? null
+                      : onMilestoneChanged,
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
@@ -455,9 +466,10 @@ class _FocusContextSection extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged: state.status == FocusTimerStatus.running
-                  ? null
-                  : onTaskChanged,
+              onChanged:
+                  state.status == FocusTimerStatus.running
+                      ? null
+                      : onTaskChanged,
             ),
             if (pathSegments.isNotEmpty) ...[
               const SizedBox(height: 8),

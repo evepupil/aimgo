@@ -9,6 +9,14 @@ final goalsPageControllerProvider =
       GoalsPageController.new,
     );
 
+enum GoalCompletionFilter { all, completed, inProgress }
+
+enum GoalProgressFilter { all, below50, between50And100, over100 }
+
+enum GoalUpdatedFilter { all, today, thisWeek, thisMonth }
+
+enum GoalSortMode { manual, updatedDesc, progressDesc, progressAsc }
+
 final class GoalWithMilestones {
   const GoalWithMilestones({required this.goal, required this.milestones});
 
@@ -29,12 +37,20 @@ final class GoalsPageState {
     required this.selectedGoalId,
     required this.searchQuery,
     required this.expandedMilestoneIds,
+    required this.completionFilter,
+    required this.progressFilter,
+    required this.updatedFilter,
+    required this.sortMode,
   });
 
   final List<GoalWithMilestones> goalTree;
   final int? selectedGoalId;
   final String searchQuery;
   final Set<int> expandedMilestoneIds;
+  final GoalCompletionFilter completionFilter;
+  final GoalProgressFilter progressFilter;
+  final GoalUpdatedFilter updatedFilter;
+  final GoalSortMode sortMode;
 
   GoalWithMilestones? get selectedGoalTree {
     final selectedGoalIdValue = selectedGoalId;
@@ -55,43 +71,140 @@ final class GoalsPageState {
       return const [];
     }
 
+    final now = DateTime.now();
+    final allMilestones = selected.milestones
+        .where(_matchesCompletionFilter)
+        .where(_matchesProgressFilter)
+        .where((item) => _matchesUpdatedFilter(item, now))
+        .toList(growable: false);
+
     final query = searchQuery.trim().toLowerCase();
+    final List<MilestoneWithTasks> filtered;
     if (query.isEmpty) {
-      return selected.milestones;
+      filtered = allMilestones;
+    } else {
+      final goalMatched =
+          _contains(selected.goal.title, query) ||
+          _contains(selected.goal.description, query);
+
+      final searchFiltered = <MilestoneWithTasks>[];
+      for (final milestoneNode in allMilestones) {
+        final milestoneMatched =
+            _contains(milestoneNode.milestone.title, query) ||
+            _contains(milestoneNode.milestone.description, query);
+
+        if (goalMatched || milestoneMatched) {
+          searchFiltered.add(milestoneNode);
+          continue;
+        }
+
+        final matchedTasks = milestoneNode.tasks
+            .where(
+              (task) =>
+                  _contains(task.title, query) ||
+                  _contains(task.description, query),
+            )
+            .toList(growable: false);
+        if (matchedTasks.isNotEmpty) {
+          searchFiltered.add(
+            MilestoneWithTasks(
+              milestone: milestoneNode.milestone,
+              tasks: matchedTasks,
+            ),
+          );
+        }
+      }
+      filtered = searchFiltered;
     }
 
-    final goalMatched =
-        _contains(selected.goal.title, query) ||
-        _contains(selected.goal.description, query);
+    return _sortMilestones(filtered);
+  }
 
-    final filtered = <MilestoneWithTasks>[];
-    for (final milestoneNode in selected.milestones) {
-      final milestoneMatched =
-          _contains(milestoneNode.milestone.title, query) ||
-          _contains(milestoneNode.milestone.description, query);
+  bool _matchesCompletionFilter(MilestoneWithTasks milestoneNode) {
+    switch (completionFilter) {
+      case GoalCompletionFilter.all:
+        return true;
+      case GoalCompletionFilter.completed:
+        return milestoneNode.milestone.isCompleted;
+      case GoalCompletionFilter.inProgress:
+        return !milestoneNode.milestone.isCompleted;
+    }
+  }
 
-      if (goalMatched || milestoneMatched) {
-        filtered.add(milestoneNode);
-        continue;
-      }
+  bool _matchesProgressFilter(MilestoneWithTasks milestoneNode) {
+    final progress = milestoneNode.milestone.progressRatio;
+    switch (progressFilter) {
+      case GoalProgressFilter.all:
+        return true;
+      case GoalProgressFilter.below50:
+        return progress < 0.5;
+      case GoalProgressFilter.between50And100:
+        return progress >= 0.5 && progress <= 1.0;
+      case GoalProgressFilter.over100:
+        return progress > 1.0;
+    }
+  }
 
-      final matchedTasks = milestoneNode.tasks
-          .where(
-            (task) =>
-                _contains(task.title, query) ||
-                _contains(task.description, query),
-          )
-          .toList(growable: false);
-      if (matchedTasks.isNotEmpty) {
-        filtered.add(
-          MilestoneWithTasks(
-            milestone: milestoneNode.milestone,
-            tasks: matchedTasks,
-          ),
+  bool _matchesUpdatedFilter(MilestoneWithTasks milestoneNode, DateTime now) {
+    switch (updatedFilter) {
+      case GoalUpdatedFilter.all:
+        return true;
+      case GoalUpdatedFilter.today:
+        return _isSameDay(milestoneNode.milestone.updatedAt, now);
+      case GoalUpdatedFilter.thisWeek:
+        final start = _startOfWeek(now);
+        final end = start.add(const Duration(days: 7));
+        return !milestoneNode.milestone.updatedAt.isBefore(start) &&
+            milestoneNode.milestone.updatedAt.isBefore(end);
+      case GoalUpdatedFilter.thisMonth:
+        return milestoneNode.milestone.updatedAt.year == now.year &&
+            milestoneNode.milestone.updatedAt.month == now.month;
+    }
+  }
+
+  List<MilestoneWithTasks> _sortMilestones(List<MilestoneWithTasks> source) {
+    final sorted = [...source];
+    switch (sortMode) {
+      case GoalSortMode.manual:
+        sorted.sort((a, b) {
+          final sortCompare = a.milestone.sortOrder.compareTo(
+            b.milestone.sortOrder,
+          );
+          if (sortCompare != 0) {
+            return sortCompare;
+          }
+          return a.milestone.id.compareTo(b.milestone.id);
+        });
+        return sorted;
+      case GoalSortMode.updatedDesc:
+        sorted.sort(
+          (a, b) => b.milestone.updatedAt.compareTo(a.milestone.updatedAt),
         );
-      }
+        return sorted;
+      case GoalSortMode.progressDesc:
+        sorted.sort(
+          (a, b) =>
+              b.milestone.progressRatio.compareTo(a.milestone.progressRatio),
+        );
+        return sorted;
+      case GoalSortMode.progressAsc:
+        sorted.sort(
+          (a, b) =>
+              a.milestone.progressRatio.compareTo(b.milestone.progressRatio),
+        );
+        return sorted;
     }
-    return filtered;
+  }
+
+  static DateTime _startOfWeek(DateTime value) {
+    final dayStart = DateTime(value.year, value.month, value.day);
+    return dayStart.subtract(Duration(days: dayStart.weekday - 1));
+  }
+
+  static bool _isSameDay(DateTime left, DateTime right) {
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
   }
 
   bool isMilestoneExpanded(int milestoneId) {
@@ -104,6 +217,10 @@ final class GoalsPageState {
     bool clearSelectedGoal = false,
     String? searchQuery,
     Set<int>? expandedMilestoneIds,
+    GoalCompletionFilter? completionFilter,
+    GoalProgressFilter? progressFilter,
+    GoalUpdatedFilter? updatedFilter,
+    GoalSortMode? sortMode,
   }) {
     return GoalsPageState(
       goalTree: goalTree ?? this.goalTree,
@@ -111,6 +228,10 @@ final class GoalsPageState {
           clearSelectedGoal ? null : (selectedGoalId ?? this.selectedGoalId),
       searchQuery: searchQuery ?? this.searchQuery,
       expandedMilestoneIds: expandedMilestoneIds ?? this.expandedMilestoneIds,
+      completionFilter: completionFilter ?? this.completionFilter,
+      progressFilter: progressFilter ?? this.progressFilter,
+      updatedFilter: updatedFilter ?? this.updatedFilter,
+      sortMode: sortMode ?? this.sortMode,
     );
   }
 
@@ -136,6 +257,10 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
         preferredGoalId: current?.selectedGoalId,
         query: current?.searchQuery,
         expandedMilestoneIds: current?.expandedMilestoneIds,
+        completionFilter: current?.completionFilter,
+        progressFilter: current?.progressFilter,
+        updatedFilter: current?.updatedFilter,
+        sortMode: current?.sortMode,
       ),
     );
   }
@@ -178,6 +303,80 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
       updated.add(milestoneId);
     }
     state = AsyncData(current.copyWith(expandedMilestoneIds: updated));
+  }
+
+  Future<void> setFilters({
+    GoalCompletionFilter? completionFilter,
+    GoalProgressFilter? progressFilter,
+    GoalUpdatedFilter? updatedFilter,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+    state = AsyncData(
+      current.copyWith(
+        completionFilter: completionFilter,
+        progressFilter: progressFilter,
+        updatedFilter: updatedFilter,
+      ),
+    );
+  }
+
+  Future<void> clearFilters() async {
+    final current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+    state = AsyncData(
+      current.copyWith(
+        completionFilter: GoalCompletionFilter.all,
+        progressFilter: GoalProgressFilter.all,
+        updatedFilter: GoalUpdatedFilter.all,
+      ),
+    );
+  }
+
+  Future<void> setSortMode(GoalSortMode sortMode) async {
+    final current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+    state = AsyncData(current.copyWith(sortMode: sortMode));
+  }
+
+  Future<int> bulkSetVisibleTasksCompletion({required bool completed}) async {
+    final current = state.valueOrNull;
+    if (current == null) {
+      return 0;
+    }
+    final selectedGoal = current.selectedGoalTree;
+    if (selectedGoal == null) {
+      return 0;
+    }
+
+    final repository = ref.read(aimGoRepositoryProvider);
+    final visibleTasks = current.visibleMilestones
+        .expand((milestone) => milestone.tasks)
+        .where((task) => task.isCompleted != completed)
+        .toList(growable: false);
+    if (visibleTasks.isEmpty) {
+      return 0;
+    }
+
+    await repository.transaction(() async {
+      for (final task in visibleTasks) {
+        await repository.setTaskCompletion(
+          taskId: task.id,
+          isCompleted: completed,
+        );
+      }
+    });
+    await ref
+        .read(progressSyncServiceProvider)
+        .recalculateGoalProgress(selectedGoal.goal.id);
+    await _reloadAndPreserve(selectedGoalId: selectedGoal.goal.id);
+    return visibleTasks.length;
   }
 
   Future<void> createGoal({required String title, String? description}) async {
@@ -347,6 +546,10 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
         preferredGoalId: selectedGoalId ?? current?.selectedGoalId,
         query: current?.searchQuery,
         expandedMilestoneIds: current?.expandedMilestoneIds,
+        completionFilter: current?.completionFilter,
+        progressFilter: current?.progressFilter,
+        updatedFilter: current?.updatedFilter,
+        sortMode: current?.sortMode,
       ),
     );
   }
@@ -355,6 +558,10 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
     int? preferredGoalId,
     String? query,
     Set<int>? expandedMilestoneIds,
+    GoalCompletionFilter? completionFilter,
+    GoalProgressFilter? progressFilter,
+    GoalUpdatedFilter? updatedFilter,
+    GoalSortMode? sortMode,
   }) async {
     final repository = ref.read(aimGoRepositoryProvider);
     final goals = await repository.listGoals();
@@ -397,6 +604,10 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
       selectedGoalId: selectedGoalId,
       searchQuery: query ?? '',
       expandedMilestoneIds: normalizedExpanded,
+      completionFilter: completionFilter ?? GoalCompletionFilter.all,
+      progressFilter: progressFilter ?? GoalProgressFilter.all,
+      updatedFilter: updatedFilter ?? GoalUpdatedFilter.all,
+      sortMode: sortMode ?? GoalSortMode.manual,
     );
   }
 }

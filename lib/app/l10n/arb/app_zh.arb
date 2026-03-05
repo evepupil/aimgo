@@ -38,6 +38,8 @@
   "focusCompletedTitle": "专注完成",
   "focusCompletedMessage": "做得不错，是否进入专注自评？",
   "focusGoEvaluation": "去自评",
+  "focusPendingEvaluationTitle": "有待完成的专注自评",
+  "focusPendingEvaluationHint": "你可以稍后提交自评，流程可继续恢复。",
   "focusContextTitle": "专注上下文",
   "focusContextEmpty": "尚未选择专注对象",
   "profileTitle": "我的",

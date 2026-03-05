@@ -12,7 +12,7 @@
 
 - ✅ **已基本满足**：核心数据模型、目标/专注/自评主流程、历史与分析基础能力、语言主题切换
 - 🟡 **部分满足**：通用交互细节（Header 显隐、动效统一、小屏适配）、目标页筛选菜单、历史视觉细节
-- ❌ **未满足**：设置中的备份恢复与通知行为落地、历史默认目标过滤、番茄结束休息引导
+- ❌ **未满足**：设置中的备份恢复与通知行为落地
 
 ### 1.2 优先级建议
 
@@ -53,7 +53,7 @@
 - ✅ 目标切换抽屉、目标/里程碑/任务 CRUD、搜索与高亮：已实现（`lib/features/goals/presentation/goals_page.dart`）
 - ✅ 里程碑卡片进度与展开动画：已实现（`lib/features/goals/presentation/widgets/milestone_card.dart`）
 - 🟡 任务未完成图标“圈边缘进度”细节：当前为“外圈+内层小进度圈”，与需求描述存在偏差（`lib/features/goals/presentation/widgets/task_item_tile.dart`）
-- ❌ Header 的筛选与菜单能力：目前仍占位提示（`goalsActionNotImplemented`，见 `lib/features/goals/presentation/goals_page.dart`）
+- ✅ Header 的筛选与菜单能力：已实现筛选面板 + 排序/批量操作入口（`lib/features/goals/presentation/goals_page.dart`、`lib/features/goals/application/goals_page_controller.dart`）
 
 ---
 
@@ -61,8 +61,8 @@
 
 - ✅ 页面结构、番茄/自由模式、预设时长、控制按钮状态机：已实现（`lib/features/focus/presentation/focus_page.dart`）
 - ✅ 专注对象选择（目标/里程碑/任务）与上下文路径：已实现（`lib/features/focus/presentation/focus_page.dart`）
-- ✅ 完成后引导自评并记录闭环：已实现（`lib/features/focus/application/focus_timer_controller.dart` + `lib/features/evaluation/presentation/evaluation_page.dart`）
-- ❌ 番茄完成后“休息引导”缺失：当前仅“去自评/关闭”（`lib/features/focus/presentation/focus_page.dart`）
+- ✅ 完成后自动记录闭环：专注结束即按默认效率入库并回写进度（`lib/features/focus/application/focus_timer_controller.dart`）
+- ✅ 番茄完成后流程简化：按产品决策取消休息与强制自评引导入口（`lib/features/focus/presentation/focus_page.dart`）
 - 🟡 默认选择“当前目标”策略不够稳健：依赖 `selectedGoalIdProvider`，首次从专注页进入可能为空（`lib/features/focus/application/focus_timer_controller.dart`）
 
 ---
@@ -86,9 +86,9 @@
 
 - ✅ 时间轴/日历双视图、搜索、目标与时间范围筛选：已实现（`lib/features/history/presentation/history_page.dart`）
 - ✅ 时间分组（今天/昨天/本周/上周）：已实现（`lib/features/history/application/history_page_controller.dart`）
-- ❌ 默认显示“当前目标”记录：未实现（当前默认 `goalFilterId` 为空）
-- ❌ 时间轴左侧日期点与连接线：未实现（当前仅分组标题 + 卡片）
-- ❌ 日历“有记录日期指示点”：未实现（`CalendarDatePicker` 未做事件标记层）
+- ✅ 默认显示“当前目标”记录：已实现从专注页带入 `goalId` 并应用初始筛选（`lib/features/focus/presentation/focus_page.dart`、`lib/features/history/presentation/history_page.dart`）
+- ✅ 时间轴左侧日期点与连接线：已实现节点 + 连线时间骨架（`lib/features/history/presentation/history_page.dart`）
+- ✅ 日历“有记录日期指示点”：已实现日期点标记（`lib/features/history/presentation/history_page.dart`）
 
 ---
 
@@ -113,19 +113,19 @@
 ## Phase P0（高优先，先落地）
 
 ### P0-1 目标页筛选与菜单能力（需求 2.1）
-- [ ] 设计并落地筛选模型（完成状态、时间进度区间、更新时间）
-- [ ] 替换 `goalsActionNotImplemented` 占位，接入真实筛选面板
-- [ ] 菜单能力落地（至少含排序方式与批量操作入口）
+- [x] 设计并落地筛选模型（完成状态、时间进度区间、更新时间）
+- [x] 替换 `goalsActionNotImplemented` 占位，接入真实筛选面板
+- [x] 菜单能力落地（至少含排序方式与批量操作入口）
 
 ### P0-2 历史页关键缺口（需求 6.2/6.5/6.6）
-- [ ] 从专注页进入历史时，默认使用当前选中目标过滤
-- [ ] 时间轴增加左侧时间线（节点+连线）组件
-- [ ] 日历视图增加“有记录日期”指示点
+- [x] 从专注页进入历史时，默认使用当前选中目标过滤
+- [x] 时间轴增加左侧时间线（节点+连线）组件
+- [x] 日历视图增加“有记录日期”指示点
 
 ### P0-3 番茄结束休息引导（需求 3.2）
-- [ ] 新增“休息 X 分钟”引导弹层/流程
-- [ ] 配置休息时长默认值与可选值
-- [ ] 与“去自评”路径并存，保证流程可中断可恢复
+- [x] 按产品决策移除“休息 X 分钟”入口
+- [x] 保留“专注完成即自动记录”路径
+- [x] 取消强制自评依赖，记录保留决定权交给用户
 
 ### P0-4 设置页能力落地（需求 8.4）
 - [ ] 实现本地备份导出（JSON）
@@ -194,8 +194,8 @@
 
 - **P0 可用性问题**
   - [ ] 专注页关键操作可达性不足（“开始专注”在部分小屏需滚动后才可见）
-  - [ ] 目标页筛选/菜单是占位，形成“可见不可用”的挫败体验
-  - [ ] 番茄结束后缺少休息引导，任务流中断感明显
+  - [x] 目标页筛选/菜单是占位，形成“可见不可用”的挫败体验
+  - [x] 按产品决策取消休息引导入口，避免无效步骤
 
 - **P1 可读性问题**
   - [ ] 历史时间轴缺少“点+线+日期锚点”视觉骨架，扫描效率低
@@ -210,9 +210,9 @@
 ### 6.2 对应改造动作（与前文任务映射）
 
 - [ ] 将“开始专注按钮首屏可见”纳入 Phase P1-1 小屏专项适配验收
-- [ ] 将“时间轴骨架 + 日历标记”作为 Phase P0-2 的交付硬标准
-- [ ] 将“番茄结束休息引导”作为 Phase P0-3 的必做项
-- [ ] 将“筛选/菜单占位清零”作为 Phase P0-1 的出关条件
+- [x] 将“时间轴骨架 + 日历标记”作为 Phase P0-2 的交付硬标准
+- [x] 将“专注完成后流程简化（无休息入口）”作为 Phase P0-3 交付项
+- [x] 将“筛选/菜单占位清零”作为 Phase P0-1 的出关条件
 - [ ] 在 Phase P1 增加统一的间距/组件密度规范（形成 UI tokens 或页面规范）
 
 ### 6.3 体验验收指标（前端向）

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:aimgo/features/focus/application/focus_evaluation_draft_controller.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
+import 'package:aimgo/features/goals/application/progress_sync_service.dart';
 import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +19,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     ref.onDispose(() {
       _timer?.cancel();
     });
+
     final selectedGoalId = ref.read(selectedGoalIdProvider);
     return FocusTimerState.initial(selectedGoalId: selectedGoalId);
   }
@@ -114,7 +115,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
   void terminate({required bool isAbandoned}) {
     final elapsedSeconds = state.displayElapsedSeconds;
     if (elapsedSeconds > 0 && state.sessionStartedAt != null) {
-      _buildDraftAndTriggerCompletion(
+      _persistSessionAndReset(
         elapsedSeconds: elapsedSeconds,
         startedAt: state.sessionStartedAt!,
         endedAt: DateTime.now(),
@@ -146,7 +147,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     if (state.mode == FocusMode.pomodoro &&
         elapsed >= state.pomodoroMinutes * 60 &&
         state.sessionStartedAt != null) {
-      _buildDraftAndTriggerCompletion(
+      _persistSessionAndReset(
         elapsedSeconds: state.pomodoroMinutes * 60,
         startedAt: state.sessionStartedAt!,
         endedAt: now,
@@ -155,7 +156,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     }
   }
 
-  void _buildDraftAndTriggerCompletion({
+  void _persistSessionAndReset({
     required int elapsedSeconds,
     required DateTime startedAt,
     required DateTime endedAt,
@@ -164,18 +165,21 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     _timer?.cancel();
     _timer = null;
 
-    final draft = FocusEvaluationDraft(
+    final input = CreateFocusSessionInput(
       goalId: state.selectedGoalId,
       milestoneId: state.selectedMilestoneId,
       taskId: state.selectedTaskId,
       durationMinutes: (elapsedSeconds / 60).ceil(),
+      efficiencyPercent: null,
+      focusTargetLevel: _resolveTargetLevel(),
       startedAt: startedAt,
       endedAt: endedAt,
-      focusTargetLevel: _resolveTargetLevel(),
-      focusMode: state.mode,
+      note: null,
       isAbandoned: isAbandoned,
     );
-    ref.read(focusEvaluationDraftProvider.notifier).setDraft(draft);
+    unawaited(
+      ref.read(progressSyncServiceProvider).createSessionAndSync(input),
+    );
 
     state = FocusTimerState.initial(
       selectedGoalId: state.selectedGoalId,

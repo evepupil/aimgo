@@ -38,6 +38,8 @@
   "focusCompletedTitle": "Focus Completed",
   "focusCompletedMessage": "Great work. Continue to self-evaluation?",
   "focusGoEvaluation": "Go Evaluate",
+  "focusPendingEvaluationTitle": "Pending focus evaluation",
+  "focusPendingEvaluationHint": "You can submit it later and resume the flow.",
   "focusContextTitle": "Focus Context",
   "focusContextEmpty": "No focus target selected",
   "profileTitle": "My",

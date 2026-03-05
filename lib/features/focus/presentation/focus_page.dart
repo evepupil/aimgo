@@ -44,38 +44,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
     final focusController = ref.read(focusTimerControllerProvider.notifier);
     final hierarchyAsync = ref.watch(focusHierarchyProvider);
 
-    ref.listen(focusTimerControllerProvider, (previous, next) async {
-      final previousId = previous?.completionEventId ?? 0;
-      if (next.completionEventId <= previousId) {
-        return;
-      }
-      if (!mounted) {
-        return;
-      }
-      final goEvaluate = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(l10n.focusCompletedTitle),
-            content: Text(l10n.focusCompletedMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n.commonClose),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(l10n.focusGoEvaluation),
-              ),
-            ],
-          );
-        },
-      );
-      if (goEvaluate == true && context.mounted) {
-        context.push(RoutePaths.evaluation);
-      }
-    });
-
     final hierarchy =
         hierarchyAsync.valueOrNull ?? const <FocusHierarchyItem>[];
 

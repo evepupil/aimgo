@@ -98,7 +98,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
       body: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             children: [
               SegmentedButton<FocusMode>(
                 segments: [
@@ -118,7 +118,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   focusController.setMode(selection.first);
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _FocusContextSection(
                 hierarchy: hierarchy,
                 state: focusState,
@@ -126,24 +126,22 @@ class _FocusPageState extends ConsumerState<FocusPage>
                 onMilestoneChanged: focusController.selectMilestone,
                 onTaskChanged: focusController.selectTask,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               Center(
                 child: GestureDetector(
-                  onTap:
-                      focusState.mode == FocusMode.pomodoro
-                          ? _openPomodoroDurationPicker
-                          : null,
+                  onTap: focusState.mode == FocusMode.pomodoro
+                      ? _openPomodoroDurationPicker
+                      : null,
                   child: SizedBox(
-                    width: 240,
-                    height: 240,
+                    width: 220,
+                    height: 220,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         CircularProgressIndicator(
-                          value:
-                              focusState.mode == FocusMode.pomodoro
-                                  ? focusState.progressRatio
-                                  : null,
+                          value: focusState.mode == FocusMode.pomodoro
+                              ? focusState.progressRatio
+                              : null,
                           strokeWidth: 10,
                         ),
                         Column(
@@ -152,11 +150,11 @@ class _FocusPageState extends ConsumerState<FocusPage>
                             Text(
                               focusState.mode == FocusMode.pomodoro
                                   ? formatClockFromSeconds(
-                                    focusState.remainingSeconds,
-                                  )
+                                      focusState.remainingSeconds,
+                                    )
                                   : formatClockFromSeconds(
-                                    focusState.displayElapsedSeconds,
-                                  ),
+                                      focusState.displayElapsedSeconds,
+                                    ),
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             const SizedBox(height: 6),
@@ -182,7 +180,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _FocusControlSection(
                 state: focusState,
                 canStart: focusState.hasSelection,
@@ -375,7 +373,7 @@ class _FocusContextSection extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -383,10 +381,17 @@ class _FocusContextSection extends StatelessWidget {
               l10n.focusContextTitle,
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             DropdownButtonFormField<int>(
               value: state.selectedGoalId,
-              decoration: InputDecoration(labelText: l10n.goalsCreateTypeGoal),
+              decoration: InputDecoration(
+                labelText: l10n.goalsCreateTypeGoal,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
               items: [
                 for (final item in hierarchy)
                   DropdownMenuItem<int>(
@@ -398,16 +403,20 @@ class _FocusContextSection extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged:
-                  state.status == FocusTimerStatus.running
-                      ? null
-                      : onGoalChanged,
+              onChanged: state.status == FocusTimerStatus.running
+                  ? null
+                  : onGoalChanged,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             DropdownButtonFormField<int>(
               value: state.selectedMilestoneId,
               decoration: InputDecoration(
                 labelText: l10n.goalsCreateTypeMilestone,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
               items: [
                 for (final item in milestones)
@@ -420,15 +429,21 @@ class _FocusContextSection extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged:
-                  state.status == FocusTimerStatus.running
-                      ? null
-                      : onMilestoneChanged,
+              onChanged: state.status == FocusTimerStatus.running
+                  ? null
+                  : onMilestoneChanged,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             DropdownButtonFormField<int>(
               value: state.selectedTaskId,
-              decoration: InputDecoration(labelText: l10n.goalsCreateTypeTask),
+              decoration: InputDecoration(
+                labelText: l10n.goalsCreateTypeTask,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
               items: [
                 for (final item in tasks)
                   DropdownMenuItem<int>(
@@ -440,18 +455,19 @@ class _FocusContextSection extends StatelessWidget {
                     ),
                   ),
               ],
-              onChanged:
-                  state.status == FocusTimerStatus.running
-                      ? null
-                      : onTaskChanged,
+              onChanged: state.status == FocusTimerStatus.running
+                  ? null
+                  : onTaskChanged,
             ),
-            const SizedBox(height: 12),
-            Text(
-              pathSegments.isEmpty
-                  ? l10n.focusContextEmpty
-                  : pathSegments.join(' > '),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            if (pathSegments.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                pathSegments.join(' > '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ],
         ),
       ),

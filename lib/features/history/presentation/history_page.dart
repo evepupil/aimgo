@@ -280,7 +280,7 @@ class _TimelineView extends StatelessWidget {
       itemBuilder: (context, index) {
         final section = sections[index];
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),

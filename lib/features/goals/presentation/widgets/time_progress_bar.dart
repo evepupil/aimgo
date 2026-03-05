@@ -19,38 +19,40 @@ class TimeProgressBar extends StatelessWidget {
         final maxWidth = constraints.maxWidth;
         final normalWidth = maxWidth * normalPart;
         final overflowWidth = maxWidth * overflowPart.clamp(0, 0.35);
+        final borderRadius = BorderRadius.circular(8);
 
-        return Container(
-          height: 8,
-          decoration: BoxDecoration(
+        return ClipRRect(
+          borderRadius: borderRadius,
+          child: Container(
+            height: 8,
             color: theme.colorScheme.surfaceContainerHighest.withValues(
               alpha: 0.6,
             ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Stack(
-            children: [
-              Container(
-                width: normalWidth,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              if (overflowWidth > 0)
+            child: Stack(
+              children: [
                 Positioned(
-                  left: normalWidth - 1,
-                  child: Container(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: normalWidth,
+                  child: const ColoredBox(color: Color(0xFF2E7D32)),
+                ),
+                if (overflowWidth > 0)
+                  Positioned(
+                    left: math.max(0, normalWidth - 1),
+                    top: 0,
+                    bottom: 0,
                     width: overflowWidth + 1,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2E7D32), Color(0xFFF57C00)],
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF2E7D32), Color(0xFFF57C00)],
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         );
       },

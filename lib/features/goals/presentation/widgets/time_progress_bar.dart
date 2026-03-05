@@ -6,19 +6,21 @@ class TimeProgressBar extends StatelessWidget {
   const TimeProgressBar({required this.progressRatio, super.key});
 
   final double progressRatio;
+  static const _maxVisualOverflowRatio = 0.82;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final clamped = progressRatio.isNaN ? 0.0 : progressRatio;
     final normalPart = clamped.clamp(0, 1).toDouble();
-    final overflowPart = math.max(0, clamped - 1);
+    final overflowPart = math.max(0, clamped - 1).toDouble();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
         final normalWidth = maxWidth * normalPart;
-        final overflowWidth = maxWidth * overflowPart.clamp(0, 0.5);
+        final overflowVisualRatio = _resolveOverflowVisualRatio(overflowPart);
+        final overflowWidth = maxWidth * overflowVisualRatio;
         final borderRadius = BorderRadius.circular(2);
 
         return ClipRRect(
@@ -57,5 +59,12 @@ class TimeProgressBar extends StatelessWidget {
         );
       },
     );
+  }
+
+  double _resolveOverflowVisualRatio(double overflowPart) {
+    if (overflowPart <= 0) {
+      return 0;
+    }
+    return _maxVisualOverflowRatio * (1 - math.exp(-overflowPart * 1.4));
   }
 }

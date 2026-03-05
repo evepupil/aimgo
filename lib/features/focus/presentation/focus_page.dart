@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
@@ -43,6 +45,13 @@ class _FocusPageState extends ConsumerState<FocusPage>
     final focusState = ref.watch(focusTimerControllerProvider);
     final focusController = ref.read(focusTimerControllerProvider.notifier);
     final hierarchyAsync = ref.watch(focusHierarchyProvider);
+    final layoutMetrics = _FocusLayoutMetrics.fromSize(
+      MediaQuery.sizeOf(context),
+    );
+    final timerTextStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
+      fontSize: layoutMetrics.timerTextSize,
+      height: 1.05,
+    );
 
     final hierarchy =
         hierarchyAsync.valueOrNull ?? const <FocusHierarchyItem>[];
@@ -73,7 +82,12 @@ class _FocusPageState extends ConsumerState<FocusPage>
       body: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            padding: EdgeInsets.fromLTRB(
+              layoutMetrics.horizontalPadding,
+              layoutMetrics.topPadding,
+              layoutMetrics.horizontalPadding,
+              layoutMetrics.bottomPadding,
+            ),
             children: [
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -96,15 +110,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   },
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: layoutMetrics.sectionSpacing),
               _FocusContextSection(
                 hierarchy: hierarchy,
                 state: focusState,
                 onGoalChanged: focusController.selectGoal,
                 onMilestoneChanged: focusController.selectMilestone,
                 onTaskChanged: focusController.selectTask,
+                contentPadding: layoutMetrics.contextPadding,
+                fieldSpacing: layoutMetrics.fieldSpacing,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: layoutMetrics.sectionSpacing),
               Center(
                 child: GestureDetector(
                   onTap:
@@ -112,8 +128,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
                           ? _openPomodoroDurationPicker
                           : null,
                   child: SizedBox(
-                    width: 220,
-                    height: 220,
+                    width: layoutMetrics.timerSize,
+                    height: layoutMetrics.timerSize,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -122,7 +138,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                               focusState.mode == FocusMode.pomodoro
                                   ? focusState.progressRatio
                                   : null,
-                          strokeWidth: 10,
+                          strokeWidth: layoutMetrics.timerStrokeWidth,
                         ),
                         Column(
                           mainAxisSize: MainAxisSize.min,
@@ -135,9 +151,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
                                   : formatClockFromSeconds(
                                     focusState.displayElapsedSeconds,
                                   ),
-                              style: Theme.of(context).textTheme.headlineMedium,
+                              style: timerTextStyle,
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: layoutMetrics.timerLabelSpacing),
                             Text(
                               focusState.mode == FocusMode.pomodoro
                                   ? l10n.focusRemaining
@@ -145,7 +161,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                             if (focusState.mode == FocusMode.pomodoro) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(
+                                height: layoutMetrics.timerPresetTopSpacing,
+                              ),
                               Text(
                                 l10n.focusPomodoroPreset(
                                   focusState.pomodoroMinutes.toString(),
@@ -160,7 +178,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: layoutMetrics.controlTopSpacing),
               _FocusControlSection(
                 state: focusState,
                 canStart: focusState.hasSelection,
@@ -312,6 +330,59 @@ class _FocusControlSection extends StatelessWidget {
   }
 }
 
+class _FocusLayoutMetrics {
+  const _FocusLayoutMetrics({
+    required this.horizontalPadding,
+    required this.topPadding,
+    required this.bottomPadding,
+    required this.sectionSpacing,
+    required this.contextPadding,
+    required this.fieldSpacing,
+    required this.timerSize,
+    required this.timerStrokeWidth,
+    required this.timerTextSize,
+    required this.timerLabelSpacing,
+    required this.timerPresetTopSpacing,
+    required this.controlTopSpacing,
+  });
+
+  final double horizontalPadding;
+  final double topPadding;
+  final double bottomPadding;
+  final double sectionSpacing;
+  final double contextPadding;
+  final double fieldSpacing;
+  final double timerSize;
+  final double timerStrokeWidth;
+  final double timerTextSize;
+  final double timerLabelSpacing;
+  final double timerPresetTopSpacing;
+  final double controlTopSpacing;
+
+  factory _FocusLayoutMetrics.fromSize(Size size) {
+    final compactWidth = size.width <= 360;
+    final compactHeight = size.height <= 720;
+    final widthBasedTimer = size.width - (compactWidth ? 28 : 40);
+    final targetTimer = compactHeight ? 178.0 : 220.0;
+    final timerSize = math.max(156.0, math.min(widthBasedTimer, targetTimer));
+
+    return _FocusLayoutMetrics(
+      horizontalPadding: compactWidth ? 12 : 16,
+      topPadding: compactHeight ? 8 : 12,
+      bottomPadding: 20,
+      sectionSpacing: compactHeight ? 8 : 12,
+      contextPadding: compactWidth ? 8 : 10,
+      fieldSpacing: compactHeight ? 6 : 8,
+      timerSize: timerSize,
+      timerStrokeWidth: compactWidth ? 8 : 10,
+      timerTextSize: compactWidth ? 32 : 36,
+      timerLabelSpacing: compactHeight ? 4 : 6,
+      timerPresetTopSpacing: compactHeight ? 2 : 4,
+      controlTopSpacing: compactHeight ? 10 : 16,
+    );
+  }
+}
+
 class _FocusContextSection extends StatelessWidget {
   const _FocusContextSection({
     required this.hierarchy,
@@ -319,6 +390,8 @@ class _FocusContextSection extends StatelessWidget {
     required this.onGoalChanged,
     required this.onMilestoneChanged,
     required this.onTaskChanged,
+    required this.contentPadding,
+    required this.fieldSpacing,
   });
 
   final List<FocusHierarchyItem> hierarchy;
@@ -326,6 +399,8 @@ class _FocusContextSection extends StatelessWidget {
   final void Function(int?) onGoalChanged;
   final void Function(int?) onMilestoneChanged;
   final void Function(int?) onTaskChanged;
+  final double contentPadding;
+  final double fieldSpacing;
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +428,7 @@ class _FocusContextSection extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(contentPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -361,15 +436,15 @@ class _FocusContextSection extends StatelessWidget {
               l10n.focusContextTitle,
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: fieldSpacing),
             DropdownButtonFormField<int>(
               value: state.selectedGoalId,
               decoration: InputDecoration(
                 labelText: l10n.goalsCreateTypeGoal,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
+                contentPadding: EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 10,
+                  vertical: fieldSpacing + 2,
                 ),
               ),
               items: [
@@ -388,15 +463,15 @@ class _FocusContextSection extends StatelessWidget {
                       ? null
                       : onGoalChanged,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: fieldSpacing),
             DropdownButtonFormField<int>(
               value: state.selectedMilestoneId,
               decoration: InputDecoration(
                 labelText: l10n.goalsCreateTypeMilestone,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
+                contentPadding: EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 10,
+                  vertical: fieldSpacing + 2,
                 ),
               ),
               items: [
@@ -415,15 +490,15 @@ class _FocusContextSection extends StatelessWidget {
                       ? null
                       : onMilestoneChanged,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: fieldSpacing),
             DropdownButtonFormField<int>(
               value: state.selectedTaskId,
               decoration: InputDecoration(
                 labelText: l10n.goalsCreateTypeTask,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
+                contentPadding: EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 10,
+                  vertical: fieldSpacing + 2,
                 ),
               ),
               items: [
@@ -443,7 +518,7 @@ class _FocusContextSection extends StatelessWidget {
                       : onTaskChanged,
             ),
             if (pathSegments.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: fieldSpacing),
               Text(
                 pathSegments.join(' > '),
                 maxLines: 1,

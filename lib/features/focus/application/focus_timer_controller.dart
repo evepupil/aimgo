@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:aimgo/core/services/local_storage_service.dart';
+import 'package:aimgo/core/services/notification_service.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/goals/application/progress_sync_service.dart';
 import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
@@ -180,6 +182,10 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     unawaited(
       ref.read(progressSyncServiceProvider).createSessionAndSync(input),
     );
+    _notifyIfNeeded(
+      durationMinutes: input.durationMinutes,
+      isAbandoned: isAbandoned,
+    );
 
     state = FocusTimerState.initial(
       selectedGoalId: state.selectedGoalId,
@@ -200,6 +206,29 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       return FocusTargetLevel.milestone;
     }
     return FocusTargetLevel.goal;
+  }
+
+  void _notifyIfNeeded({
+    required int durationMinutes,
+    required bool isAbandoned,
+  }) {
+    if (isAbandoned) {
+      return;
+    }
+    final storage = ref.read(localStorageServiceProvider);
+    final notificationsEnabled = storage.getNotificationEnabled();
+    if (!notificationsEnabled) {
+      return;
+    }
+    unawaited(
+      ref
+          .read(notificationServiceProvider)
+          .showFocusCompletedNotification(
+            durationMinutes: durationMinutes,
+            soundEnabled: storage.getSoundEnabled(),
+            localePreference: storage.getLocalePreference(),
+          ),
+    );
   }
 
   void _resetTimerState() {

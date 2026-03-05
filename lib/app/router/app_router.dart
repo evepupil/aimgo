@@ -9,6 +9,7 @@ import 'package:aimgo/features/profile/presentation/profile_page.dart';
 import 'package:aimgo/features/evaluation/presentation/evaluation_page.dart';
 import 'package:aimgo/features/profile/presentation/about_page.dart';
 import 'package:aimgo/features/settings/presentation/settings_page.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -57,29 +58,77 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.settings,
-        builder: (context, state) => const SettingsPage(),
+        pageBuilder:
+            (context, state) => _buildOverlayTransitionPage(
+              state: state,
+              child: const SettingsPage(),
+            ),
       ),
       GoRoute(
         path: RoutePaths.history,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final initialGoalFilterId = int.tryParse(
             state.uri.queryParameters['goalId'] ?? '',
           );
-          return HistoryPage(initialGoalFilterId: initialGoalFilterId);
+          return _buildOverlayTransitionPage(
+            state: state,
+            child: HistoryPage(initialGoalFilterId: initialGoalFilterId),
+          );
         },
       ),
       GoRoute(
         path: RoutePaths.evaluation,
-        builder: (context, state) => const EvaluationPage(),
+        pageBuilder:
+            (context, state) => _buildOverlayTransitionPage(
+              state: state,
+              child: const EvaluationPage(),
+            ),
       ),
       GoRoute(
         path: RoutePaths.analytics,
-        builder: (context, state) => const AnalyticsPage(),
+        pageBuilder:
+            (context, state) => _buildOverlayTransitionPage(
+              state: state,
+              child: const AnalyticsPage(),
+            ),
       ),
       GoRoute(
         path: RoutePaths.about,
-        builder: (context, state) => const AboutPage(),
+        pageBuilder:
+            (context, state) => _buildOverlayTransitionPage(
+              state: state,
+              child: const AboutPage(),
+            ),
       ),
     ],
   );
 });
+
+CustomTransitionPage<void> _buildOverlayTransitionPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, pageChild) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curvedAnimation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.03),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: pageChild,
+        ),
+      );
+    },
+  );
+}

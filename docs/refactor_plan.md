@@ -12,7 +12,9 @@
 
 - ✅ **已基本满足**：核心数据模型、目标/专注/自评主流程、历史与分析基础能力、语言主题切换
 - 🟡 **部分满足**：通用交互细节（Header 显隐、动效统一、小屏适配）、目标页筛选菜单、历史视觉细节
-- ❌ **未满足**：设置中的备份恢复与通知行为落地
+- ❌ **未满足**：全局 Header 显隐策略、跨页面密度与节奏统一
+
+> 2026-03-05 更新：目标页已切换为高密度清单样式；设置页已落地本地备份恢复与通知开关联动；P1 路由动效与专注页小屏可达性完成。
 
 ### 1.2 优先级建议
 
@@ -36,24 +38,25 @@
 ### 2.1.2 Header 显隐、页面切换动效、响应式
 
 - ❌ Header 滚动隐藏/显示：未实现（各页面均为普通 `AppBar`，无滚动联动）
-- 🟡 页面切换动画：使用默认路由行为，未统一策略（`lib/app/router/app_router.dart`）
-- 🟡 响应式适配：仅局部微调，缺少系统化断点/布局策略（多页面固定间距与卡片宽度）
+- ✅ 页面切换动画：非 Tab push/pop 路由已统一为淡入+轻微上滑过渡（`lib/app/router/app_router.dart`）
+- 🟡 响应式适配：已补专注页小屏关键布局，但缺少全局断点/布局策略（多页面固定间距与卡片宽度）
 
 ### 2.1.3 核心规则（需求 1.3）
 
 - ✅ 三级模型 Goal→Milestone→Task：已实现（`lib/shared/models/planning_models.dart`、`lib/core/services/database/app_database.dart`）
 - ✅ 有效专注时间=时长×效率，默认 60%：已实现（`lib/shared/repositories/drift_aimgo_repository.dart`）
 - ✅ 进度可超过 100% 且完成状态独立：已实现（`lib/features/goals/domain/progress_calculator.dart`、`lib/features/goals/application/progress_sync_service.dart`）
-- 🟡 超时进度条视觉：已实现基础溢出，但溢出可视宽度目前封顶（`lib/features/goals/presentation/widgets/time_progress_bar.dart`）
+- ✅ 超时进度条视觉：已实现指数型溢出视觉（放开固定封顶，保留可读性上限保护）（`lib/features/goals/presentation/widgets/time_progress_bar.dart`）
 
 ---
 
 ## 2.2 目标页面（需求 2）
 
 - ✅ 目标切换抽屉、目标/里程碑/任务 CRUD、搜索与高亮：已实现（`lib/features/goals/presentation/goals_page.dart`）
-- ✅ 里程碑卡片进度与展开动画：已实现（`lib/features/goals/presentation/widgets/milestone_card.dart`）
-- 🟡 任务未完成图标“圈边缘进度”细节：当前为“外圈+内层小进度圈”，与需求描述存在偏差（`lib/features/goals/presentation/widgets/task_item_tile.dart`）
+- ✅ 里程碑列表进度与展开动画：已实现（`lib/features/goals/presentation/widgets/milestone_card.dart`）
+- ✅ 任务未完成图标“圈边缘进度”细节：已调整为边缘进度环语义（`lib/features/goals/presentation/widgets/task_item_tile.dart`）
 - ✅ Header 的筛选与菜单能力：已实现筛选面板 + 排序/批量操作入口（`lib/features/goals/presentation/goals_page.dart`、`lib/features/goals/application/goals_page_controller.dart`）
+- ✅ 目标页结构已切换为高密度清单（非卡片主导），提升单屏可见数量（`lib/features/goals/presentation/widgets/milestone_card.dart`）
 
 ---
 
@@ -102,8 +105,8 @@
 ## 2.8 设置页面（需求 8）
 
 - ✅ 语言/主题切换：已实现（`lib/features/settings/presentation/settings_page.dart`）
-- 🟡 通知/声音开关：仅本地持久化，未驱动真实通知策略（`lib/features/settings/application/settings_controller.dart`）
-- ❌ 数据备份与恢复：仍占位提示（`settingsActionPlaceholder`）
+- ✅ 通知/声音开关：已联动本地通知行为（开关真实生效）（`lib/features/settings/application/settings_controller.dart`、`lib/core/services/notification_service.dart`）
+- ✅ 数据备份与恢复：已实现本地 JSON 导出 + 恢复最近备份（覆盖恢复）（`lib/features/settings/data/local_backup_service.dart`、`lib/features/settings/presentation/settings_page.dart`）
 - 🟡 清除缓存：目前仅重置设置项，不包含业务缓存/历史聚合缓存
 
 ---
@@ -128,10 +131,10 @@
 - [x] 取消强制自评依赖，记录保留决定权交给用户
 
 ### P0-4 设置页能力落地（需求 8.4）
-- [ ] 实现本地备份导出（JSON）
-- [ ] 实现本地恢复导入（JSON 校验 + 覆盖策略）
-- [ ] 接入通知服务（番茄结束提醒）
-- [ ] 将通知/声音开关真正作用到提醒行为
+- [x] 实现本地备份导出（JSON）
+- [x] 实现本地恢复导入（JSON 校验 + 覆盖策略）
+- [x] 接入通知服务（番茄结束提醒）
+- [x] 将通知/声音开关真正作用到提醒行为
 
 ---
 
@@ -139,12 +142,12 @@
 
 ### P1-1 通用交互一致性（需求 1）
 - [ ] 统一滚动 Header 显隐方案（列表页复用）
-- [ ] 统一路由切换动画（push/pop 过渡规则）
-- [ ] 小屏专项适配（360dp 宽度下关键按钮可见性）
+- [x] 统一路由切换动画（push/pop 过渡规则）
+- [x] 小屏专项适配（360dp 宽度下关键按钮可见性）
 
 ### P1-2 目标页视觉细节
-- [ ] 调整任务未完成图标为“边缘进度环”样式
-- [ ] 复核进度条超时视觉策略（是否放开当前溢出宽度封顶）
+- [x] 调整任务未完成图标为“边缘进度环”样式
+- [x] 复核进度条超时视觉策略（是否放开当前溢出宽度封顶）
 
 ### P1-3 历史与分析一致性
 - [ ] 历史查询去 N+1（聚合查询或映射缓存）
@@ -193,23 +196,23 @@
 ### 6.1 问题分级
 
 - **P0 可用性问题**
-  - [ ] 专注页关键操作可达性不足（“开始专注”在部分小屏需滚动后才可见）
+  - [x] 专注页关键操作可达性不足（“开始专注”在部分小屏需滚动后才可见）
   - [x] 目标页筛选/菜单是占位，形成“可见不可用”的挫败体验
   - [x] 按产品决策取消休息引导入口，避免无效步骤
 
 - **P1 可读性问题**
-  - [ ] 历史时间轴缺少“点+线+日期锚点”视觉骨架，扫描效率低
-  - [ ] 日历页无“有记录日期”明显标记，信息发现成本高
-  - [ ] 目标页任务进度图标与需求语义有偏差（边缘进度环表达不够直观）
+  - [x] 历史时间轴缺少“点+线+日期锚点”视觉骨架，扫描效率低
+  - [x] 日历页无“有记录日期”明显标记，信息发现成本高
+  - [x] 目标页任务进度图标与需求语义有偏差（边缘进度环表达不够直观）
 
 - **P1 一致性问题**
   - [ ] 各页面间距密度与卡片层级不完全一致（紧凑度不统一）
   - [ ] Header 行为不统一（滚动页未实现显隐策略）
-  - [ ] 路由过渡动画缺少统一规范（页面切换体感不一致）
+  - [x] 路由过渡动画缺少统一规范（页面切换体感不一致）
 
 ### 6.2 对应改造动作（与前文任务映射）
 
-- [ ] 将“开始专注按钮首屏可见”纳入 Phase P1-1 小屏专项适配验收
+- [x] 将“开始专注按钮首屏可见”纳入 Phase P1-1 小屏专项适配验收
 - [x] 将“时间轴骨架 + 日历标记”作为 Phase P0-2 的交付硬标准
 - [x] 将“专注完成后流程简化（无休息入口）”作为 Phase P0-3 交付项
 - [x] 将“筛选/菜单占位清零”作为 Phase P0-1 的出关条件
@@ -217,7 +220,7 @@
 
 ### 6.3 体验验收指标（前端向）
 
-- [ ] 360dp 宽度设备下，专注页无需滚动即可完成一次开始操作
+- [x] 360dp 宽度设备下，专注页无需滚动即可完成一次开始操作
 - [ ] 历史时间轴首屏可一眼区分时间分组与记录归属
 - [ ] 关键页面（首页/目标/专注/历史）垂直节奏一致，无明显“忽松忽紧”
 - [ ] 用户可在 3 秒内找到“筛选入口并生效”（目标页与历史页）

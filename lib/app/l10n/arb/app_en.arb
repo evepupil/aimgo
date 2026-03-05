@@ -177,10 +177,47 @@
   "settingsNotification": "Notifications",
   "settingsSound": "Sound",
   "settingsBackupRestore": "Backup & Restore",
-  "settingsBackupRestoreHint": "Cloud sync and import/export will be added in later phases.",
+  "settingsBackupRestoreHint": "Supports local JSON export and restore from the latest backup.",
+  "settingsBackupActionSheetTitle": "Backup Actions",
+  "settingsBackupExport": "Export Backup",
+  "settingsBackupImportLatest": "Restore Latest Backup",
+  "settingsBackupNoFile": "No local backup file found.",
+  "settingsBackupExportSuccess": "Backup exported: {path}",
+  "@settingsBackupExportSuccess": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackupImportSuccess": "Restore completed: {path}",
+  "@settingsBackupImportSuccess": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackupOperationFailed": "Action failed: {error}",
+  "@settingsBackupOperationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "settingsClearCache": "Clear Cache",
   "settingsActionPlaceholder": "This action will be refined in next phases.",
   "settingsCacheCleared": "Cache settings have been reset.",
+  "notificationFocusDoneTitle": "Focus Completed",
+  "notificationFocusDoneBody": "{minutes} minutes have been recorded.",
+  "@notificationFocusDoneBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
   "langSystem": "System",
   "langZh": "中文",
   "langEn": "English",

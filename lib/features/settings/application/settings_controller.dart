@@ -1,4 +1,6 @@
 import 'package:aimgo/core/services/local_storage_service.dart';
+import 'package:aimgo/core/services/notification_service.dart';
+import 'package:aimgo/features/settings/data/local_backup_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final settingsControllerProvider =
@@ -34,6 +36,12 @@ final class SettingsController extends Notifier<SettingsState> {
   Future<void> setNotificationEnabled(bool value) async {
     state = state.copyWith(notificationsEnabled: value);
     await ref.read(localStorageServiceProvider).setNotificationEnabled(value);
+    final notificationService = ref.read(notificationServiceProvider);
+    if (value) {
+      await notificationService.requestPermissions();
+    } else {
+      await notificationService.cancelAll();
+    }
   }
 
   Future<void> setSoundEnabled(bool value) async {
@@ -48,5 +56,24 @@ final class SettingsController extends Notifier<SettingsState> {
       notificationsEnabled: storage.getNotificationEnabled(),
       soundEnabled: storage.getSoundEnabled(),
     );
+  }
+
+  Future<String> exportBackup() {
+    return ref.read(localBackupServiceProvider).exportBackup();
+  }
+
+  Future<String?> importLatestBackup() async {
+    final restoredPath =
+        await ref.read(localBackupServiceProvider).restoreLatestBackup();
+    final storage = ref.read(localStorageServiceProvider);
+    state = state.copyWith(
+      notificationsEnabled: storage.getNotificationEnabled(),
+      soundEnabled: storage.getSoundEnabled(),
+    );
+    return restoredPath;
+  }
+
+  Future<bool> hasBackupFile() {
+    return ref.read(localBackupServiceProvider).hasBackupFile();
   }
 }

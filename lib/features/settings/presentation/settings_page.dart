@@ -105,9 +105,12 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.backup_outlined),
             title: Text(l10n.settingsBackupRestore),
             subtitle: Text(l10n.settingsBackupRestoreHint),
-            onTap: () {
-              _showMessage(context, l10n.settingsActionPlaceholder);
-            },
+            onTap:
+                () => _onTapBackupRestore(
+                  context: context,
+                  ref: ref,
+                  controller: settingsController,
+                ),
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -129,5 +132,76 @@ class SettingsPage extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _onTapBackupRestore({
+    required BuildContext context,
+    required WidgetRef ref,
+    required SettingsController controller,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final hasBackup = await controller.hasBackupFile();
+    if (!context.mounted) {
+      return;
+    }
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                title: Text(l10n.settingsBackupActionSheetTitle),
+                enabled: false,
+              ),
+              ListTile(
+                leading: const Icon(Icons.upload_file_outlined),
+                title: Text(l10n.settingsBackupExport),
+                onTap: () => Navigator.of(sheetContext).pop('export'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.download_outlined),
+                title: Text(l10n.settingsBackupImportLatest),
+                subtitle: hasBackup ? null : Text(l10n.settingsBackupNoFile),
+                enabled: hasBackup,
+                onTap: () => Navigator.of(sheetContext).pop('import'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!context.mounted || action == null) {
+      return;
+    }
+
+    try {
+      if (action == 'export') {
+        final path = await controller.exportBackup();
+        if (context.mounted) {
+          _showMessage(context, l10n.settingsBackupExportSuccess(path));
+        }
+        return;
+      }
+
+      final restoredPath = await controller.importLatestBackup();
+      if (!context.mounted) {
+        return;
+      }
+      if (restoredPath == null) {
+        _showMessage(context, l10n.settingsBackupNoFile);
+      } else {
+        _showMessage(context, l10n.settingsBackupImportSuccess(restoredPath));
+      }
+    } catch (error) {
+      if (context.mounted) {
+        _showMessage(
+          context,
+          l10n.settingsBackupOperationFailed(error.toString()),
+        );
+      }
+    }
   }
 }

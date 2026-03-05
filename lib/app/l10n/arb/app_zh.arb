@@ -177,10 +177,47 @@
   "settingsNotification": "通知设置",
   "settingsSound": "声音设置",
   "settingsBackupRestore": "数据备份与恢复",
-  "settingsBackupRestoreHint": "云同步与导入导出功能将在后续阶段提供。",
+  "settingsBackupRestoreHint": "支持本地导出 JSON 备份，并可恢复最近一次备份。",
+  "settingsBackupActionSheetTitle": "备份操作",
+  "settingsBackupExport": "导出备份",
+  "settingsBackupImportLatest": "恢复最近备份",
+  "settingsBackupNoFile": "未找到可恢复的本地备份。",
+  "settingsBackupExportSuccess": "备份导出成功：{path}",
+  "@settingsBackupExportSuccess": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackupImportSuccess": "恢复完成：{path}",
+  "@settingsBackupImportSuccess": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackupOperationFailed": "操作失败：{error}",
+  "@settingsBackupOperationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "settingsClearCache": "清除缓存",
   "settingsActionPlaceholder": "该操作将在后续阶段细化。",
   "settingsCacheCleared": "缓存设置已重置。",
+  "notificationFocusDoneTitle": "专注已完成",
+  "notificationFocusDoneBody": "本次已记录 {minutes} 分钟专注。",
+  "@notificationFocusDoneBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
   "langSystem": "跟随系统",
   "langZh": "中文",
   "langEn": "英文",

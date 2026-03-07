@@ -3,6 +3,7 @@ import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
 import 'package:aimgo/features/goals/presentation/widgets/milestone_card.dart';
+import 'package:aimgo/features/goals/presentation/widgets/planning_entry_sheet.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -196,13 +197,11 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   milestone: node.milestone,
                 ),
             onAddTask:
-                () => _showTaskDialog(
-                  goalId: selectedGoal.goal.id,
-                  selectedMilestoneId: milestoneId,
-                  availableMilestones:
-                      selectedGoal.milestones
-                          .map((item) => item.milestone)
-                          .toList(),
+                () => _openCreateComposer(
+                  state: state,
+                  initialType: PlanningComposerType.task,
+                  initialGoalId: selectedGoal.goal.id,
+                  initialMilestoneId: milestoneId,
                 ),
             onToggleTask:
                 (taskId, targetCompleted) => controller.toggleTaskCompletion(
@@ -248,7 +247,10 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
           },
           onAddGoal: () {
             Navigator.of(context).pop();
-            _showGoalDialog();
+            _openCreateComposer(
+              state: state,
+              initialType: PlanningComposerType.goal,
+            );
           },
           onEditGoal: (goalId) {
             Navigator.of(context).pop();
@@ -550,148 +552,128 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   }
 
   Future<void> _onTapAdd(GoalsPageState? state) async {
-    final l10n = AppLocalizations.of(context)!;
-    final selectedGoal = state?.selectedGoalTree;
+    await _openCreateComposer(state: state);
+  }
 
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                title: Text(l10n.goalsCreateTypeGoal),
-                leading: const Icon(Icons.flag_outlined),
-                onTap: () => Navigator.of(context).pop('goal'),
-              ),
-              ListTile(
-                title: Text(l10n.goalsCreateTypeMilestone),
-                leading: const Icon(Icons.layers_outlined),
-                onTap: () => Navigator.of(context).pop('milestone'),
-              ),
-              ListTile(
-                title: Text(l10n.goalsCreateTypeTask),
-                leading: const Icon(Icons.task_alt_outlined),
-                onTap: () => Navigator.of(context).pop('task'),
-              ),
-            ],
-          ),
-        );
-      },
+  Future<void> _openCreateComposer({
+    GoalsPageState? state,
+    PlanningComposerType initialType = PlanningComposerType.task,
+    int? initialGoalId,
+    int? initialMilestoneId,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final entryState =
+        state ?? ref.read(goalsPageControllerProvider).valueOrNull;
+    final selectedGoal = entryState?.selectedGoalTree;
+    final resolvedGoalId = initialGoalId ?? selectedGoal?.goal.id;
+    final resolvedMilestoneId =
+        initialMilestoneId ??
+        _resolveDefaultMilestoneId(entryState, selectedGoal: selectedGoal);
+
+    final request = await _showPlanningEntrySheet<PlanningComposerRequest>(
+      PlanningComposerSheet(
+        goalTree: entryState?.goalTree ?? const <GoalWithMilestones>[],
+        submitLabel: l10n.goalsCreateEntry,
+        initialType: initialType,
+        initialGoalId: resolvedGoalId,
+        initialMilestoneId: resolvedMilestoneId,
+      ),
     );
 
-    if (!mounted || result == null) {
+    if (request == null || !mounted) {
       return;
     }
 
-    switch (result) {
-      case 'goal':
-        await _showGoalDialog();
-        break;
-      case 'milestone':
-        if (selectedGoal == null) {
+    final controller = ref.read(goalsPageControllerProvider.notifier);
+    switch (request.type) {
+      case PlanningComposerType.goal:
+        await controller.createGoal(
+          title: request.title,
+          description: request.description,
+        );
+        return;
+      case PlanningComposerType.milestone:
+        final goalId = request.goalId;
+        if (goalId == null) {
           _showInfoToast(l10n.goalsSelectGoalFirst);
           return;
         }
-        await _showMilestoneDialog(goalId: selectedGoal.goal.id);
-        break;
-      case 'task':
-        if (selectedGoal == null) {
+        await controller.createMilestone(
+          goalId: goalId,
+          title: request.title,
+          description: request.description,
+        );
+        return;
+      case PlanningComposerType.task:
+        final goalId = request.goalId;
+        final milestoneId = request.milestoneId;
+        final estimateMinutes = request.estimateMinutes;
+        if (goalId == null) {
           _showInfoToast(l10n.goalsSelectGoalFirst);
           return;
         }
-        if (selectedGoal.milestones.isEmpty) {
+        if (milestoneId == null || estimateMinutes == null) {
           _showInfoToast(l10n.goalsSelectMilestoneFirst);
           return;
         }
-        final defaultMilestoneId =
-            selectedGoal.milestones
-                .firstWhere(
-                  (node) =>
-                      state!.expandedMilestoneIds.contains(node.milestone.id),
-                  orElse: () => selectedGoal.milestones.first,
-                )
-                .milestone
-                .id;
-        await _showTaskDialog(
-          goalId: selectedGoal.goal.id,
-          selectedMilestoneId: defaultMilestoneId,
-          availableMilestones:
-              selectedGoal.milestones.map((item) => item.milestone).toList(),
+        await controller.createTask(
+          goalId: goalId,
+          milestoneId: milestoneId,
+          title: request.title,
+          description: request.description,
+          estimateMinutes: estimateMinutes,
         );
-        break;
+        return;
     }
+  }
+
+  int? _resolveDefaultMilestoneId(
+    GoalsPageState? state, {
+    GoalWithMilestones? selectedGoal,
+  }) {
+    final goal = selectedGoal ?? state?.selectedGoalTree;
+    if (goal == null || goal.milestones.isEmpty) {
+      return null;
+    }
+    final expandedIds = state?.expandedMilestoneIds ?? const <int>{};
+    for (final milestoneNode in goal.milestones) {
+      if (expandedIds.contains(milestoneNode.milestone.id)) {
+        return milestoneNode.milestone.id;
+      }
+    }
+    return goal.milestones.first.milestone.id;
   }
 
   Future<void> _showGoalDialog({GoalModel? existingGoal}) async {
     final l10n = AppLocalizations.of(context)!;
-    final titleController = TextEditingController(
-      text: existingGoal?.title ?? '',
-    );
-    final descriptionController = TextEditingController(
-      text: existingGoal?.description ?? '',
-    );
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(
+    final input = await _showPlanningEntrySheet<CreateGoalInput>(
+      GoalEntrySheet(
+        title:
             existingGoal == null
                 ? l10n.goalsCreateGoalDialogTitle
                 : l10n.goalsEditGoalDialogTitle,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: l10n.goalsEntryTitle),
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(
-                  labelText: l10n.goalsEntryDescription,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                existingGoal == null ? l10n.goalsCreateEntry : l10n.commonSave,
-              ),
-            ),
-          ],
-        );
-      },
+        submitLabel:
+            existingGoal == null ? l10n.goalsCreateEntry : l10n.commonSave,
+        initialTitle: existingGoal?.title,
+        initialDescription: existingGoal?.description,
+      ),
     );
 
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    final title = titleController.text.trim();
-    if (title.isEmpty) {
+    if (input == null || !mounted) {
       return;
     }
 
     final controller = ref.read(goalsPageControllerProvider.notifier);
     if (existingGoal == null) {
       await controller.createGoal(
-        title: title,
-        description: _normalizeNullable(descriptionController.text),
+        title: input.title,
+        description: input.description,
       );
     } else {
       await controller.updateGoal(
         goalId: existingGoal.id,
-        title: title,
-        description: _normalizeNullable(descriptionController.text),
+        title: input.title,
+        description: input.description,
         sortOrder: existingGoal.sortOrder,
         colorHex: existingGoal.colorHex,
         dueAt: existingGoal.dueAt,
@@ -716,61 +698,21 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     MilestoneModel? existingMilestone,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final titleController = TextEditingController(
-      text: existingMilestone?.title ?? '',
-    );
-    final descriptionController = TextEditingController(
-      text: existingMilestone?.description ?? '',
-    );
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(
+    final input = await _showPlanningEntrySheet<CreateMilestoneInput>(
+      MilestoneEntrySheet(
+        goalId: goalId,
+        title:
             existingMilestone == null
                 ? l10n.goalsCreateMilestoneDialogTitle
                 : l10n.goalsEditMilestoneDialogTitle,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: l10n.goalsEntryTitle),
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(
-                  labelText: l10n.goalsEntryDescription,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                existingMilestone == null
-                    ? l10n.goalsCreateEntry
-                    : l10n.commonSave,
-              ),
-            ),
-          ],
-        );
-      },
+        submitLabel:
+            existingMilestone == null ? l10n.goalsCreateEntry : l10n.commonSave,
+        initialTitle: existingMilestone?.title,
+        initialDescription: existingMilestone?.description,
+      ),
     );
 
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    final title = titleController.text.trim();
-    if (title.isEmpty) {
+    if (input == null || !mounted) {
       return;
     }
 
@@ -778,15 +720,15 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     if (existingMilestone == null) {
       await controller.createMilestone(
         goalId: goalId,
-        title: title,
-        description: _normalizeNullable(descriptionController.text),
+        title: input.title,
+        description: input.description,
       );
     } else {
       await controller.updateMilestone(
         goalId: goalId,
         milestoneId: existingMilestone.id,
-        title: title,
-        description: _normalizeNullable(descriptionController.text),
+        title: input.title,
+        description: input.description,
         sortOrder: existingMilestone.sortOrder,
         dueAt: existingMilestone.dueAt,
       );
@@ -824,105 +766,23 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     TaskModel? existingTask,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final titleController = TextEditingController(
-      text: existingTask?.title ?? '',
-    );
-    final descriptionController = TextEditingController(
-      text: existingTask?.description ?? '',
-    );
-    final estimateController = TextEditingController(
-      text: existingTask?.estimateMinutes.toString() ?? '25',
-    );
-    var milestoneId = existingTask?.milestoneId ?? selectedMilestoneId;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                existingTask == null
-                    ? l10n.goalsCreateTaskDialogTitle
-                    : l10n.goalsEditTaskDialogTitle,
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<int>(
-                    value: milestoneId,
-                    decoration: InputDecoration(
-                      labelText: l10n.goalsAddMilestone,
-                    ),
-                    items: availableMilestones
-                        .map(
-                          (milestone) => DropdownMenuItem(
-                            value: milestone.id,
-                            child: Text(
-                              milestone.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      if (value == null) {
-                        return;
-                      }
-                      setState(() {
-                        milestoneId = value;
-                      });
-                    },
-                  ),
-                  TextField(
-                    controller: titleController,
-                    decoration: InputDecoration(
-                      labelText: l10n.goalsEntryTitle,
-                    ),
-                  ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(
-                      labelText: l10n.goalsEntryDescription,
-                    ),
-                  ),
-                  TextField(
-                    controller: estimateController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: l10n.goalsEntryEstimateMinutes,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n.commonCancel),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(
-                    existingTask == null
-                        ? l10n.goalsCreateEntry
-                        : l10n.commonSave,
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+    final input = await _showPlanningEntrySheet<CreateTaskInput>(
+      TaskEntrySheet(
+        title:
+            existingTask == null
+                ? l10n.goalsCreateTaskDialogTitle
+                : l10n.goalsEditTaskDialogTitle,
+        submitLabel:
+            existingTask == null ? l10n.goalsCreateEntry : l10n.commonSave,
+        availableMilestones: availableMilestones,
+        initialMilestoneId: existingTask?.milestoneId ?? selectedMilestoneId,
+        initialTitle: existingTask?.title,
+        initialDescription: existingTask?.description,
+        initialEstimateMinutes: existingTask?.estimateMinutes ?? 25,
+      ),
     );
 
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    final title = titleController.text.trim();
-    final estimateMinutes = int.tryParse(estimateController.text.trim());
-    if (title.isEmpty || estimateMinutes == null || estimateMinutes <= 0) {
+    if (input == null || !mounted) {
       return;
     }
 
@@ -930,23 +790,34 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     if (existingTask == null) {
       await controller.createTask(
         goalId: goalId,
-        milestoneId: milestoneId,
-        title: title,
-        description: _normalizeNullable(descriptionController.text),
-        estimateMinutes: estimateMinutes,
+        milestoneId: input.milestoneId,
+        title: input.title,
+        description: input.description,
+        estimateMinutes: input.estimateMinutes,
       );
     } else {
       await controller.updateTask(
         goalId: goalId,
         taskId: existingTask.id,
-        milestoneId: milestoneId,
-        title: title,
-        description: _normalizeNullable(descriptionController.text),
-        estimateMinutes: estimateMinutes,
+        milestoneId: input.milestoneId,
+        title: input.title,
+        description: input.description,
+        estimateMinutes: input.estimateMinutes,
         sortOrder: existingTask.sortOrder,
         dueAt: existingTask.dueAt,
       );
     }
+  }
+
+  Future<T?> _showPlanningEntrySheet<T>(Widget child) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder: (context) => child,
+    );
   }
 
   Future<void> _editTaskDialog({
@@ -1024,11 +895,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
       },
     );
     return confirmed == true;
-  }
-
-  String? _normalizeNullable(String text) {
-    final trimmed = text.trim();
-    return trimmed.isEmpty ? null : trimmed;
   }
 
   void _showInfoToast(String message) {

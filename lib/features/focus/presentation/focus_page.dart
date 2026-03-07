@@ -7,10 +7,12 @@ import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/focus/application/focus_timer_controller.dart';
+import 'package:aimgo/features/goals/application/progress_sync_service.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -87,29 +89,12 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       ),
                       IconButton(
                         onPressed:
-                            focusState.status == FocusTimerStatus.running
-                                ? null
-                                : () => _openFocusTargetPicker(
-                                  hierarchy: hierarchy,
-                                  state: focusState,
-                                ),
+                            () => _openManualFocusSheet(
+                              hierarchy: hierarchy,
+                              state: focusState,
+                            ),
                         icon: const Icon(Icons.add),
-                        tooltip: l10n.focusContextTitle,
-                      ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert),
-                        onSelected: (value) {
-                          if (value == 'settings') {
-                            context.push(RoutePaths.settings);
-                          }
-                        },
-                        itemBuilder:
-                            (context) => [
-                              PopupMenuItem<String>(
-                                value: 'settings',
-                                child: Text(l10n.settingsTitle),
-                              ),
-                            ],
+                        tooltip: l10n.focusManualAddTooltip,
                       ),
                     ],
                   ),
@@ -408,8 +393,77 @@ class _FocusPageState extends ConsumerState<FocusPage>
       return;
     }
 
+    final picked = await _pickTaskTarget(
+      hierarchy: hierarchy,
+      selectedGoalId: state.selectedGoalId,
+      selectedMilestoneId: state.selectedMilestoneId,
+      selectedTaskId: state.selectedTaskId,
+    );
+    if (!mounted || picked == null) {
+      return;
+    }
+
     final controller = ref.read(focusTimerControllerProvider.notifier);
+    controller.selectGoal(picked.goalId);
+    controller.selectMilestone(picked.milestoneId);
+    controller.selectTask(picked.taskId);
+  }
+
+  Future<void> _openManualFocusSheet({
+    required List<FocusHierarchyItem> hierarchy,
+    required FocusTimerState state,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (hierarchy.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.goalsNoGoal)));
+      return;
+    }
+
     await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.93,
+          child: _ManualFocusSheet(
+            hierarchy: hierarchy,
+            initialGoalId: state.selectedGoalId,
+            initialMilestoneId: state.selectedMilestoneId,
+            initialTaskId: state.selectedTaskId,
+            onPickTarget: ({
+              required int? selectedGoalId,
+              required int? selectedMilestoneId,
+              required int? selectedTaskId,
+            }) {
+              return _pickTaskTarget(
+                hierarchy: hierarchy,
+                selectedGoalId: selectedGoalId,
+                selectedMilestoneId: selectedMilestoneId,
+                selectedTaskId: selectedTaskId,
+              );
+            },
+            onSave: (input) async {
+              await ref
+                  .read(progressSyncServiceProvider)
+                  .createSessionAndSync(input);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<_FocusTaskSelection?> _pickTaskTarget({
+    required List<FocusHierarchyItem> hierarchy,
+    required int? selectedGoalId,
+    required int? selectedMilestoneId,
+    required int? selectedTaskId,
+  }) async {
+    return showModalBottomSheet<_FocusTaskSelection>(
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
@@ -419,14 +473,18 @@ class _FocusPageState extends ConsumerState<FocusPage>
           heightFactor: 0.93,
           child: _FocusTargetPickerSheet(
             hierarchy: hierarchy,
-            selectedGoalId: state.selectedGoalId,
-            selectedMilestoneId: state.selectedMilestoneId,
-            selectedTaskId: state.selectedTaskId,
-            onSelectTask: (goalId, milestoneId, taskId) {
-              controller.selectGoal(goalId);
-              controller.selectMilestone(milestoneId);
-              controller.selectTask(taskId);
-              Navigator.of(sheetContext).pop();
+            selectedGoalId: selectedGoalId,
+            selectedMilestoneId: selectedMilestoneId,
+            selectedTaskId: selectedTaskId,
+            onSelectTask: (goalId, milestoneId, taskId, pathText) {
+              Navigator.of(sheetContext).pop(
+                _FocusTaskSelection(
+                  goalId: goalId,
+                  milestoneId: milestoneId,
+                  taskId: taskId,
+                  pathText: pathText,
+                ),
+              );
             },
           ),
         );
@@ -881,7 +939,7 @@ class _FocusLayoutMetrics {
 }
 
 typedef _TaskSelectCallback =
-    void Function(int goalId, int milestoneId, int taskId);
+    void Function(int goalId, int milestoneId, int taskId, String pathText);
 
 class _FocusTargetPickerSheet extends StatelessWidget {
   const _FocusTargetPickerSheet({
@@ -1028,6 +1086,7 @@ class _FocusTargetPickerSheet extends StatelessWidget {
                                             goalNode.goal.id,
                                             milestoneNode.milestone.id,
                                             task.id,
+                                            '${goalNode.goal.title}>${milestoneNode.milestone.title}>${task.title}',
                                           ),
                                     ),
                                 ],
@@ -1042,6 +1101,404 @@ class _FocusTargetPickerSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+typedef _PickManualTarget =
+    Future<_FocusTaskSelection?> Function({
+      required int? selectedGoalId,
+      required int? selectedMilestoneId,
+      required int? selectedTaskId,
+    });
+
+typedef _SaveManualFocusSession =
+    Future<void> Function(CreateFocusSessionInput input);
+
+final class _FocusTaskSelection {
+  const _FocusTaskSelection({
+    required this.goalId,
+    required this.milestoneId,
+    required this.taskId,
+    required this.pathText,
+  });
+
+  final int goalId;
+  final int milestoneId;
+  final int taskId;
+  final String pathText;
+}
+
+class _ManualFocusSheet extends StatefulWidget {
+  const _ManualFocusSheet({
+    required this.hierarchy,
+    required this.initialGoalId,
+    required this.initialMilestoneId,
+    required this.initialTaskId,
+    required this.onPickTarget,
+    required this.onSave,
+  });
+
+  final List<FocusHierarchyItem> hierarchy;
+  final int? initialGoalId;
+  final int? initialMilestoneId;
+  final int? initialTaskId;
+  final _PickManualTarget onPickTarget;
+  final _SaveManualFocusSession onSave;
+
+  @override
+  State<_ManualFocusSheet> createState() => _ManualFocusSheetState();
+}
+
+class _ManualFocusSheetState extends State<_ManualFocusSheet> {
+  late DateTime _selectedDate;
+  late TimeOfDay _selectedStartTime;
+  late TextEditingController _durationController;
+  late TextEditingController _efficiencyController;
+  late TextEditingController _noteController;
+
+  _FocusTaskSelection? _selectedTarget;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
+    _selectedStartTime = TimeOfDay(hour: now.hour, minute: now.minute);
+    _durationController = TextEditingController(text: '25');
+    _efficiencyController = TextEditingController(text: '60');
+    _noteController = TextEditingController();
+    _selectedTarget = _resolveTaskSelectionFromIds(
+      hierarchy: widget.hierarchy,
+      goalId: widget.initialGoalId,
+      milestoneId: widget.initialMilestoneId,
+      taskId: widget.initialTaskId,
+    );
+  }
+
+  @override
+  void dispose() {
+    _durationController.dispose();
+    _efficiencyController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final selectedDateLabel = DateFormat(
+      'yyyy-MM-dd',
+      locale,
+    ).format(_selectedDate);
+    final selectedTimeLabel = _selectedStartTime.format(context);
+
+    return Material(
+      color: theme.colorScheme.surface,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed:
+                      _isSaving ? null : () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  tooltip: l10n.commonClose,
+                ),
+                Expanded(
+                  child: Text(
+                    l10n.focusManualTitle,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                children: [
+                  _ManualFieldTile(
+                    label: l10n.focusManualDateLabel,
+                    value: selectedDateLabel,
+                    onTap: _isSaving ? null : _pickDate,
+                  ),
+                  const SizedBox(height: 10),
+                  _ManualFieldTile(
+                    label: l10n.focusManualStartTimeLabel,
+                    value: selectedTimeLabel,
+                    onTap: _isSaving ? null : _pickStartTime,
+                  ),
+                  const SizedBox(height: 10),
+                  _ManualFieldTile(
+                    label: l10n.focusManualTargetLabel,
+                    value: _selectedTarget?.pathText ?? l10n.focusContextEmpty,
+                    actionLabel: l10n.focusManualPickTarget,
+                    onTap: _isSaving ? null : _pickTarget,
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _durationController,
+                    enabled: !_isSaving,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.focusManualDurationLabel,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _efficiencyController,
+                    enabled: !_isSaving,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.focusManualEfficiencyLabel,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _noteController,
+                    enabled: !_isSaving,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: l10n.focusManualNoteLabel,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                12 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _isSaving ? null : _save,
+                  child:
+                      _isSaving
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : Text(l10n.focusManualSave),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDate: _selectedDate,
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _selectedDate = DateTime(picked.year, picked.month, picked.day);
+    });
+  }
+
+  Future<void> _pickStartTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedStartTime,
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _selectedStartTime = picked;
+    });
+  }
+
+  Future<void> _pickTarget() async {
+    final picked = await widget.onPickTarget(
+      selectedGoalId: _selectedTarget?.goalId ?? widget.initialGoalId,
+      selectedMilestoneId:
+          _selectedTarget?.milestoneId ?? widget.initialMilestoneId,
+      selectedTaskId: _selectedTarget?.taskId ?? widget.initialTaskId,
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _selectedTarget = picked;
+    });
+  }
+
+  Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
+    final durationMinutes = int.tryParse(_durationController.text.trim());
+    final efficiency = int.tryParse(_efficiencyController.text.trim());
+
+    if (_selectedTarget == null ||
+        durationMinutes == null ||
+        durationMinutes <= 0 ||
+        durationMinutes > 1440 ||
+        efficiency == null ||
+        efficiency < 0 ||
+        efficiency > 100) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.focusManualInvalidInput)));
+      }
+      return;
+    }
+
+    final startedAt = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedStartTime.hour,
+      _selectedStartTime.minute,
+    );
+    final endedAt = startedAt.add(Duration(minutes: durationMinutes));
+    final note = _noteController.text.trim();
+
+    setState(() {
+      _isSaving = true;
+    });
+    try {
+      await widget.onSave(
+        CreateFocusSessionInput(
+          goalId: _selectedTarget!.goalId,
+          milestoneId: _selectedTarget!.milestoneId,
+          taskId: _selectedTarget!.taskId,
+          durationMinutes: durationMinutes,
+          efficiencyPercent: efficiency,
+          focusTargetLevel: FocusTargetLevel.task,
+          startedAt: startedAt,
+          endedAt: endedAt,
+          note: note.isEmpty ? null : note,
+          isAbandoned: false,
+        ),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.focusManualSaved)));
+        Navigator.of(context).pop();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+}
+
+class _ManualFieldTile extends StatelessWidget {
+  const _ManualFieldTile({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.actionLabel,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+  final String? actionLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: theme.textTheme.labelMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              if (actionLabel != null)
+                Text(
+                  actionLabel!,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+_FocusTaskSelection? _resolveTaskSelectionFromIds({
+  required List<FocusHierarchyItem> hierarchy,
+  required int? goalId,
+  required int? milestoneId,
+  required int? taskId,
+}) {
+  if (goalId == null || milestoneId == null || taskId == null) {
+    return null;
+  }
+  for (final goalNode in hierarchy) {
+    if (goalNode.goal.id != goalId) {
+      continue;
+    }
+    for (final milestoneNode in goalNode.milestones) {
+      if (milestoneNode.milestone.id != milestoneId) {
+        continue;
+      }
+      for (final task in milestoneNode.tasks) {
+        if (task.id == taskId) {
+          return _FocusTaskSelection(
+            goalId: goalId,
+            milestoneId: milestoneId,
+            taskId: taskId,
+            pathText:
+                '${goalNode.goal.title}>${milestoneNode.milestone.title}>${task.title}',
+          );
+        }
+      }
+    }
+  }
+  return null;
 }
 
 _FocusSelectedTarget? _resolveSelectedTarget({

@@ -131,10 +131,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
                 SizedBox(height: layoutMetrics.modeToTargetSpacing),
                 _FocusTargetEntry(
                   enabled: focusState.status != FocusTimerStatus.running,
-                  title:
-                      selectedTarget?.title ??
+                  pathText:
+                      selectedTarget?.displayPath ??
                       AppLocalizations.of(context)!.focusContextEmpty,
-                  subtitle: selectedTarget?.subtitle,
                   onTap:
                       () => _openFocusTargetPicker(
                         hierarchy: hierarchy,
@@ -463,66 +462,42 @@ class _FocusPageState extends ConsumerState<FocusPage>
 class _FocusTargetEntry extends StatelessWidget {
   const _FocusTargetEntry({
     required this.enabled,
-    required this.title,
-    required this.subtitle,
+    required this.pathText,
     required this.onTap,
   });
 
   final bool enabled;
-  final String title;
-  final String? subtitle;
+  final String pathText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mutedColor = theme.colorScheme.onSurfaceVariant;
-    final titleStyle = theme.textTheme.titleMedium?.copyWith(
+    final pathStyle = theme.textTheme.titleMedium?.copyWith(
       color: enabled ? null : mutedColor,
-    );
-    final subtitleStyle = theme.textTheme.bodySmall?.copyWith(
-      color: mutedColor.withValues(alpha: enabled ? 1 : 0.75),
+      fontWeight: FontWeight.w600,
     );
 
     return InkWell(
       onTap: enabled ? onTap : null,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.focusTitle,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: mutedColor,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right, size: 18, color: mutedColor),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: titleStyle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle!,
-                style: subtitleStyle,
+            Flexible(
+              child: Text(
+                pathText,
+                style: pathStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
               ),
-            ],
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, size: 18, color: mutedColor),
           ],
         ),
       ),
@@ -891,9 +866,9 @@ class _FocusLayoutMetrics {
 
     return _FocusLayoutMetrics(
       horizontalPadding: compactWidth ? 12 : 16,
-      topPadding: compactHeight ? 8 : 12,
+      topPadding: compactHeight ? 14 : 20,
       bottomPadding: 20,
-      modeToTargetSpacing: compactHeight ? 14 : 20,
+      modeToTargetSpacing: compactHeight ? 24 : 36,
       targetToTimerSpacing: compactHeight ? 26 : 52,
       timerToControlSpacing: compactHeight ? 26 : 54,
       timerSize: timerSize,
@@ -1120,11 +1095,7 @@ final class _FocusSelectedTarget {
   final MilestoneModel? milestone;
   final TaskModel? task;
 
-  String get title {
-    return task?.title ?? milestone?.title ?? goal?.title ?? '';
-  }
-
-  String? get subtitle {
+  String get displayPath {
     final parts = <String>[];
     if (goal != null) {
       parts.add(goal!.title);
@@ -1132,9 +1103,9 @@ final class _FocusSelectedTarget {
     if (milestone != null) {
       parts.add(milestone!.title);
     }
-    if (parts.isEmpty) {
-      return null;
+    if (task != null) {
+      parts.add(task!.title);
     }
-    return parts.join(' > ');
+    return parts.join('>');
   }
 }

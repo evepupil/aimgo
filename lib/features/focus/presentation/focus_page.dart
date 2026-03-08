@@ -2,9 +2,11 @@ import 'dart:math' as math;
 
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/core/services/local_storage_service.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
+import 'package:aimgo/features/focus/application/focus_evaluation_draft_controller.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/focus/application/focus_timer_controller.dart';
 import 'package:aimgo/features/goals/application/progress_sync_service.dart';
@@ -47,6 +49,31 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    ref.listen<FocusTimerState>(focusTimerControllerProvider, (previous, next) {
+      if (previous == null) {
+        return;
+      }
+      if (next.completionEventId == previous.completionEventId) {
+        return;
+      }
+      final autoOpenEvaluation =
+          ref.read(localStorageServiceProvider).getAutoOpenEvaluationEnabled();
+      if (!autoOpenEvaluation) {
+        return;
+      }
+      final draft = ref.read(focusEvaluationDraftProvider);
+      if (draft == null) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        context.push(RoutePaths.evaluation);
+      });
+    });
+
     final focusState = ref.watch(focusTimerControllerProvider);
     final focusController = ref.read(focusTimerControllerProvider.notifier);
     final hierarchyAsync = ref.watch(focusHierarchyProvider);

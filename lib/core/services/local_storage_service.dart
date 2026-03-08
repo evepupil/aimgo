@@ -12,6 +12,7 @@ final class LocalStorageService {
   static const _localePreferenceKey = 'locale.preference';
   static const _notificationEnabledKey = 'settings.notification.enabled';
   static const _soundEnabledKey = 'settings.sound.enabled';
+  static const _autoOpenEvaluationKey = 'settings.evaluation.auto_open';
 
   final SharedPreferences _sharedPreferences;
 
@@ -50,6 +51,14 @@ final class LocalStorageService {
 
   Future<bool> setSoundEnabled(bool value) {
     return _sharedPreferences.setBool(_soundEnabledKey, value);
+  }
+
+  bool getAutoOpenEvaluationEnabled() {
+    return _sharedPreferences.getBool(_autoOpenEvaluationKey) ?? true;
+  }
+
+  Future<bool> setAutoOpenEvaluationEnabled(bool value) {
+    return _sharedPreferences.setBool(_autoOpenEvaluationKey, value);
   }
 
   Future<void> clearTransientCache() async {

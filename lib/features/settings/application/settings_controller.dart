@@ -10,15 +10,23 @@ final class SettingsState {
   const SettingsState({
     required this.notificationsEnabled,
     required this.soundEnabled,
+    required this.autoOpenEvaluationEnabled,
   });
 
   final bool notificationsEnabled;
   final bool soundEnabled;
+  final bool autoOpenEvaluationEnabled;
 
-  SettingsState copyWith({bool? notificationsEnabled, bool? soundEnabled}) {
+  SettingsState copyWith({
+    bool? notificationsEnabled,
+    bool? soundEnabled,
+    bool? autoOpenEvaluationEnabled,
+  }) {
     return SettingsState(
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
+      autoOpenEvaluationEnabled:
+          autoOpenEvaluationEnabled ?? this.autoOpenEvaluationEnabled,
     );
   }
 }
@@ -30,6 +38,7 @@ final class SettingsController extends Notifier<SettingsState> {
     return SettingsState(
       notificationsEnabled: storage.getNotificationEnabled(),
       soundEnabled: storage.getSoundEnabled(),
+      autoOpenEvaluationEnabled: storage.getAutoOpenEvaluationEnabled(),
     );
   }
 
@@ -49,12 +58,20 @@ final class SettingsController extends Notifier<SettingsState> {
     await ref.read(localStorageServiceProvider).setSoundEnabled(value);
   }
 
+  Future<void> setAutoOpenEvaluationEnabled(bool value) async {
+    state = state.copyWith(autoOpenEvaluationEnabled: value);
+    await ref
+        .read(localStorageServiceProvider)
+        .setAutoOpenEvaluationEnabled(value);
+  }
+
   Future<void> clearCache() async {
     await ref.read(localStorageServiceProvider).clearTransientCache();
     final storage = ref.read(localStorageServiceProvider);
     state = state.copyWith(
       notificationsEnabled: storage.getNotificationEnabled(),
       soundEnabled: storage.getSoundEnabled(),
+      autoOpenEvaluationEnabled: storage.getAutoOpenEvaluationEnabled(),
     );
   }
 
@@ -69,6 +86,7 @@ final class SettingsController extends Notifier<SettingsState> {
     state = state.copyWith(
       notificationsEnabled: storage.getNotificationEnabled(),
       soundEnabled: storage.getSoundEnabled(),
+      autoOpenEvaluationEnabled: storage.getAutoOpenEvaluationEnabled(),
     );
     return restoredPath;
   }

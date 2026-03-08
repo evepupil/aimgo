@@ -109,6 +109,12 @@ class SettingsPage extends ConsumerWidget {
               title: Text(l10n.settingsSound),
               onChanged: settingsController.setSoundEnabled,
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: settingsState.autoOpenEvaluationEnabled,
+              title: Text(l10n.settingsAutoOpenEvaluation),
+              onChanged: settingsController.setAutoOpenEvaluationEnabled,
+            ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.backup_outlined),

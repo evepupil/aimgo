@@ -312,6 +312,7 @@
   "settingsOtherSection": "Other Settings",
   "settingsNotification": "Notifications",
   "settingsSound": "Sound",
+  "settingsAutoOpenEvaluation": "Auto open evaluation after focus",
   "settingsBackupRestore": "Backup & Restore",
   "settingsBackupRestoreHint": "Supports local JSON export and restore from the latest backup.",
   "settingsBackupActionSheetTitle": "Backup Actions",

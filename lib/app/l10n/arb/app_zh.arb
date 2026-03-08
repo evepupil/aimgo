@@ -312,6 +312,7 @@
   "settingsOtherSection": "其他设置",
   "settingsNotification": "通知设置",
   "settingsSound": "声音设置",
+  "settingsAutoOpenEvaluation": "专注完成后自动进入自评",
   "settingsBackupRestore": "数据备份与恢复",
   "settingsBackupRestoreHint": "支持本地导出 JSON 备份，并可恢复最近一次备份。",
   "settingsBackupActionSheetTitle": "备份操作",

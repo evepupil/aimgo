@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aimgo/core/services/local_storage_service.dart';
 import 'package:aimgo/core/services/notification_service.dart';
+import 'package:aimgo/features/focus/application/focus_evaluation_draft_controller.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/goals/application/progress_sync_service.dart';
 import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
@@ -181,14 +182,16 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
   }) {
     _timer?.cancel();
     _timer = null;
+    final resolvedTargetLevel = _resolveTargetLevel();
+    final resolvedDurationMinutes = (elapsedSeconds / 60).ceil();
 
     final input = CreateFocusSessionInput(
       goalId: state.selectedGoalId,
       milestoneId: state.selectedMilestoneId,
       taskId: state.selectedTaskId,
-      durationMinutes: (elapsedSeconds / 60).ceil(),
+      durationMinutes: resolvedDurationMinutes,
       efficiencyPercent: null,
-      focusTargetLevel: _resolveTargetLevel(),
+      focusTargetLevel: resolvedTargetLevel,
       startedAt: startedAt,
       endedAt: endedAt,
       note: null,
@@ -204,6 +207,23 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       durationMinutes: input.durationMinutes,
       isAbandoned: isAbandoned,
     );
+    if (!isAbandoned) {
+      ref
+          .read(focusEvaluationDraftProvider.notifier)
+          .setDraft(
+            FocusEvaluationDraft(
+              goalId: state.selectedGoalId,
+              milestoneId: state.selectedMilestoneId,
+              taskId: state.selectedTaskId,
+              durationMinutes: resolvedDurationMinutes,
+              startedAt: startedAt,
+              endedAt: endedAt,
+              focusTargetLevel: resolvedTargetLevel,
+              focusMode: state.mode,
+              isAbandoned: false,
+            ),
+          );
+    }
 
     state = FocusTimerState.initial(
       selectedGoalId: state.selectedGoalId,

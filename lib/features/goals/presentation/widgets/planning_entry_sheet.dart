@@ -123,7 +123,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
         padding: const EdgeInsets.only(top: 12),
         child: Material(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
           clipBehavior: Clip.antiAlias,
           child: AnimatedPadding(
             duration: const Duration(milliseconds: 220),
@@ -142,11 +142,11 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                   children: [
                     const SizedBox(height: 8),
                     Container(
-                      width: 36,
-                      height: 4,
+                      width: 28,
+                      height: 3,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.32,
+                          alpha: 0.24,
                         ),
                         borderRadius: BorderRadius.circular(999),
                       ),
@@ -162,6 +162,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                               autofocus: true,
                               textInputAction: TextInputAction.next,
                               style: theme.textTheme.headlineSmall?.copyWith(
+                                color: theme.colorScheme.onSurface,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: -0.2,
                               ),
@@ -169,24 +170,26 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                                 hintText: l10n.goalsEntryTitle,
                                 hintStyle: theme.textTheme.headlineSmall
                                     ?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
+                                      color: theme.colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.62),
                                       fontWeight: FontWeight.w700,
                                     ),
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             TextField(
                               controller: _descriptionController,
                               minLines: 1,
                               maxLines: 4,
                               style: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: theme.colorScheme.onSurface,
                                 height: 1.35,
                               ),
                               decoration: InputDecoration.collapsed(
                                 hintText: l10n.goalsEntryDescription,
                                 hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.78),
                                 ),
                               ),
                             ),
@@ -249,9 +252,14 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                         ),
                       ),
                     ),
-                    const Divider(height: 1),
+                    Divider(
+                      height: 1,
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.35,
+                      ),
+                    ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
                       child: Row(
                         children: [
                           Expanded(child: _buildSelectionButton(context)),
@@ -393,6 +401,14 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
     return null;
   }
 
+  List<GoalWithMilestones> get _selectionGoalTree {
+    final currentGoalNode = _selectedGoalNode;
+    if (currentGoalNode != null) {
+      return [currentGoalNode];
+    }
+    return widget.goalTree;
+  }
+
   int? _firstGoalId() {
     if (widget.goalTree.isEmpty) {
       return null;
@@ -405,6 +421,8 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
       return;
     }
 
+    final visibleGoalTree = _selectionGoalTree;
+
     if (_selectedType == PlanningComposerType.milestone) {
       final goalId = await showDialog<int>(
         context: context,
@@ -413,7 +431,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
         builder: (context) {
           return _SelectionPopupFrame(
             child: _GoalPickerCard(
-              goalTree: widget.goalTree,
+              goalTree: visibleGoalTree,
               selectedGoalId: _selectedGoalId,
             ),
           );
@@ -436,7 +454,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
       builder: (context) {
         return _SelectionPopupFrame(
           child: _TaskParentPickerCard(
-            goalTree: widget.goalTree,
+            goalTree: visibleGoalTree,
             selectedGoalId: _selectedGoalId,
             selectedMilestoneId: _selectedMilestoneId,
           ),
@@ -636,24 +654,32 @@ class _TaskParentPickerCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
         for (final goalNode in goalTree) ...[
-          ListTile(
-            visualDensity: const VisualDensity(vertical: -3),
-            dense: true,
-            leading: Icon(
-              Icons.flag_outlined,
-              size: 18,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            title: Text(
-              goalNode.goal.title,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.flag_outlined,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    goalNode.goal.title,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           if (goalNode.milestones.isEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(56, 0, 16, 10),
+              padding: const EdgeInsets.fromLTRB(44, 0, 16, 10),
               child: Text(
                 l10n.goalsNoMilestone,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -664,13 +690,14 @@ class _TaskParentPickerCard extends StatelessWidget {
           for (final milestoneNode in goalNode.milestones)
             ListTile(
               visualDensity: const VisualDensity(vertical: -2),
-              contentPadding: const EdgeInsets.only(left: 56, right: 16),
+              contentPadding: const EdgeInsets.only(left: 44, right: 16),
+              minLeadingWidth: 20,
               leading: Icon(
                 goalNode.goal.id == selectedGoalId &&
                         milestoneNode.milestone.id == selectedMilestoneId
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
-                size: 20,
+                size: 18,
                 color:
                     goalNode.goal.id == selectedGoalId &&
                             milestoneNode.milestone.id == selectedMilestoneId
@@ -722,16 +749,16 @@ class _ComposerTabChip extends StatelessWidget {
           selected
               ? theme.colorScheme.surfaceContainerLow
               : theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color:
                   selected
@@ -777,7 +804,7 @@ class _ComposerMetaChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.75),
         ),
@@ -808,8 +835,8 @@ class _ComposerSubmitButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: SizedBox(
-        width: 56,
-        height: 48,
+        width: 52,
+        height: 42,
         child: FilledButton(
           onPressed: onPressed,
           style: FilledButton.styleFrom(
@@ -818,7 +845,7 @@ class _ComposerSubmitButton extends StatelessWidget {
             backgroundColor: const Color(0xFFE95F37),
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
           child: const Icon(Icons.send_rounded, size: 20),
@@ -1138,7 +1165,7 @@ class _EntrySheetFrame extends StatelessWidget {
       padding: const EdgeInsets.only(top: 12),
       child: Material(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
         clipBehavior: Clip.antiAlias,
         child: AnimatedPadding(
           duration: const Duration(milliseconds: 220),
@@ -1186,7 +1213,12 @@ class _EntrySheetFrame extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Divider(height: 1),
+                  Divider(
+                    height: 1,
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.35,
+                    ),
+                  ),
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),

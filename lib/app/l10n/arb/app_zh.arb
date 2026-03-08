@@ -7,6 +7,54 @@
   "tabProfile": "我的",
   "homeTitle": "首页",
   "homeTodayOverview": "今日有效专注",
+  "homeTodayEffectiveFocus": "今天已有效专注",
+  "homeCurrentGoal": "当前目标",
+  "homeCurrentMilestone": "当前里程碑",
+  "homeCompletedMilestones": "已完成里程碑 {completed} / {total}",
+  "@homeCompletedMilestones": {
+    "placeholders": {
+      "completed": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNoMilestonesYet": "还没有里程碑",
+  "homeLastFocus": "上次专注",
+  "homeLastFocusEmptyTitle": "还没有专注记录",
+  "homeLastFocusEmptySubtitle": "去完成今天的第一次专注吧。",
+  "homeStartFocus": "开始专注",
+  "homeEfficiency": "效率 {value}%",
+  "@homeEfficiency": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEffective": "有效 {value}m",
+  "@homeEffective": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeHeatmapTitle": "最近三个月专注热力图",
+  "homeHeatmapSubtitle": "本月及前两个月的投入轨迹",
+  "homeHeatmapDetail": "{date} · 有效专注 {duration}",
+  "@homeHeatmapDetail": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "homeWeekTrend": "本周专注趋势",
   "homeActiveGoals": "进行中目标",
   "homeQuickActions": "快捷操作",
@@ -62,6 +110,60 @@
   "profileAnalytics": "专注分析",
   "profileTimeMachine": "专注时光机",
   "profileAbout": "关于",
+  "profileSectionQuickAccess": "快捷入口",
+  "profileSectionPreferences": "偏好设置",
+  "profileSectionData": "数据管理",
+  "profileSectionAbout": "关于",
+  "profileOverviewWeekFocus": "近7天专注",
+  "profileOverviewTasksDone": "已完成任务",
+  "profileOverviewMilestonesDone": "已完成里程碑",
+  "profilePendingItems": "待处理项",
+  "profilePendingNone": "全部已清空",
+  "profileVersionLabel": "当前版本",
+  "profileSwitchOn": "已开启",
+  "profileSwitchOff": "已关闭",
+  "profileStreakDays": "连续 {days} 天",
+  "@profileStreakDays": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "profileActiveGoals": "进行中目标 {count}",
+  "@profileActiveGoals": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "profileOverdueTasks": "逾期任务 {count}",
+  "@profileOverdueTasks": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "profileStatusStartToday": "今天先开始一次专注吧。",
+  "profileStatusOnTrack": "当前节奏良好。",
+  "profileStatusPending": "还有 {count} 个任务待处理。",
+  "@profileStatusPending": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "profileStatusOverdue": "有 {count} 个逾期任务待处理。",
+  "@profileStatusOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "historyTitle": "专注历史",
   "phase3HistoryPlaceholder": "Phase 3 已打通入口，完整历史页面将在 Phase 6 实现。",
   "historyTimelineTab": "时间轴",

@@ -7,6 +7,54 @@
   "tabProfile": "Profile",
   "homeTitle": "Home",
   "homeTodayOverview": "Today's Effective Focus",
+  "homeTodayEffectiveFocus": "Today's effective focus",
+  "homeCurrentGoal": "Current Goal",
+  "homeCurrentMilestone": "Current Milestone",
+  "homeCompletedMilestones": "Completed milestones {completed} / {total}",
+  "@homeCompletedMilestones": {
+    "placeholders": {
+      "completed": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNoMilestonesYet": "No milestones yet",
+  "homeLastFocus": "Last Focus",
+  "homeLastFocusEmptyTitle": "No focus record yet",
+  "homeLastFocusEmptySubtitle": "Start your first focus session today.",
+  "homeStartFocus": "Start Focus",
+  "homeEfficiency": "Efficiency {value}%",
+  "@homeEfficiency": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEffective": "Effective {value}m",
+  "@homeEffective": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeHeatmapTitle": "Last 3 Months Heatmap",
+  "homeHeatmapSubtitle": "Your focus trail for this month and the previous two months",
+  "homeHeatmapDetail": "{date} · Effective focus {duration}",
+  "@homeHeatmapDetail": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "homeWeekTrend": "Weekly Focus Trend",
   "homeActiveGoals": "Active Goals",
   "homeQuickActions": "Quick Actions",
@@ -62,6 +110,60 @@
   "profileAnalytics": "Focus Analytics",
   "profileTimeMachine": "Focus Time Machine",
   "profileAbout": "About",
+  "profileSectionQuickAccess": "Quick Access",
+  "profileSectionPreferences": "Preferences",
+  "profileSectionData": "Data",
+  "profileSectionAbout": "About",
+  "profileOverviewWeekFocus": "7d Focus",
+  "profileOverviewTasksDone": "Tasks Done",
+  "profileOverviewMilestonesDone": "Milestones Done",
+  "profilePendingItems": "Pending Items",
+  "profilePendingNone": "All clear",
+  "profileVersionLabel": "Current Version",
+  "profileSwitchOn": "On",
+  "profileSwitchOff": "Off",
+  "profileStreakDays": "{days}d streak",
+  "@profileStreakDays": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "profileActiveGoals": "Active goals {count}",
+  "@profileActiveGoals": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "profileOverdueTasks": "{count} overdue tasks",
+  "@profileOverdueTasks": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "profileStatusStartToday": "Start one focus session today.",
+  "profileStatusOnTrack": "You're on track.",
+  "profileStatusPending": "{count} tasks pending.",
+  "@profileStatusPending": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "profileStatusOverdue": "{count} overdue tasks need attention.",
+  "@profileStatusOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "historyTitle": "Focus History",
   "phase3HistoryPlaceholder": "Phase 3 provides route entry; full history view arrives in Phase 6.",
   "historyTimelineTab": "Timeline",

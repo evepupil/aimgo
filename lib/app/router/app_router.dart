@@ -2,6 +2,7 @@ import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/widgets/main_tab_shell.dart';
 import 'package:aimgo/features/focus/presentation/focus_page.dart';
 import 'package:aimgo/features/goals/presentation/goals_page.dart';
+import 'package:aimgo/features/goals/presentation/milestone_progress_page.dart';
 import 'package:aimgo/features/home/presentation/home_page.dart';
 import 'package:aimgo/features/history/presentation/history_page.dart';
 import 'package:aimgo/features/analytics/presentation/analytics_page.dart';
@@ -99,6 +100,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               state: state,
               child: const AboutPage(),
             ),
+      ),
+      GoRoute(
+        path: RoutePaths.goalMilestones,
+        pageBuilder: (context, state) {
+          final goalId = int.tryParse(
+            state.uri.queryParameters['goalId'] ?? '',
+          );
+          return _buildOverlayTransitionPage(
+            state: state,
+            child: MilestoneProgressPage(goalId: goalId),
+          );
+        },
       ),
     ],
   );

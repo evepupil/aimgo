@@ -59,6 +59,8 @@ class Milestones extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get completedAt => dateTime().nullable()();
 }
 
 class Tasks extends Table {
@@ -143,7 +145,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.addColumn(milestones, milestones.completedAt);
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {

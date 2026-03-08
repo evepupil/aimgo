@@ -43,6 +43,7 @@ final class MilestoneModel {
     required this.sortOrder,
     required this.createdAt,
     required this.updatedAt,
+    this.completedAt,
     this.dueAt,
   });
 
@@ -58,6 +59,7 @@ final class MilestoneModel {
   final DateTime? dueAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? completedAt;
 }
 
 final class TaskModel {

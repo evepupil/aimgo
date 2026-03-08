@@ -875,6 +875,17 @@ class $MilestonesTable extends Milestones
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -889,6 +900,7 @@ class $MilestonesTable extends Milestones
     dueAt,
     createdAt,
     updatedAt,
+    completedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -990,6 +1002,15 @@ class $MilestonesTable extends Milestones
         updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
       );
     }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1057,6 +1078,10 @@ class $MilestonesTable extends Milestones
             DriftSqlType.dateTime,
             data['${effectivePrefix}updated_at'],
           )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
     );
   }
 
@@ -1079,6 +1104,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
   final DateTime? dueAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? completedAt;
   const Milestone({
     required this.id,
     required this.goalId,
@@ -1092,6 +1118,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
     this.dueAt,
     required this.createdAt,
     required this.updatedAt,
+    this.completedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1112,6 +1139,9 @@ class Milestone extends DataClass implements Insertable<Milestone> {
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
     return map;
   }
 
@@ -1133,6 +1163,10 @@ class Milestone extends DataClass implements Insertable<Milestone> {
           dueAt == null && nullToAbsent ? const Value.absent() : Value(dueAt),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      completedAt:
+          completedAt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(completedAt),
     );
   }
 
@@ -1154,6 +1188,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
       dueAt: serializer.fromJson<DateTime?>(json['dueAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
     );
   }
   @override
@@ -1172,6 +1207,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
       'dueAt': serializer.toJson<DateTime?>(dueAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
     };
   }
 
@@ -1188,6 +1224,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
     Value<DateTime?> dueAt = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
+    Value<DateTime?> completedAt = const Value.absent(),
   }) => Milestone(
     id: id ?? this.id,
     goalId: goalId ?? this.goalId,
@@ -1201,6 +1238,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
     dueAt: dueAt.present ? dueAt.value : this.dueAt,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
   );
   Milestone copyWithCompanion(MilestonesCompanion data) {
     return Milestone(
@@ -1227,6 +1265,8 @@ class Milestone extends DataClass implements Insertable<Milestone> {
       dueAt: data.dueAt.present ? data.dueAt.value : this.dueAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      completedAt:
+          data.completedAt.present ? data.completedAt.value : this.completedAt,
     );
   }
 
@@ -1244,7 +1284,8 @@ class Milestone extends DataClass implements Insertable<Milestone> {
           ..write('sortOrder: $sortOrder, ')
           ..write('dueAt: $dueAt, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('completedAt: $completedAt')
           ..write(')'))
         .toString();
   }
@@ -1263,6 +1304,7 @@ class Milestone extends DataClass implements Insertable<Milestone> {
     dueAt,
     createdAt,
     updatedAt,
+    completedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1279,7 +1321,8 @@ class Milestone extends DataClass implements Insertable<Milestone> {
           other.sortOrder == this.sortOrder &&
           other.dueAt == this.dueAt &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.completedAt == this.completedAt);
 }
 
 class MilestonesCompanion extends UpdateCompanion<Milestone> {
@@ -1295,6 +1338,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
   final Value<DateTime?> dueAt;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<DateTime?> completedAt;
   const MilestonesCompanion({
     this.id = const Value.absent(),
     this.goalId = const Value.absent(),
@@ -1308,6 +1352,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
     this.dueAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
   });
   MilestonesCompanion.insert({
     this.id = const Value.absent(),
@@ -1322,6 +1367,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
     this.dueAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
   }) : goalId = Value(goalId),
        title = Value(title);
   static Insertable<Milestone> custom({
@@ -1337,6 +1383,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
     Expression<DateTime>? dueAt,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<DateTime>? completedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1351,6 +1398,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
       if (dueAt != null) 'due_at': dueAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (completedAt != null) 'completed_at': completedAt,
     });
   }
 
@@ -1367,6 +1415,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
     Value<DateTime?>? dueAt,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
+    Value<DateTime?>? completedAt,
   }) {
     return MilestonesCompanion(
       id: id ?? this.id,
@@ -1381,6 +1430,7 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
       dueAt: dueAt ?? this.dueAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 
@@ -1423,6 +1473,9 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
     return map;
   }
 
@@ -1440,7 +1493,8 @@ class MilestonesCompanion extends UpdateCompanion<Milestone> {
           ..write('sortOrder: $sortOrder, ')
           ..write('dueAt: $dueAt, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('completedAt: $completedAt')
           ..write(')'))
         .toString();
   }
@@ -3552,6 +3606,7 @@ typedef $$MilestonesTableCreateCompanionBuilder =
       Value<DateTime?> dueAt,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
+      Value<DateTime?> completedAt,
     });
 typedef $$MilestonesTableUpdateCompanionBuilder =
     MilestonesCompanion Function({
@@ -3567,6 +3622,7 @@ typedef $$MilestonesTableUpdateCompanionBuilder =
       Value<DateTime?> dueAt,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
+      Value<DateTime?> completedAt,
     });
 
 final class $$MilestonesTableReferences
@@ -3693,6 +3749,11 @@ class $$MilestonesTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3834,6 +3895,11 @@ class $$MilestonesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GoalsTableOrderingComposer get goalId {
     final $$GoalsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3909,6 +3975,11 @@ class $$MilestonesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
 
   $$GoalsTableAnnotationComposer get goalId {
     final $$GoalsTableAnnotationComposer composer = $composerBuilder(
@@ -4028,6 +4099,7 @@ class $$MilestonesTableTableManager
                 Value<DateTime?> dueAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
               }) => MilestonesCompanion(
                 id: id,
                 goalId: goalId,
@@ -4041,6 +4113,7 @@ class $$MilestonesTableTableManager
                 dueAt: dueAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                completedAt: completedAt,
               ),
           createCompanionCallback:
               ({
@@ -4056,6 +4129,7 @@ class $$MilestonesTableTableManager
                 Value<DateTime?> dueAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
               }) => MilestonesCompanion.insert(
                 id: id,
                 goalId: goalId,
@@ -4069,6 +4143,7 @@ class $$MilestonesTableTableManager
                 dueAt: dueAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                completedAt: completedAt,
               ),
           withReferenceMapper:
               (p0) =>

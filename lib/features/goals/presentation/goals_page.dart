@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
@@ -7,6 +8,7 @@ import 'package:aimgo/features/goals/presentation/widgets/planning_entry_sheet.d
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class GoalsPage extends ConsumerStatefulWidget {
   const GoalsPage({super.key});
@@ -104,6 +106,16 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                               onPressed: () => _openFilterSheet(data),
                               icon: const Icon(Icons.filter_list),
                               tooltip: l10n.goalsFilterTooltip,
+                            ),
+                            IconButton(
+                              onPressed:
+                                  data.selectedGoalTree == null
+                                      ? null
+                                      : () => context.push(
+                                        '${RoutePaths.goalMilestones}?goalId=${data.selectedGoalTree!.goal.id}',
+                                      ),
+                              icon: const Icon(Icons.alt_route),
+                              tooltip: l10n.goalsMilestoneProgress,
                             ),
                             IconButton(
                               onPressed: () => _openMenuSheet(data),

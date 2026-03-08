@@ -312,6 +312,19 @@ final class DriftAimGoRepository implements AimGoRepository {
   Future<void> updateMilestoneAggregate(
     model.MilestoneProgressAggregate aggregate,
   ) async {
+    final currentMilestone =
+        await (_database.select(_database.milestones)..where(
+          (table) => table.id.equals(aggregate.milestoneId),
+        )).getSingleOrNull();
+    final now = DateTime.now();
+    final completedAtValue =
+        aggregate.isCompleted
+            ? (currentMilestone?.isCompleted == true &&
+                    currentMilestone?.completedAt != null
+                ? currentMilestone!.completedAt
+                : now)
+            : null;
+
     await (_database.update(_database.milestones)
       ..where((table) => table.id.equals(aggregate.milestoneId))).write(
       MilestonesCompanion(
@@ -319,7 +332,8 @@ final class DriftAimGoRepository implements AimGoRepository {
         effectiveMinutes: Value(aggregate.effectiveMinutes),
         progressRatio: Value(aggregate.progressRatio),
         isCompleted: Value(aggregate.isCompleted),
-        updatedAt: Value(DateTime.now()),
+        completedAt: Value(completedAtValue),
+        updatedAt: Value(now),
       ),
     );
   }
@@ -376,6 +390,7 @@ final class DriftAimGoRepository implements AimGoRepository {
       dueAt: row.dueAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      completedAt: row.completedAt,
     );
   }
 

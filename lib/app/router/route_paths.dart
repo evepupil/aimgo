@@ -8,4 +8,5 @@ final class RoutePaths {
   static const history = '/history';
   static const analytics = '/analytics';
   static const about = '/about';
+  static const goalMilestones = '/goal-milestones';
 }

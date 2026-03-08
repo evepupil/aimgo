@@ -15,11 +15,23 @@ final focusTimerControllerProvider =
 
 final class FocusTimerController extends Notifier<FocusTimerState> {
   Timer? _timer;
+  StreamSubscription<FocusNotificationAction>? _notificationActionSubscription;
+  var _notificationPermissionEnsured = false;
 
   @override
   FocusTimerState build() {
+    _notificationActionSubscription ??= ref
+        .read(notificationServiceProvider)
+        .focusActionStream
+        .listen(_handleNotificationAction);
+
     ref.onDispose(() {
       _timer?.cancel();
+      _notificationActionSubscription?.cancel();
+      _notificationActionSubscription = null;
+      unawaited(
+        ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
+      );
     });
 
     final selectedGoalId = ref.read(selectedGoalIdProvider);
@@ -91,6 +103,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       runningStartedAt: now,
     );
     _ensureTicker();
+    _syncFocusOngoingNotification();
   }
 
   void pause() {
@@ -105,6 +118,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       accumulatedElapsedSeconds: state.displayElapsedSeconds,
       clearRunningStart: true,
     );
+    _syncFocusOngoingNotification();
   }
 
   void syncFromLifecycle() {
@@ -145,6 +159,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     final passedSeconds = now.difference(state.runningStartedAt!).inSeconds;
     final elapsed = state.accumulatedElapsedSeconds + passedSeconds;
     state = state.copyWith(displayElapsedSeconds: elapsed);
+    _syncFocusOngoingNotification();
 
     if (state.mode == FocusMode.pomodoro &&
         elapsed >= state.pomodoroMinutes * 60 &&
@@ -181,6 +196,9 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     );
     unawaited(
       ref.read(progressSyncServiceProvider).createSessionAndSync(input),
+    );
+    unawaited(
+      ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
     );
     _notifyIfNeeded(
       durationMinutes: input.durationMinutes,
@@ -234,6 +252,9 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
   void _resetTimerState() {
     _timer?.cancel();
     _timer = null;
+    unawaited(
+      ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
+    );
     state = FocusTimerState.initial(
       selectedGoalId: state.selectedGoalId,
     ).copyWith(
@@ -241,6 +262,42 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       pomodoroMinutes: state.pomodoroMinutes,
       selectedMilestoneId: state.selectedMilestoneId,
       selectedTaskId: state.selectedTaskId,
+    );
+  }
+
+  void _handleNotificationAction(FocusNotificationAction action) {
+    if (action == FocusNotificationAction.pause &&
+        state.status == FocusTimerStatus.running) {
+      pause();
+      return;
+    }
+    if (action == FocusNotificationAction.resume &&
+        state.status == FocusTimerStatus.paused) {
+      startOrResume();
+    }
+  }
+
+  void _syncFocusOngoingNotification() {
+    final storage = ref.read(localStorageServiceProvider);
+    final notificationsEnabled = storage.getNotificationEnabled();
+    if (!notificationsEnabled || state.status == FocusTimerStatus.idle) {
+      unawaited(
+        ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
+      );
+      return;
+    }
+    if (!_notificationPermissionEnsured) {
+      _notificationPermissionEnsured = true;
+      unawaited(ref.read(notificationServiceProvider).requestPermissions());
+    }
+    unawaited(
+      ref
+          .read(notificationServiceProvider)
+          .showOrUpdateFocusOngoingNotification(
+            paused: state.status == FocusTimerStatus.paused,
+            elapsedSeconds: state.displayElapsedSeconds,
+            localePreference: storage.getLocalePreference(),
+          ),
     );
   }
 }

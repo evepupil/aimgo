@@ -81,6 +81,16 @@
   "focusPause": "Pause",
   "focusResume": "Resume",
   "focusTerminate": "End",
+  "focusNotificationOngoingTitle": "Focusing",
+  "focusNotificationPausedTitle": "Focus Paused",
+  "focusNotificationElapsed": "Elapsed {time}",
+  "@focusNotificationElapsed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "focusEndTitle": "End this focus session?",
   "focusEndMessage": "This session will be saved automatically when ended.",
   "focusCompletedTitle": "Focus Completed",

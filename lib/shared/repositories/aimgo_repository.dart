@@ -28,6 +28,10 @@ abstract interface class AimGoRepository {
 
   Future<FocusSessionModel> createFocusSession(CreateFocusSessionInput input);
 
+  Future<FocusSessionModel> updateFocusSession(UpdateFocusSessionInput input);
+
+  Future<FocusSessionModel?> getFocusSessionById(int sessionId);
+
   Future<GoalModel?> getGoalById(int goalId);
 
   Future<MilestoneModel?> getMilestoneById(int milestoneId);

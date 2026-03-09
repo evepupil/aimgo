@@ -1,7 +1,10 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/features/focus/application/focus_context_provider.dart';
+import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/history/application/history_page_controller.dart';
+import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -116,11 +119,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                       onRefresh: controller.refresh,
                       child:
                           data.viewMode == HistoryViewMode.timeline
-                              ? _TimelineView(state: data)
+                              ? _TimelineView(
+                                state: data,
+                                onEdit: _openEditSessionSheet,
+                              )
                               : _CalendarView(
                                 state: data,
                                 onDateSelected:
                                     controller.setSelectedCalendarDate,
+                                onEdit: _openEditSessionSheet,
                               ),
                     ),
                   ),
@@ -188,11 +195,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         onRefresh: controller.refresh,
                         child:
                             data.viewMode == HistoryViewMode.timeline
-                                ? _TimelineView(state: data)
+                                ? _TimelineView(
+                                  state: data,
+                                  onEdit: _openEditSessionSheet,
+                                )
                                 : _CalendarView(
                                   state: data,
                                   onDateSelected:
                                       controller.setSelectedCalendarDate,
+                                  onEdit: _openEditSessionSheet,
                                 ),
                       ),
                     ),
@@ -311,6 +322,56 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       },
     );
   }
+
+  Future<void> _openEditSessionSheet(HistorySessionEntry entry) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(historyPageControllerProvider.notifier);
+    List<FocusHierarchyItem> hierarchy;
+    try {
+      hierarchy = await ref.read(focusHierarchyProvider.future);
+    } catch (_) {
+      hierarchy = const <FocusHierarchyItem>[];
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final result = await showModalBottomSheet<_HistoryEditResult>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return _HistorySessionEditSheet(entry: entry, hierarchy: hierarchy);
+      },
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+
+    try {
+      await controller.updateSession(
+        sessionId: entry.session.id,
+        goalId: result.goalId,
+        milestoneId: result.milestoneId,
+        taskId: result.taskId,
+        focusTargetLevel: result.focusTargetLevel,
+        efficiencyPercent: result.efficiencyPercent,
+        note: result.note,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.historyEditSaved)));
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.historyEditFailed(error.toString()))),
+        );
+      }
+    }
+  }
 }
 
 class _RangeChip extends StatelessWidget {
@@ -334,10 +395,300 @@ class _RangeChip extends StatelessWidget {
   }
 }
 
+class _HistoryEditResult {
+  const _HistoryEditResult({
+    required this.goalId,
+    required this.milestoneId,
+    required this.taskId,
+    required this.focusTargetLevel,
+    required this.efficiencyPercent,
+    required this.note,
+  });
+
+  final int? goalId;
+  final int? milestoneId;
+  final int? taskId;
+  final FocusTargetLevel focusTargetLevel;
+  final int efficiencyPercent;
+  final String? note;
+}
+
+class _HistorySessionEditSheet extends StatefulWidget {
+  const _HistorySessionEditSheet({
+    required this.entry,
+    required this.hierarchy,
+  });
+
+  final HistorySessionEntry entry;
+  final List<FocusHierarchyItem> hierarchy;
+
+  @override
+  State<_HistorySessionEditSheet> createState() =>
+      _HistorySessionEditSheetState();
+}
+
+class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
+  late final List<_HistoryTargetOption> _targetOptions;
+  _HistoryTargetOption? _selectedTarget;
+  late final TextEditingController _efficiencyController;
+  late final TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _targetOptions = _buildTargetOptions(widget.hierarchy);
+    _selectedTarget = _findMatchingTarget(_targetOptions, widget.entry.session);
+    if (_selectedTarget == null &&
+        (widget.entry.session.goalId != null ||
+            widget.entry.session.milestoneId != null ||
+            widget.entry.session.taskId != null)) {
+      final fallback = _HistoryTargetOption(
+        label:
+            widget.entry.pathLabel.isEmpty
+                ? widget.entry.session.focusTargetLevel.name
+                : widget.entry.pathLabel,
+        goalId: widget.entry.session.goalId,
+        milestoneId: widget.entry.session.milestoneId,
+        taskId: widget.entry.session.taskId,
+        focusTargetLevel: widget.entry.session.focusTargetLevel,
+      );
+      _targetOptions.insert(0, fallback);
+      _selectedTarget = fallback;
+    }
+    _efficiencyController = TextEditingController(
+      text: widget.entry.session.efficiencyPercent.toString(),
+    );
+    _noteController = TextEditingController(
+      text: widget.entry.session.note ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _efficiencyController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final insets = MediaQuery.viewInsetsOf(context);
+    final hasTargetOptions = _targetOptions.isNotEmpty;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: insets.bottom),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.historyEditTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: LayoutTokens.sectionGap),
+              if (hasTargetOptions) ...[
+                DropdownButtonFormField<_HistoryTargetOption>(
+                  value: _selectedTarget,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.historyEditTarget,
+                  ),
+                  items: [
+                    for (final option in _targetOptions)
+                      DropdownMenuItem<_HistoryTargetOption>(
+                        value: option,
+                        child: Text(
+                          option.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTarget = value;
+                    });
+                  },
+                ),
+              ] else ...[
+                Text(
+                  l10n.goalsNoGoal,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: LayoutTokens.sectionGap),
+              TextField(
+                controller: _efficiencyController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.historyEditEfficiency,
+                ),
+              ),
+              const SizedBox(height: LayoutTokens.sectionGap),
+              TextField(
+                controller: _noteController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(labelText: l10n.historyEditNote),
+              ),
+              const SizedBox(height: LayoutTokens.sectionGap),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(l10n.commonCancel),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed:
+                        () => _submit(hasTargetOptions: hasTargetOptions),
+                    child: Text(l10n.commonSave),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submit({required bool hasTargetOptions}) {
+    final l10n = AppLocalizations.of(context)!;
+    final efficiency = int.tryParse(_efficiencyController.text.trim());
+    if (efficiency == null || efficiency < 0 || efficiency > 100) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.focusManualInvalidInput)));
+      return;
+    }
+
+    final selectedTarget = _selectedTarget;
+    if (hasTargetOptions && selectedTarget == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.focusManualInvalidInput)));
+      return;
+    }
+
+    Navigator.of(context).pop(
+      _HistoryEditResult(
+        goalId:
+            selectedTarget == null
+                ? widget.entry.session.goalId
+                : selectedTarget.goalId,
+        milestoneId:
+            selectedTarget == null
+                ? widget.entry.session.milestoneId
+                : selectedTarget.milestoneId,
+        taskId:
+            selectedTarget == null
+                ? widget.entry.session.taskId
+                : selectedTarget.taskId,
+        focusTargetLevel:
+            selectedTarget == null
+                ? widget.entry.session.focusTargetLevel
+                : selectedTarget.focusTargetLevel,
+        efficiencyPercent: efficiency,
+        note:
+            _noteController.text.trim().isEmpty
+                ? null
+                : _noteController.text.trim(),
+      ),
+    );
+  }
+
+  static List<_HistoryTargetOption> _buildTargetOptions(
+    List<FocusHierarchyItem> hierarchy,
+  ) {
+    final options = <_HistoryTargetOption>[];
+    for (final goal in hierarchy) {
+      options.add(
+        _HistoryTargetOption(
+          label: goal.goal.title,
+          goalId: goal.goal.id,
+          milestoneId: null,
+          taskId: null,
+          focusTargetLevel: FocusTargetLevel.goal,
+        ),
+      );
+      for (final milestone in goal.milestones) {
+        options.add(
+          _HistoryTargetOption(
+            label: '${goal.goal.title} > ${milestone.milestone.title}',
+            goalId: goal.goal.id,
+            milestoneId: milestone.milestone.id,
+            taskId: null,
+            focusTargetLevel: FocusTargetLevel.milestone,
+          ),
+        );
+        for (final task in milestone.tasks) {
+          options.add(
+            _HistoryTargetOption(
+              label:
+                  '${goal.goal.title} > ${milestone.milestone.title} > ${task.title}',
+              goalId: goal.goal.id,
+              milestoneId: milestone.milestone.id,
+              taskId: task.id,
+              focusTargetLevel: FocusTargetLevel.task,
+            ),
+          );
+        }
+      }
+    }
+    return options;
+  }
+
+  static _HistoryTargetOption? _findMatchingTarget(
+    List<_HistoryTargetOption> options,
+    FocusSessionModel session,
+  ) {
+    for (final option in options) {
+      if (option.focusTargetLevel != session.focusTargetLevel) {
+        continue;
+      }
+      if (option.goalId != session.goalId) {
+        continue;
+      }
+      if (option.milestoneId != session.milestoneId) {
+        continue;
+      }
+      if (option.taskId != session.taskId) {
+        continue;
+      }
+      return option;
+    }
+    return null;
+  }
+}
+
+class _HistoryTargetOption {
+  const _HistoryTargetOption({
+    required this.label,
+    required this.goalId,
+    required this.milestoneId,
+    required this.taskId,
+    required this.focusTargetLevel,
+  });
+
+  final String label;
+  final int? goalId;
+  final int? milestoneId;
+  final int? taskId;
+  final FocusTargetLevel focusTargetLevel;
+}
+
 class _TimelineView extends StatelessWidget {
-  const _TimelineView({required this.state});
+  const _TimelineView({required this.state, required this.onEdit});
 
   final HistoryPageState state;
+  final void Function(HistorySessionEntry entry) onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -374,6 +725,7 @@ class _TimelineView extends StatelessWidget {
               _TimelineSessionItem(
                 entry: section.sessions[i],
                 isLast: i == section.sessions.length - 1,
+                onEdit: onEdit,
               ),
           ],
         );
@@ -383,10 +735,15 @@ class _TimelineView extends StatelessWidget {
 }
 
 class _TimelineSessionItem extends StatelessWidget {
-  const _TimelineSessionItem({required this.entry, required this.isLast});
+  const _TimelineSessionItem({
+    required this.entry,
+    required this.isLast,
+    required this.onEdit,
+  });
 
   final HistorySessionEntry entry;
   final bool isLast;
+  final void Function(HistorySessionEntry entry) onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -422,7 +779,12 @@ class _TimelineSessionItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: LayoutTokens.compactGap),
-          Expanded(child: _HistorySessionCard(entry: entry)),
+          Expanded(
+            child: _HistorySessionCard(
+              entry: entry,
+              onEdit: () => onEdit(entry),
+            ),
+          ),
         ],
       ),
     );
@@ -449,10 +811,15 @@ String _timelineSectionTitle(BuildContext context, String groupKey) {
 }
 
 class _CalendarView extends StatefulWidget {
-  const _CalendarView({required this.state, required this.onDateSelected});
+  const _CalendarView({
+    required this.state,
+    required this.onDateSelected,
+    required this.onEdit,
+  });
 
   final HistoryPageState state;
   final void Function(DateTime date) onDateSelected;
+  final void Function(HistorySessionEntry entry) onEdit;
 
   @override
   State<_CalendarView> createState() => _CalendarViewState();
@@ -508,7 +875,11 @@ class _CalendarViewState extends State<_CalendarView> {
             ),
             child: Text(AppLocalizations.of(context)!.goalsNoSearchResult),
           ),
-        for (final session in sessions) _HistorySessionCard(entry: session),
+        for (final session in sessions)
+          _HistorySessionCard(
+            entry: session,
+            onEdit: () => widget.onEdit(session),
+          ),
       ],
     );
   }
@@ -700,53 +1071,126 @@ bool _isSameDay(DateTime left, DateTime right) {
 }
 
 class _HistorySessionCard extends StatelessWidget {
-  const _HistorySessionCard({required this.entry});
+  const _HistorySessionCard({required this.entry, required this.onEdit});
 
   final HistorySessionEntry entry;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final session = entry.session;
+    final title =
+        entry.taskTitle ??
+        entry.milestoneTitle ??
+        entry.goalTitle ??
+        l10n.focusContextEmpty;
 
     return Card(
       margin: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Text(
-              entry.taskTitle ??
-                  entry.milestoneTitle ??
-                  entry.goalTitle ??
-                  l10n.focusContextEmpty,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: LayoutTokens.compactGap),
-            if (entry.pathLabel.isNotEmpty)
-              Text(
-                entry.pathLabel,
-                style: Theme.of(context).textTheme.bodySmall,
+            Padding(
+              padding: const EdgeInsets.only(right: 84),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleSmall),
+                  if (entry.pathLabel.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      entry.pathLabel,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: LayoutTokens.compactGap),
+                  Text(
+                    '${DateFormat('HH:mm').format(session.startedAt)} - ${DateFormat('HH:mm').format(session.endedAt)}',
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${l10n.evaluationDuration}: ${formatMinutes(session.durationMinutes)}',
+                  ),
+                  Text(
+                    '${l10n.evaluationEfficiencyLabel(session.efficiencyPercent.toString())} | ${l10n.evaluationEffectiveDuration}: ${formatMinutes(session.effectiveMinutes)}',
+                  ),
+                  if ((session.note ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${l10n.evaluationNoteLabel}: ${session.note!.trim()}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ],
               ),
-            const SizedBox(height: LayoutTokens.compactGap),
-            Text(
-              '${DateFormat('HH:mm').format(session.startedAt)} - ${DateFormat('HH:mm').format(session.endedAt)}',
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${l10n.evaluationDuration}: ${formatMinutes(session.durationMinutes)}',
+            Positioned(
+              top: 0,
+              right: 0,
+              child: _SessionStatusBadge(isAbandoned: session.isAbandoned),
             ),
-            Text(
-              '${l10n.evaluationEfficiencyLabel(session.efficiencyPercent.toString())} · ${l10n.evaluationEffectiveDuration}: ${formatMinutes(session.effectiveMinutes)}',
-            ),
-            Text(
-              session.isAbandoned
-                  ? l10n.historyStatusAbandoned
-                  : l10n.historyStatusCompleted,
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  tooltip: l10n.commonEdit,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SessionStatusBadge extends StatelessWidget {
+  const _SessionStatusBadge({required this.isAbandoned});
+
+  final bool isAbandoned;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final bgColor =
+        isAbandoned ? const Color(0xFFFDECEC) : const Color(0xFFEAF6EC);
+    final borderColor =
+        isAbandoned ? const Color(0xFFF3B2B2) : const Color(0xFFB8DDBE);
+    final textColor =
+        isAbandoned ? const Color(0xFFB71C1C) : const Color(0xFF1B5E20);
+    final dotColor =
+        isAbandoned ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isAbandoned
+                ? l10n.historyStatusAbandoned
+                : l10n.historyStatusCompleted,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: textColor),
+          ),
+        ],
       ),
     );
   }

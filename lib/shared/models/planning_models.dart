@@ -256,6 +256,28 @@ final class CreateFocusSessionInput {
   final bool isAbandoned;
 }
 
+final class UpdateFocusSessionInput {
+  const UpdateFocusSessionInput({
+    required this.id,
+    required this.durationMinutes,
+    required this.efficiencyPercent,
+    required this.focusTargetLevel,
+    this.goalId,
+    this.milestoneId,
+    this.taskId,
+    this.note,
+  });
+
+  final int id;
+  final int? goalId;
+  final int? milestoneId;
+  final int? taskId;
+  final int durationMinutes;
+  final int efficiencyPercent;
+  final FocusTargetLevel focusTargetLevel;
+  final String? note;
+}
+
 final class GoalProgressAggregate {
   const GoalProgressAggregate({
     required this.goalId,

@@ -192,6 +192,26 @@
   "historyGroupYesterday": "Yesterday",
   "historyGroupThisWeek": "This Week",
   "historyGroupLastWeek": "Last Week",
+  "historyEditTitle": "Edit Focus Record",
+  "historyEditTarget": "Focus Target",
+  "historyEditTargetLevel": "Target Level",
+  "historyEditLevelGoal": "Goal",
+  "historyEditLevelMilestone": "Milestone",
+  "historyEditLevelTask": "Task",
+  "historyEditGoal": "Goal",
+  "historyEditMilestone": "Milestone",
+  "historyEditTask": "Task",
+  "historyEditEfficiency": "Efficiency (0-100)",
+  "historyEditNote": "Focus Review",
+  "historyEditSaved": "Focus record updated.",
+  "historyEditFailed": "Update failed: {error}",
+  "@historyEditFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsTitle": "Focus Analytics",
   "phase5AnalyticsPlaceholder": "Analytics dashboard will be implemented in Phase 7.",
   "analyticsRangeDay": "Day",

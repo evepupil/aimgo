@@ -224,6 +224,39 @@ final class DriftAimGoRepository implements AimGoRepository {
   }
 
   @override
+  Future<model.FocusSessionModel> updateFocusSession(
+    model.UpdateFocusSessionInput input,
+  ) async {
+    if (input.efficiencyPercent < 0 || input.efficiencyPercent > 100) {
+      throw ArgumentError.value(
+        input.efficiencyPercent,
+        'efficiencyPercent',
+        'efficiencyPercent must be between 0 and 100',
+      );
+    }
+    final effectiveMinutes =
+        input.durationMinutes * (input.efficiencyPercent / 100);
+    await (_database.update(_database.focusSessions)
+      ..where((table) => table.id.equals(input.id))).write(
+      FocusSessionsCompanion(
+        goalId: Value(input.goalId),
+        milestoneId: Value(input.milestoneId),
+        taskId: Value(input.taskId),
+        durationMinutes: Value(input.durationMinutes),
+        efficiencyPercent: Value(input.efficiencyPercent),
+        effectiveMinutes: Value(effectiveMinutes),
+        focusTargetLevel: Value(_focusTargetLevelToDb(input.focusTargetLevel)),
+        note: Value(input.note),
+      ),
+    );
+    final updated = await getFocusSessionById(input.id);
+    if (updated == null) {
+      throw StateError('Focus session not found after update: ${input.id}');
+    }
+    return updated;
+  }
+
+  @override
   Future<model.GoalModel?> getGoalById(int goalId) async {
     final query = _database.select(_database.goals)
       ..where((table) => table.id.equals(goalId));
@@ -245,6 +278,14 @@ final class DriftAimGoRepository implements AimGoRepository {
       ..where((table) => table.id.equals(taskId));
     final row = await query.getSingleOrNull();
     return row == null ? null : _mapTask(row);
+  }
+
+  @override
+  Future<model.FocusSessionModel?> getFocusSessionById(int sessionId) async {
+    final query = _database.select(_database.focusSessions)
+      ..where((table) => table.id.equals(sessionId));
+    final row = await query.getSingleOrNull();
+    return row == null ? null : _mapFocusSession(row);
   }
 
   @override

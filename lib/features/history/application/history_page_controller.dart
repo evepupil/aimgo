@@ -1,3 +1,4 @@
+import 'package:aimgo/features/goals/application/progress_sync_service.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:aimgo/shared/repositories/drift_aimgo_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -292,6 +293,62 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
     state = AsyncData(current.copyWith(selectedCalendarDate: date));
   }
 
+  Future<void> updateSession({
+    required int sessionId,
+    required int? goalId,
+    required int? milestoneId,
+    required int? taskId,
+    required FocusTargetLevel focusTargetLevel,
+    required int efficiencyPercent,
+    required String? note,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+    final repository = ref.read(aimGoRepositoryProvider);
+    final progressSyncService = ref.read(progressSyncServiceProvider);
+
+    final previousSession = await repository.getFocusSessionById(sessionId);
+    if (previousSession == null) {
+      return;
+    }
+    final previousGoalId = await _resolveGoalIdFromSession(previousSession);
+
+    await repository.updateFocusSession(
+      UpdateFocusSessionInput(
+        id: sessionId,
+        goalId: goalId,
+        milestoneId: milestoneId,
+        taskId: taskId,
+        durationMinutes: previousSession.durationMinutes,
+        efficiencyPercent: efficiencyPercent,
+        focusTargetLevel: focusTargetLevel,
+        note: note,
+      ),
+    );
+
+    final updatedSession = await repository.getFocusSessionById(sessionId);
+    final updatedGoalId =
+        updatedSession == null
+            ? await _resolveGoalIdFromTarget(
+              goalId: goalId,
+              milestoneId: milestoneId,
+              taskId: taskId,
+            )
+            : await _resolveGoalIdFromSession(updatedSession);
+
+    final affectedGoals = <int>{
+      if (previousGoalId != null) previousGoalId,
+      if (updatedGoalId != null) updatedGoalId,
+    };
+    for (final id in affectedGoals) {
+      await progressSyncService.recalculateGoalProgress(id);
+    }
+
+    await refresh();
+  }
+
   Future<HistoryPageState> _loadState({HistoryPageState? current}) async {
     final repository = ref.read(aimGoRepositoryProvider);
     final goals = await repository.listGoals();
@@ -340,5 +397,37 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
       customRangeEnd: current?.customRangeEnd,
       selectedCalendarDate: current?.selectedCalendarDate ?? DateTime.now(),
     );
+  }
+
+  Future<int?> _resolveGoalIdFromSession(FocusSessionModel session) async {
+    return _resolveGoalIdFromTarget(
+      goalId: session.goalId,
+      milestoneId: session.milestoneId,
+      taskId: session.taskId,
+    );
+  }
+
+  Future<int?> _resolveGoalIdFromTarget({
+    required int? goalId,
+    required int? milestoneId,
+    required int? taskId,
+  }) async {
+    final repository = ref.read(aimGoRepositoryProvider);
+    if (goalId != null) {
+      return goalId;
+    }
+    if (milestoneId != null) {
+      final milestone = await repository.getMilestoneById(milestoneId);
+      return milestone?.goalId;
+    }
+    if (taskId != null) {
+      final task = await repository.getTaskById(taskId);
+      if (task == null) {
+        return null;
+      }
+      final milestone = await repository.getMilestoneById(task.milestoneId);
+      return milestone?.goalId;
+    }
+    return null;
   }
 }

@@ -192,6 +192,26 @@
   "historyGroupYesterday": "昨天",
   "historyGroupThisWeek": "本周",
   "historyGroupLastWeek": "上周",
+  "historyEditTitle": "编辑专注记录",
+  "historyEditTarget": "专注对象",
+  "historyEditTargetLevel": "专注对象层级",
+  "historyEditLevelGoal": "目标",
+  "historyEditLevelMilestone": "里程碑",
+  "historyEditLevelTask": "任务",
+  "historyEditGoal": "目标",
+  "historyEditMilestone": "里程碑",
+  "historyEditTask": "任务",
+  "historyEditEfficiency": "专注效率（0-100）",
+  "historyEditNote": "专注自评",
+  "historyEditSaved": "专注记录已更新。",
+  "historyEditFailed": "更新失败：{error}",
+  "@historyEditFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsTitle": "专注分析",
   "phase5AnalyticsPlaceholder": "分析看板将在 Phase 7 完整实现。",
   "analyticsRangeDay": "日",

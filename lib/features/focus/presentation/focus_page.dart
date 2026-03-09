@@ -26,6 +26,7 @@ class FocusPage extends ConsumerStatefulWidget {
 class _FocusPageState extends ConsumerState<FocusPage>
     with WidgetsBindingObserver {
   final List<int> _pomodoroOptions = <int>[15, 25, 40, 60];
+  bool _isCompletionDialogShowing = false;
 
   @override
   void initState() {
@@ -59,9 +60,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
       }
       final autoOpenEvaluation =
           ref.read(localStorageServiceProvider).getAutoOpenEvaluationEnabled();
-      if (!autoOpenEvaluation) {
-        return;
-      }
       final draft = ref.read(focusEvaluationDraftProvider);
       if (draft == null) {
         return;
@@ -70,7 +68,11 @@ class _FocusPageState extends ConsumerState<FocusPage>
         if (!mounted) {
           return;
         }
-        context.push(RoutePaths.evaluation);
+        if (autoOpenEvaluation) {
+          context.push(RoutePaths.evaluation);
+          return;
+        }
+        _showCompletionDecisionDialog();
       });
     });
 
@@ -541,6 +543,40 @@ class _FocusPageState extends ConsumerState<FocusPage>
       },
     );
     return confirmed == true;
+  }
+
+  Future<void> _showCompletionDecisionDialog() async {
+    if (_isCompletionDialogShowing || !mounted) {
+      return;
+    }
+    _isCompletionDialogShowing = true;
+    final l10n = AppLocalizations.of(context)!;
+    final shouldEvaluate = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.focusCompletedTitle),
+          content: Text(l10n.focusCompletedMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.commonClose),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.focusGoEvaluation),
+            ),
+          ],
+        );
+      },
+    );
+    _isCompletionDialogShowing = false;
+    if (!mounted) {
+      return;
+    }
+    if (shouldEvaluate == true) {
+      context.push(RoutePaths.evaluation);
+    }
   }
 }
 

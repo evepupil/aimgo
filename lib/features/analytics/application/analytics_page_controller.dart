@@ -127,6 +127,32 @@ final class AnalyticsPageState {
     return map;
   }
 
+  Map<FocusSessionMode, int> modeSessionCount() {
+    final result = <FocusSessionMode, int>{
+      FocusSessionMode.pomodoro: 0,
+      FocusSessionMode.free: 0,
+    };
+    for (final session in currentSessions) {
+      result.update(session.focusMode, (value) => value + 1, ifAbsent: () => 1);
+    }
+    return result;
+  }
+
+  Map<FocusSessionMode, double> modeEffectiveMinutes() {
+    final result = <FocusSessionMode, double>{
+      FocusSessionMode.pomodoro: 0,
+      FocusSessionMode.free: 0,
+    };
+    for (final session in currentSessions) {
+      result.update(
+        session.focusMode,
+        (value) => value + session.effectiveMinutes,
+        ifAbsent: () => session.effectiveMinutes,
+      );
+    }
+    return result;
+  }
+
   String labelForGoal(int goalId) {
     return goalTitleById[goalId] ?? 'Goal #$goalId';
   }

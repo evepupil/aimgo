@@ -89,10 +89,7 @@ final class LocalBackupService {
       Milestone.fromJson,
     );
     final tasks = _decodeRows<Task>(decoded['tasks'], Task.fromJson);
-    final focusSessions = _decodeRows<FocusSession>(
-      decoded['focusSessions'],
-      FocusSession.fromJson,
-    );
+    final focusSessions = _decodeFocusSessions(decoded['focusSessions']);
 
     await _database.transaction(() async {
       await _database.delete(_database.focusSessions).go();
@@ -185,6 +182,22 @@ final class LocalBackupService {
             throw const FormatException('Invalid backup row.');
           }
           return decode(Map<String, dynamic>.from(item));
+        })
+        .toList(growable: false);
+  }
+
+  List<FocusSession> _decodeFocusSessions(Object? rawValue) {
+    if (rawValue is! List) {
+      throw const FormatException('Invalid backup data section.');
+    }
+    return rawValue
+        .map((item) {
+          if (item is! Map) {
+            throw const FormatException('Invalid backup row.');
+          }
+          final map = Map<String, dynamic>.from(item);
+          map.putIfAbsent('focusMode', () => 'pomodoro');
+          return FocusSession.fromJson(map);
         })
         .toList(growable: false);
   }

@@ -212,6 +212,7 @@ final class DriftAimGoRepository implements AimGoRepository {
             efficiencyPercent: Value(resolvedEfficiency),
             effectiveMinutes: Value(effectiveMinutes),
             focusTargetLevel: _focusTargetLevelToDb(input.focusTargetLevel),
+            focusMode: Value(_focusModeToDb(input.focusMode)),
             startedAt: input.startedAt,
             endedAt: input.endedAt,
             note: Value(input.note),
@@ -246,6 +247,10 @@ final class DriftAimGoRepository implements AimGoRepository {
         efficiencyPercent: Value(input.efficiencyPercent),
         effectiveMinutes: Value(effectiveMinutes),
         focusTargetLevel: Value(_focusTargetLevelToDb(input.focusTargetLevel)),
+        focusMode:
+            input.focusMode == null
+                ? const Value.absent()
+                : Value(_focusModeToDb(input.focusMode!)),
         note: Value(input.note),
       ),
     );
@@ -468,6 +473,7 @@ final class DriftAimGoRepository implements AimGoRepository {
       efficiencyPercent: row.efficiencyPercent,
       effectiveMinutes: row.effectiveMinutes,
       focusTargetLevel: _focusTargetLevelFromDb(row.focusTargetLevel),
+      focusMode: _focusModeFromDb(row.focusMode),
       startedAt: row.startedAt,
       endedAt: row.endedAt,
       isAbandoned: row.isAbandoned,
@@ -490,6 +496,20 @@ final class DriftAimGoRepository implements AimGoRepository {
       'milestone' => model.FocusTargetLevel.milestone,
       'task' => model.FocusTargetLevel.task,
       _ => model.FocusTargetLevel.goal,
+    };
+  }
+
+  String _focusModeToDb(model.FocusSessionMode mode) {
+    return switch (mode) {
+      model.FocusSessionMode.pomodoro => 'pomodoro',
+      model.FocusSessionMode.free => 'free',
+    };
+  }
+
+  model.FocusSessionMode _focusModeFromDb(String value) {
+    return switch (value) {
+      'free' => model.FocusSessionMode.free,
+      _ => model.FocusSessionMode.pomodoro,
     };
   }
 }

@@ -478,6 +478,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             initialGoalId: state.selectedGoalId,
             initialMilestoneId: state.selectedMilestoneId,
             initialTaskId: state.selectedTaskId,
+            initialFocusMode: state.mode,
             onPickTarget: ({
               required int? selectedGoalId,
               required int? selectedMilestoneId,
@@ -1372,6 +1373,7 @@ class _ManualFocusSheet extends StatefulWidget {
     required this.initialGoalId,
     required this.initialMilestoneId,
     required this.initialTaskId,
+    required this.initialFocusMode,
     required this.onPickTarget,
     required this.onSave,
   });
@@ -1380,6 +1382,7 @@ class _ManualFocusSheet extends StatefulWidget {
   final int? initialGoalId;
   final int? initialMilestoneId;
   final int? initialTaskId;
+  final FocusMode initialFocusMode;
   final _PickManualTarget onPickTarget;
   final _SaveManualFocusSession onSave;
 
@@ -1622,6 +1625,10 @@ class _ManualFocusSheetState extends State<_ManualFocusSheet> {
           durationMinutes: durationMinutes,
           efficiencyPercent: efficiency,
           focusTargetLevel: FocusTargetLevel.task,
+          focusMode:
+              widget.initialFocusMode == FocusMode.free
+                  ? FocusSessionMode.free
+                  : FocusSessionMode.pomodoro,
           startedAt: startedAt,
           endedAt: endedAt,
           note: note.isEmpty ? null : note,

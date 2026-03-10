@@ -2295,6 +2295,18 @@ class $FocusSessionsTable extends FocusSessions
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _focusModeMeta = const VerificationMeta(
+    'focusMode',
+  );
+  @override
+  late final GeneratedColumn<String> focusMode = GeneratedColumn<String>(
+    'focus_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pomodoro'),
+  );
   static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
     'durationMinutes',
   );
@@ -2396,6 +2408,7 @@ class $FocusSessionsTable extends FocusSessions
     milestoneId,
     taskId,
     focusTargetLevel,
+    focusMode,
     durationMinutes,
     efficiencyPercent,
     effectiveMinutes,
@@ -2451,6 +2464,12 @@ class $FocusSessionsTable extends FocusSessions
       );
     } else if (isInserting) {
       context.missing(_focusTargetLevelMeta);
+    }
+    if (data.containsKey('focus_mode')) {
+      context.handle(
+        _focusModeMeta,
+        focusMode.isAcceptableOrUnknown(data['focus_mode']!, _focusModeMeta),
+      );
     }
     if (data.containsKey('duration_minutes')) {
       context.handle(
@@ -2547,6 +2566,11 @@ class $FocusSessionsTable extends FocusSessions
             DriftSqlType.string,
             data['${effectivePrefix}focus_target_level'],
           )!,
+      focusMode:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}focus_mode'],
+          )!,
       durationMinutes:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
@@ -2601,6 +2625,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
   final int? milestoneId;
   final int? taskId;
   final String focusTargetLevel;
+  final String focusMode;
   final int durationMinutes;
   final int efficiencyPercent;
   final double effectiveMinutes;
@@ -2615,6 +2640,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
     this.milestoneId,
     this.taskId,
     required this.focusTargetLevel,
+    required this.focusMode,
     required this.durationMinutes,
     required this.efficiencyPercent,
     required this.effectiveMinutes,
@@ -2638,6 +2664,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
       map['task_id'] = Variable<int>(taskId);
     }
     map['focus_target_level'] = Variable<String>(focusTargetLevel);
+    map['focus_mode'] = Variable<String>(focusMode);
     map['duration_minutes'] = Variable<int>(durationMinutes);
     map['efficiency_percent'] = Variable<int>(efficiencyPercent);
     map['effective_minutes'] = Variable<double>(effectiveMinutes);
@@ -2663,6 +2690,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
       taskId:
           taskId == null && nullToAbsent ? const Value.absent() : Value(taskId),
       focusTargetLevel: Value(focusTargetLevel),
+      focusMode: Value(focusMode),
       durationMinutes: Value(durationMinutes),
       efficiencyPercent: Value(efficiencyPercent),
       effectiveMinutes: Value(effectiveMinutes),
@@ -2685,6 +2713,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
       milestoneId: serializer.fromJson<int?>(json['milestoneId']),
       taskId: serializer.fromJson<int?>(json['taskId']),
       focusTargetLevel: serializer.fromJson<String>(json['focusTargetLevel']),
+      focusMode: serializer.fromJson<String>(json['focusMode']),
       durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
       efficiencyPercent: serializer.fromJson<int>(json['efficiencyPercent']),
       effectiveMinutes: serializer.fromJson<double>(json['effectiveMinutes']),
@@ -2704,6 +2733,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
       'milestoneId': serializer.toJson<int?>(milestoneId),
       'taskId': serializer.toJson<int?>(taskId),
       'focusTargetLevel': serializer.toJson<String>(focusTargetLevel),
+      'focusMode': serializer.toJson<String>(focusMode),
       'durationMinutes': serializer.toJson<int>(durationMinutes),
       'efficiencyPercent': serializer.toJson<int>(efficiencyPercent),
       'effectiveMinutes': serializer.toJson<double>(effectiveMinutes),
@@ -2721,6 +2751,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
     Value<int?> milestoneId = const Value.absent(),
     Value<int?> taskId = const Value.absent(),
     String? focusTargetLevel,
+    String? focusMode,
     int? durationMinutes,
     int? efficiencyPercent,
     double? effectiveMinutes,
@@ -2735,6 +2766,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
     milestoneId: milestoneId.present ? milestoneId.value : this.milestoneId,
     taskId: taskId.present ? taskId.value : this.taskId,
     focusTargetLevel: focusTargetLevel ?? this.focusTargetLevel,
+    focusMode: focusMode ?? this.focusMode,
     durationMinutes: durationMinutes ?? this.durationMinutes,
     efficiencyPercent: efficiencyPercent ?? this.efficiencyPercent,
     effectiveMinutes: effectiveMinutes ?? this.effectiveMinutes,
@@ -2755,6 +2787,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
           data.focusTargetLevel.present
               ? data.focusTargetLevel.value
               : this.focusTargetLevel,
+      focusMode: data.focusMode.present ? data.focusMode.value : this.focusMode,
       durationMinutes:
           data.durationMinutes.present
               ? data.durationMinutes.value
@@ -2784,6 +2817,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
           ..write('milestoneId: $milestoneId, ')
           ..write('taskId: $taskId, ')
           ..write('focusTargetLevel: $focusTargetLevel, ')
+          ..write('focusMode: $focusMode, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('efficiencyPercent: $efficiencyPercent, ')
           ..write('effectiveMinutes: $effectiveMinutes, ')
@@ -2803,6 +2837,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
     milestoneId,
     taskId,
     focusTargetLevel,
+    focusMode,
     durationMinutes,
     efficiencyPercent,
     effectiveMinutes,
@@ -2821,6 +2856,7 @@ class FocusSession extends DataClass implements Insertable<FocusSession> {
           other.milestoneId == this.milestoneId &&
           other.taskId == this.taskId &&
           other.focusTargetLevel == this.focusTargetLevel &&
+          other.focusMode == this.focusMode &&
           other.durationMinutes == this.durationMinutes &&
           other.efficiencyPercent == this.efficiencyPercent &&
           other.effectiveMinutes == this.effectiveMinutes &&
@@ -2837,6 +2873,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
   final Value<int?> milestoneId;
   final Value<int?> taskId;
   final Value<String> focusTargetLevel;
+  final Value<String> focusMode;
   final Value<int> durationMinutes;
   final Value<int> efficiencyPercent;
   final Value<double> effectiveMinutes;
@@ -2851,6 +2888,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
     this.milestoneId = const Value.absent(),
     this.taskId = const Value.absent(),
     this.focusTargetLevel = const Value.absent(),
+    this.focusMode = const Value.absent(),
     this.durationMinutes = const Value.absent(),
     this.efficiencyPercent = const Value.absent(),
     this.effectiveMinutes = const Value.absent(),
@@ -2866,6 +2904,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
     this.milestoneId = const Value.absent(),
     this.taskId = const Value.absent(),
     required String focusTargetLevel,
+    this.focusMode = const Value.absent(),
     this.durationMinutes = const Value.absent(),
     this.efficiencyPercent = const Value.absent(),
     this.effectiveMinutes = const Value.absent(),
@@ -2883,6 +2922,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
     Expression<int>? milestoneId,
     Expression<int>? taskId,
     Expression<String>? focusTargetLevel,
+    Expression<String>? focusMode,
     Expression<int>? durationMinutes,
     Expression<int>? efficiencyPercent,
     Expression<double>? effectiveMinutes,
@@ -2898,6 +2938,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
       if (milestoneId != null) 'milestone_id': milestoneId,
       if (taskId != null) 'task_id': taskId,
       if (focusTargetLevel != null) 'focus_target_level': focusTargetLevel,
+      if (focusMode != null) 'focus_mode': focusMode,
       if (durationMinutes != null) 'duration_minutes': durationMinutes,
       if (efficiencyPercent != null) 'efficiency_percent': efficiencyPercent,
       if (effectiveMinutes != null) 'effective_minutes': effectiveMinutes,
@@ -2915,6 +2956,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
     Value<int?>? milestoneId,
     Value<int?>? taskId,
     Value<String>? focusTargetLevel,
+    Value<String>? focusMode,
     Value<int>? durationMinutes,
     Value<int>? efficiencyPercent,
     Value<double>? effectiveMinutes,
@@ -2930,6 +2972,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
       milestoneId: milestoneId ?? this.milestoneId,
       taskId: taskId ?? this.taskId,
       focusTargetLevel: focusTargetLevel ?? this.focusTargetLevel,
+      focusMode: focusMode ?? this.focusMode,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       efficiencyPercent: efficiencyPercent ?? this.efficiencyPercent,
       effectiveMinutes: effectiveMinutes ?? this.effectiveMinutes,
@@ -2958,6 +3001,9 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
     }
     if (focusTargetLevel.present) {
       map['focus_target_level'] = Variable<String>(focusTargetLevel.value);
+    }
+    if (focusMode.present) {
+      map['focus_mode'] = Variable<String>(focusMode.value);
     }
     if (durationMinutes.present) {
       map['duration_minutes'] = Variable<int>(durationMinutes.value);
@@ -2994,6 +3040,7 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSession> {
           ..write('milestoneId: $milestoneId, ')
           ..write('taskId: $taskId, ')
           ..write('focusTargetLevel: $focusTargetLevel, ')
+          ..write('focusMode: $focusMode, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('efficiencyPercent: $efficiencyPercent, ')
           ..write('effectiveMinutes: $effectiveMinutes, ')
@@ -4821,6 +4868,7 @@ typedef $$FocusSessionsTableCreateCompanionBuilder =
       Value<int?> milestoneId,
       Value<int?> taskId,
       required String focusTargetLevel,
+      Value<String> focusMode,
       Value<int> durationMinutes,
       Value<int> efficiencyPercent,
       Value<double> effectiveMinutes,
@@ -4837,6 +4885,7 @@ typedef $$FocusSessionsTableUpdateCompanionBuilder =
       Value<int?> milestoneId,
       Value<int?> taskId,
       Value<String> focusTargetLevel,
+      Value<String> focusMode,
       Value<int> durationMinutes,
       Value<int> efficiencyPercent,
       Value<double> effectiveMinutes,
@@ -4927,6 +4976,11 @@ class $$FocusSessionsTableFilterComposer
 
   ColumnFilters<String> get focusTargetLevel => $composableBuilder(
     column: $table.focusTargetLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get focusMode => $composableBuilder(
+    column: $table.focusMode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5059,6 +5113,11 @@ class $$FocusSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get focusMode => $composableBuilder(
+    column: $table.focusMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get durationMinutes => $composableBuilder(
     column: $table.durationMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -5185,6 +5244,9 @@ class $$FocusSessionsTableAnnotationComposer
     column: $table.focusTargetLevel,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get focusMode =>
+      $composableBuilder(column: $table.focusMode, builder: (column) => column);
 
   GeneratedColumn<int> get durationMinutes => $composableBuilder(
     column: $table.durationMinutes,
@@ -5325,6 +5387,7 @@ class $$FocusSessionsTableTableManager
                 Value<int?> milestoneId = const Value.absent(),
                 Value<int?> taskId = const Value.absent(),
                 Value<String> focusTargetLevel = const Value.absent(),
+                Value<String> focusMode = const Value.absent(),
                 Value<int> durationMinutes = const Value.absent(),
                 Value<int> efficiencyPercent = const Value.absent(),
                 Value<double> effectiveMinutes = const Value.absent(),
@@ -5339,6 +5402,7 @@ class $$FocusSessionsTableTableManager
                 milestoneId: milestoneId,
                 taskId: taskId,
                 focusTargetLevel: focusTargetLevel,
+                focusMode: focusMode,
                 durationMinutes: durationMinutes,
                 efficiencyPercent: efficiencyPercent,
                 effectiveMinutes: effectiveMinutes,
@@ -5355,6 +5419,7 @@ class $$FocusSessionsTableTableManager
                 Value<int?> milestoneId = const Value.absent(),
                 Value<int?> taskId = const Value.absent(),
                 required String focusTargetLevel,
+                Value<String> focusMode = const Value.absent(),
                 Value<int> durationMinutes = const Value.absent(),
                 Value<int> efficiencyPercent = const Value.absent(),
                 Value<double> effectiveMinutes = const Value.absent(),
@@ -5369,6 +5434,7 @@ class $$FocusSessionsTableTableManager
                 milestoneId: milestoneId,
                 taskId: taskId,
                 focusTargetLevel: focusTargetLevel,
+                focusMode: focusMode,
                 durationMinutes: durationMinutes,
                 efficiencyPercent: efficiencyPercent,
                 effectiveMinutes: effectiveMinutes,

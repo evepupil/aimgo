@@ -1,5 +1,7 @@
 enum FocusTargetLevel { goal, milestone, task }
 
+enum FocusSessionMode { pomodoro, free }
+
 final class GoalModel {
   const GoalModel({
     required this.id,
@@ -99,6 +101,7 @@ final class FocusSessionModel {
     required this.efficiencyPercent,
     required this.effectiveMinutes,
     required this.focusTargetLevel,
+    required this.focusMode,
     required this.startedAt,
     required this.endedAt,
     required this.isAbandoned,
@@ -117,6 +120,7 @@ final class FocusSessionModel {
   final int efficiencyPercent;
   final double effectiveMinutes;
   final FocusTargetLevel focusTargetLevel;
+  final FocusSessionMode focusMode;
   final DateTime startedAt;
   final DateTime endedAt;
   final bool isAbandoned;
@@ -236,6 +240,7 @@ final class CreateFocusSessionInput {
     required this.focusTargetLevel,
     required this.startedAt,
     required this.endedAt,
+    this.focusMode = FocusSessionMode.pomodoro,
     this.goalId,
     this.milestoneId,
     this.taskId,
@@ -250,6 +255,7 @@ final class CreateFocusSessionInput {
   final int durationMinutes;
   final int? efficiencyPercent;
   final FocusTargetLevel focusTargetLevel;
+  final FocusSessionMode focusMode;
   final DateTime startedAt;
   final DateTime endedAt;
   final String? note;
@@ -262,6 +268,7 @@ final class UpdateFocusSessionInput {
     required this.durationMinutes,
     required this.efficiencyPercent,
     required this.focusTargetLevel,
+    this.focusMode,
     this.goalId,
     this.milestoneId,
     this.taskId,
@@ -275,6 +282,7 @@ final class UpdateFocusSessionInput {
   final int durationMinutes;
   final int efficiencyPercent;
   final FocusTargetLevel focusTargetLevel;
+  final FocusSessionMode? focusMode;
   final String? note;
 }
 

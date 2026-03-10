@@ -200,6 +200,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       durationMinutes: resolvedDurationMinutes,
       efficiencyPercent: null,
       focusTargetLevel: resolvedTargetLevel,
+      focusMode: _toSessionMode(mode),
       startedAt: startedAt,
       endedAt: endedAt,
       note: null,
@@ -265,6 +266,13 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       return FocusTargetLevel.milestone;
     }
     return FocusTargetLevel.goal;
+  }
+
+  FocusSessionMode _toSessionMode(FocusMode mode) {
+    return switch (mode) {
+      FocusMode.pomodoro => FocusSessionMode.pomodoro,
+      FocusMode.free => FocusSessionMode.free,
+    };
   }
 
   void _notifyIfNeeded({

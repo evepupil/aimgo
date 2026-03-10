@@ -32,6 +32,8 @@ abstract interface class AimGoRepository {
 
   Future<FocusSessionModel?> getFocusSessionById(int sessionId);
 
+  Future<void> deleteFocusSession(int sessionId);
+
   Future<GoalModel?> getGoalById(int goalId);
 
   Future<MilestoneModel?> getMilestoneById(int milestoneId);

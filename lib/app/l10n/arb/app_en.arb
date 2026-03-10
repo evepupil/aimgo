@@ -212,6 +212,17 @@
       }
     }
   },
+  "historyDeleteConfirmTitle": "Delete focus record?",
+  "historyDeleteConfirmMessage": "This will remove the session and recalculate related progress.",
+  "historyDeleteSuccess": "Focus record deleted.",
+  "historyDeleteFailed": "Delete failed: {error}",
+  "@historyDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsTitle": "Focus Analytics",
   "phase5AnalyticsPlaceholder": "Analytics dashboard will be implemented in Phase 7.",
   "analyticsRangeDay": "Day",

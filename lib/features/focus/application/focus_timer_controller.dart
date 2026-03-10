@@ -182,13 +182,21 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
   }) {
     _timer?.cancel();
     _timer = null;
+    unawaited(
+      ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
+    );
     final resolvedTargetLevel = _resolveTargetLevel();
     final resolvedDurationMinutes = (elapsedSeconds / 60).ceil();
+    final selectedGoalId = state.selectedGoalId;
+    final selectedMilestoneId = state.selectedMilestoneId;
+    final selectedTaskId = state.selectedTaskId;
+    final mode = state.mode;
+    final pomodoroMinutes = state.pomodoroMinutes;
 
     final input = CreateFocusSessionInput(
-      goalId: state.selectedGoalId,
-      milestoneId: state.selectedMilestoneId,
-      taskId: state.selectedTaskId,
+      goalId: selectedGoalId,
+      milestoneId: selectedMilestoneId,
+      taskId: selectedTaskId,
       durationMinutes: resolvedDurationMinutes,
       efficiencyPercent: null,
       focusTargetLevel: resolvedTargetLevel,
@@ -197,43 +205,56 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       note: null,
       isAbandoned: isAbandoned,
     );
-    unawaited(
-      ref.read(progressSyncServiceProvider).createSessionAndSync(input),
+    state = FocusTimerState.initial(selectedGoalId: selectedGoalId).copyWith(
+      mode: mode,
+      pomodoroMinutes: pomodoroMinutes,
+      selectedMilestoneId: selectedMilestoneId,
+      selectedTaskId: selectedTaskId,
     );
     unawaited(
-      ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
+      _createSessionAndHandleCompletion(
+        input: input,
+        mode: mode,
+        isAbandoned: isAbandoned,
+      ),
     );
-    _notifyIfNeeded(
-      durationMinutes: input.durationMinutes,
-      isAbandoned: isAbandoned,
-    );
-    if (!isAbandoned) {
-      ref
-          .read(focusEvaluationDraftProvider.notifier)
-          .setDraft(
-            FocusEvaluationDraft(
-              goalId: state.selectedGoalId,
-              milestoneId: state.selectedMilestoneId,
-              taskId: state.selectedTaskId,
-              durationMinutes: resolvedDurationMinutes,
-              startedAt: startedAt,
-              endedAt: endedAt,
-              focusTargetLevel: resolvedTargetLevel,
-              focusMode: state.mode,
-              isAbandoned: false,
-            ),
-          );
-    }
+  }
 
-    state = FocusTimerState.initial(
-      selectedGoalId: state.selectedGoalId,
-    ).copyWith(
-      mode: state.mode,
-      pomodoroMinutes: state.pomodoroMinutes,
-      selectedMilestoneId: state.selectedMilestoneId,
-      selectedTaskId: state.selectedTaskId,
-      completionEventId: state.completionEventId + 1,
-    );
+  Future<void> _createSessionAndHandleCompletion({
+    required CreateFocusSessionInput input,
+    required FocusMode mode,
+    required bool isAbandoned,
+  }) async {
+    try {
+      final session = await ref
+          .read(progressSyncServiceProvider)
+          .createSessionAndSync(input);
+      _notifyIfNeeded(
+        durationMinutes: input.durationMinutes,
+        isAbandoned: isAbandoned,
+      );
+      if (!isAbandoned) {
+        ref
+            .read(focusEvaluationDraftProvider.notifier)
+            .setDraft(
+              FocusEvaluationDraft(
+                sessionId: session.id,
+                goalId: input.goalId,
+                milestoneId: input.milestoneId,
+                taskId: input.taskId,
+                durationMinutes: input.durationMinutes,
+                startedAt: input.startedAt,
+                endedAt: input.endedAt,
+                focusTargetLevel: input.focusTargetLevel,
+                focusMode: mode,
+                isAbandoned: false,
+              ),
+            );
+        state = state.copyWith(completionEventId: state.completionEventId + 1);
+      }
+    } catch (_) {
+      // Session persistence failed; keep timer reset state and skip completion flow.
+    }
   }
 
   FocusTargetLevel _resolveTargetLevel() {

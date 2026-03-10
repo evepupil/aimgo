@@ -350,6 +350,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     }
 
     try {
+      if (result.deleteRequested) {
+        await controller.deleteSession(entry.session.id);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.historyDeleteSuccess)));
+        }
+        return;
+      }
       await controller.updateSession(
         sessionId: entry.session.id,
         goalId: result.goalId,
@@ -367,7 +376,13 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.historyEditFailed(error.toString()))),
+          SnackBar(
+            content: Text(
+              result.deleteRequested
+                  ? l10n.historyDeleteFailed(error.toString())
+                  : l10n.historyEditFailed(error.toString()),
+            ),
+          ),
         );
       }
     }
@@ -403,6 +418,7 @@ class _HistoryEditResult {
     required this.focusTargetLevel,
     required this.efficiencyPercent,
     required this.note,
+    this.deleteRequested = false,
   });
 
   final int? goalId;
@@ -411,6 +427,7 @@ class _HistoryEditResult {
   final FocusTargetLevel focusTargetLevel;
   final int efficiencyPercent;
   final String? note;
+  final bool deleteRequested;
 }
 
 class _HistorySessionEditSheet extends StatefulWidget {
@@ -538,17 +555,30 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
               ),
               const SizedBox(height: LayoutTokens.sectionGap),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.commonCancel),
+                  TextButton.icon(
+                    onPressed: _confirmDelete,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(l10n.commonDelete),
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed:
-                        () => _submit(hasTargetOptions: hasTargetOptions),
-                    child: Text(l10n.commonSave),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(l10n.commonCancel),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed:
+                            () => _submit(hasTargetOptions: hasTargetOptions),
+                        child: Text(l10n.commonSave),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -600,6 +630,47 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
             _noteController.text.trim().isEmpty
                 ? null
                 : _noteController.text.trim(),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.historyDeleteConfirmTitle),
+          content: Text(l10n.historyDeleteConfirmMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              child: Text(l10n.commonDelete),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm != true || !mounted) {
+      return;
+    }
+    Navigator.of(context).pop(
+      const _HistoryEditResult(
+        goalId: null,
+        milestoneId: null,
+        taskId: null,
+        focusTargetLevel: FocusTargetLevel.goal,
+        efficiencyPercent: 0,
+        note: null,
+        deleteRequested: true,
       ),
     );
   }

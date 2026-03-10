@@ -27,6 +27,56 @@ final class ProgressSyncService {
     });
   }
 
+  Future<FocusSessionModel> updateSessionAndSync(
+    UpdateFocusSessionInput input,
+  ) async {
+    return _repository.transaction(() async {
+      final previous = await _repository.getFocusSessionById(input.id);
+      final previousGoalId =
+          previous == null
+              ? null
+              : await _resolveGoalIdFromTarget(
+                goalId: previous.goalId,
+                milestoneId: previous.milestoneId,
+                taskId: previous.taskId,
+              );
+
+      final session = await _repository.updateFocusSession(input);
+      final updatedGoalId = await _resolveGoalIdFromTarget(
+        goalId: session.goalId,
+        milestoneId: session.milestoneId,
+        taskId: session.taskId,
+      );
+
+      final affectedGoalIds = <int>{
+        if (previousGoalId != null) previousGoalId,
+        if (updatedGoalId != null) updatedGoalId,
+      };
+      for (final goalId in affectedGoalIds) {
+        await _recalculateGoalProgressInternal(goalId);
+      }
+      return session;
+    });
+  }
+
+  Future<void> deleteSessionAndSync(int sessionId) async {
+    await _repository.transaction(() async {
+      final previous = await _repository.getFocusSessionById(sessionId);
+      if (previous == null) {
+        return;
+      }
+      final goalId = await _resolveGoalIdFromTarget(
+        goalId: previous.goalId,
+        milestoneId: previous.milestoneId,
+        taskId: previous.taskId,
+      );
+      await _repository.deleteFocusSession(sessionId);
+      if (goalId != null) {
+        await _recalculateGoalProgressInternal(goalId);
+      }
+    });
+  }
+
   Future<void> recalculateGoalProgress(int goalId) async {
     await _repository.transaction(
       () => _recalculateGoalProgressInternal(goalId),
@@ -111,15 +161,27 @@ final class ProgressSyncService {
   }
 
   Future<int?> _resolveGoalIdFromInput(CreateFocusSessionInput input) async {
-    if (input.goalId != null) {
-      return input.goalId;
+    return _resolveGoalIdFromTarget(
+      goalId: input.goalId,
+      milestoneId: input.milestoneId,
+      taskId: input.taskId,
+    );
+  }
+
+  Future<int?> _resolveGoalIdFromTarget({
+    required int? goalId,
+    required int? milestoneId,
+    required int? taskId,
+  }) async {
+    if (goalId != null) {
+      return goalId;
     }
-    if (input.milestoneId != null) {
-      final milestone = await _repository.getMilestoneById(input.milestoneId!);
+    if (milestoneId != null) {
+      final milestone = await _repository.getMilestoneById(milestoneId);
       return milestone?.goalId;
     }
-    if (input.taskId != null) {
-      final task = await _repository.getTaskById(input.taskId!);
+    if (taskId != null) {
+      final task = await _repository.getTaskById(taskId);
       if (task == null) {
         return null;
       }

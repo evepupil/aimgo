@@ -25,12 +25,14 @@ final class FocusEvaluationDraft {
     required this.endedAt,
     required this.focusTargetLevel,
     required this.focusMode,
+    required this.sessionId,
     this.goalId,
     this.milestoneId,
     this.taskId,
     this.isAbandoned = false,
   });
 
+  final int sessionId;
   final int? goalId;
   final int? milestoneId;
   final int? taskId;

@@ -212,6 +212,17 @@
       }
     }
   },
+  "historyDeleteConfirmTitle": "删除专注记录？",
+  "historyDeleteConfirmMessage": "删除后将回算相关目标进度。",
+  "historyDeleteSuccess": "专注记录已删除。",
+  "historyDeleteFailed": "删除失败：{error}",
+  "@historyDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsTitle": "专注分析",
   "phase5AnalyticsPlaceholder": "分析看板将在 Phase 7 完整实现。",
   "analyticsRangeDay": "日",

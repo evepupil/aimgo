@@ -180,20 +180,21 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
       _isSubmitting = true;
     });
     try {
+      if (draft.sessionId <= 0) {
+        throw StateError('Invalid draft session id');
+      }
       await ref
           .read(progressSyncServiceProvider)
-          .createSessionAndSync(
-            CreateFocusSessionInput(
+          .updateSessionAndSync(
+            UpdateFocusSessionInput(
+              id: draft.sessionId,
               goalId: draft.goalId,
               milestoneId: draft.milestoneId,
               taskId: draft.taskId,
               durationMinutes: draft.durationMinutes,
-              efficiencyPercent: skipEfficiency ? null : _efficiencyPercent,
+              efficiencyPercent: skipEfficiency ? 60 : _efficiencyPercent,
               focusTargetLevel: draft.focusTargetLevel,
-              startedAt: draft.startedAt,
-              endedAt: draft.endedAt,
               note: _normalizeNullable(_noteController.text),
-              isAbandoned: draft.isAbandoned,
             ),
           );
       ref.read(focusEvaluationDraftProvider.notifier).clear();

@@ -313,9 +313,7 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
     if (previousSession == null) {
       return;
     }
-    final previousGoalId = await _resolveGoalIdFromSession(previousSession);
-
-    await repository.updateFocusSession(
+    await progressSyncService.updateSessionAndSync(
       UpdateFocusSessionInput(
         id: sessionId,
         goalId: goalId,
@@ -327,24 +325,16 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
         note: note,
       ),
     );
+    await refresh();
+  }
 
-    final updatedSession = await repository.getFocusSessionById(sessionId);
-    final updatedGoalId =
-        updatedSession == null
-            ? await _resolveGoalIdFromTarget(
-              goalId: goalId,
-              milestoneId: milestoneId,
-              taskId: taskId,
-            )
-            : await _resolveGoalIdFromSession(updatedSession);
-
-    final affectedGoals = <int>{
-      if (previousGoalId != null) previousGoalId,
-      if (updatedGoalId != null) updatedGoalId,
-    };
-    for (final id in affectedGoals) {
-      await progressSyncService.recalculateGoalProgress(id);
+  Future<void> deleteSession(int sessionId) async {
+    final current = state.valueOrNull;
+    if (current == null) {
+      return;
     }
+    final progressSyncService = ref.read(progressSyncServiceProvider);
+    await progressSyncService.deleteSessionAndSync(sessionId);
 
     await refresh();
   }
@@ -397,37 +387,5 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
       customRangeEnd: current?.customRangeEnd,
       selectedCalendarDate: current?.selectedCalendarDate ?? DateTime.now(),
     );
-  }
-
-  Future<int?> _resolveGoalIdFromSession(FocusSessionModel session) async {
-    return _resolveGoalIdFromTarget(
-      goalId: session.goalId,
-      milestoneId: session.milestoneId,
-      taskId: session.taskId,
-    );
-  }
-
-  Future<int?> _resolveGoalIdFromTarget({
-    required int? goalId,
-    required int? milestoneId,
-    required int? taskId,
-  }) async {
-    final repository = ref.read(aimGoRepositoryProvider);
-    if (goalId != null) {
-      return goalId;
-    }
-    if (milestoneId != null) {
-      final milestone = await repository.getMilestoneById(milestoneId);
-      return milestone?.goalId;
-    }
-    if (taskId != null) {
-      final task = await repository.getTaskById(taskId);
-      if (task == null) {
-        return null;
-      }
-      final milestone = await repository.getMilestoneById(task.milestoneId);
-      return milestone?.goalId;
-    }
-    return null;
   }
 }

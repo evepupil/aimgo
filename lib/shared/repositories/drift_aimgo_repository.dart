@@ -289,6 +289,12 @@ final class DriftAimGoRepository implements AimGoRepository {
   }
 
   @override
+  Future<void> deleteFocusSession(int sessionId) async {
+    await (_database.delete(_database.focusSessions)
+      ..where((table) => table.id.equals(sessionId))).go();
+  }
+
+  @override
   Future<List<model.MilestoneModel>> listMilestonesByGoalId(int goalId) async {
     final rows =
         await (_database.select(_database.milestones)

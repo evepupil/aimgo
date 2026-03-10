@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
 import 'package:aimgo/features/focus/application/focus_evaluation_draft_controller.dart';
@@ -65,11 +66,11 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: LayoutTokens.listPagePadding,
         children: [
-          Card(
+          _EvaluationPanel(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(LayoutTokens.cardPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -77,71 +78,102 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
                     l10n.evaluationSummaryTitle,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: LayoutTokens.compactGap),
                   Text(
                     '${l10n.evaluationDuration}: ${formatMinutes(durationMinutes)}',
                   ),
                   const SizedBox(height: 4),
-                  Text(focusPath.isEmpty ? l10n.focusContextEmpty : focusPath),
+                  Text(
+                    focusPath.isEmpty ? l10n.focusContextEmpty : focusPath,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.evaluationEfficiencyLabel(_efficiencyPercent.toString()),
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          Slider(
-            value: _efficiencyPercent.toDouble(),
-            min: 0,
-            max: 100,
-            divisions: 100,
-            label: '$_efficiencyPercent%',
-            onChanged:
-                _isSubmitting
-                    ? null
-                    : (value) {
-                      setState(() {
-                        _efficiencyPercent = value.round();
-                      });
-                    },
-          ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final value in const [20, 40, 60, 80, 100])
-                ChoiceChip(
-                  label: Text('$value%'),
-                  selected: _efficiencyPercent == value,
-                  onSelected:
-                      _isSubmitting
-                          ? null
-                          : (_) {
-                            setState(() {
-                              _efficiencyPercent = value;
-                            });
-                          },
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '${l10n.evaluationEffectiveDuration}: ${formatMinutes(effectiveMinutes)}',
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _noteController,
-            minLines: 3,
-            maxLines: 6,
-            enabled: !_isSubmitting,
-            decoration: InputDecoration(
-              labelText: l10n.evaluationNoteLabel,
-              border: const OutlineInputBorder(),
+          const SizedBox(height: LayoutTokens.sectionGapLarge),
+          _EvaluationPanel(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Text(
+                      l10n.evaluationEfficiencyLabel(
+                        _efficiencyPercent.toString(),
+                      ),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  Slider(
+                    value: _efficiencyPercent.toDouble(),
+                    min: 0,
+                    max: 100,
+                    divisions: 100,
+                    label: '$_efficiencyPercent%',
+                    onChanged:
+                        _isSubmitting
+                            ? null
+                            : (value) {
+                              setState(() {
+                                _efficiencyPercent = value.round();
+                              });
+                            },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final value in const [20, 40, 60, 80, 100])
+                          ChoiceChip(
+                            label: Text('$value%'),
+                            selected: _efficiencyPercent == value,
+                            onSelected:
+                                _isSubmitting
+                                    ? null
+                                    : (_) {
+                                      setState(() {
+                                        _efficiencyPercent = value;
+                                      });
+                                    },
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Text(
+                      '${l10n.evaluationEffectiveDuration}: ${formatMinutes(effectiveMinutes)}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: LayoutTokens.sectionGapLarge),
+          _EvaluationPanel(
+            child: Padding(
+              padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+              child: TextField(
+                controller: _noteController,
+                minLines: 3,
+                maxLines: 6,
+                enabled: !_isSubmitting,
+                decoration: InputDecoration(
+                  labelText: l10n.evaluationNoteLabel,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: LayoutTokens.sectionGapLarge),
           FilledButton(
             onPressed:
                 _isSubmitting
@@ -156,7 +188,7 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
                     )
                     : Text(l10n.evaluationSubmit),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: LayoutTokens.compactGap),
           OutlinedButton(
             onPressed:
                 _isSubmitting
@@ -265,5 +297,23 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
   String? _normalizeNullable(String source) {
     final value = source.trim();
     return value.isEmpty ? null : value;
+  }
+}
+
+class _EvaluationPanel extends StatelessWidget {
+  const _EvaluationPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+      ),
+      child: child,
+    );
   }
 }

@@ -30,17 +30,6 @@ class ProfilePage extends ConsumerWidget {
                     tooltip: l10n.goalsFilterReset,
                   ),
                   IconButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.profileNotificationPlaceholder),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.notifications_none_outlined),
-                    tooltip: l10n.profileNotifications,
-                  ),
-                  IconButton(
                     onPressed: () => context.push(RoutePaths.settings),
                     icon: const Icon(Icons.settings_outlined),
                     tooltip: l10n.settingsTitle,
@@ -79,7 +68,7 @@ class ProfilePage extends ConsumerWidget {
                               )
                               : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
                     _OverviewStrip(
                       items: [
                         _OverviewItem(
@@ -96,7 +85,7 @@ class ProfilePage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
                     _Section(
                       title: l10n.profileSectionQuickAccess,
                       children: [
@@ -115,6 +104,23 @@ class ProfilePage extends ConsumerWidget {
                           title: l10n.goalsMilestoneProgress,
                           onTap: () => context.push(RoutePaths.goalMilestones),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+                    _Section(
+                      title: l10n.profileSectionPreferences,
+                      children: [
+                        _ActionRow(
+                          icon: Icons.settings_outlined,
+                          title: l10n.settingsTitle,
+                          onTap: () => context.push(RoutePaths.settings),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+                    _Section(
+                      title: l10n.profileSectionData,
+                      children: [
                         _ActionRow(
                           icon: Icons.checklist_outlined,
                           title: l10n.profilePendingItems,
@@ -124,17 +130,17 @@ class ProfilePage extends ConsumerWidget {
                                   : data.pendingTaskCount.toString(),
                           onTap: () => context.go(RoutePaths.goals),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    _Section(
-                      title: l10n.settingsTitle,
-                      children: [
                         _ActionRow(
-                          icon: Icons.settings_outlined,
-                          title: l10n.settingsTitle,
+                          icon: Icons.shield_outlined,
+                          title: l10n.settingsBackupRestore,
                           onTap: () => context.push(RoutePaths.settings),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+                    _Section(
+                      title: l10n.profileSectionAbout,
+                      children: [
                         _ActionRow(
                           icon: Icons.info_outline,
                           title: l10n.profileAbout,
@@ -144,23 +150,6 @@ class ProfilePage extends ConsumerWidget {
                           icon: Icons.tag_outlined,
                           title: l10n.profileVersionLabel,
                           trailingText: l10n.aboutVersion,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    _Section(
-                      title: l10n.profileSectionAbout,
-                      children: [
-                        _ActionRow(
-                          icon: Icons.notifications_none_outlined,
-                          title: l10n.profileNotifications,
-                          subtitle: l10n.profileNotificationPlaceholder,
-                          onTap: () => context.push(RoutePaths.settings),
-                        ),
-                        _ActionRow(
-                          icon: Icons.shield_outlined,
-                          title: l10n.settingsBackupRestore,
-                          onTap: () => context.push(RoutePaths.settings),
                         ),
                       ],
                     ),
@@ -207,10 +196,16 @@ class _IdentityPanel extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+        ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: const EdgeInsets.symmetric(
+        horizontal: LayoutTokens.cardPadding,
+        vertical: 11,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -244,7 +239,7 @@ class _IdentityPanel extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
                 ),
                 child: Text(
                   streakLabel,
@@ -296,7 +291,7 @@ class _CompactTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
         border: emphasized ? Border.all(color: borderColor) : null,
       ),
       child: Text(
@@ -322,8 +317,8 @@ class _OverviewStrip extends StatelessWidget {
     );
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
       ),
       child: Row(
         children: [
@@ -331,7 +326,7 @@ class _OverviewStrip extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  vertical: 12,
+                  vertical: 11,
                   horizontal: 8,
                 ),
                 child: Column(
@@ -394,11 +389,13 @@ class _Section extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: LayoutTokens.compactGap),
         Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(12),
+            color: theme.colorScheme.surfaceContainerLow.withValues(
+              alpha: 0.36,
+            ),
+            borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -420,14 +417,12 @@ class _ActionRow extends StatelessWidget {
   const _ActionRow({
     required this.icon,
     required this.title,
-    this.subtitle,
     this.trailingText,
     this.onTap,
   });
 
   final IconData icon;
   final String title;
-  final String? subtitle;
   final String? trailingText;
   final VoidCallback? onTap;
 
@@ -435,7 +430,10 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final rowContent = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 11),
+      padding: const EdgeInsets.symmetric(
+        horizontal: LayoutTokens.cardPadding - 1,
+        vertical: 10,
+      ),
       child: Row(
         children: [
           Icon(
@@ -454,19 +452,6 @@ class _ActionRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.9,
-                      ),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
               ],
             ),
           ),
@@ -502,7 +487,7 @@ class _ActionRow extends StatelessWidget {
       return rowContent;
     }
     return InkWell(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
       onTap: onTap,
       child: rowContent,
     );

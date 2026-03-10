@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/services/local_storage_service.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
@@ -94,177 +95,191 @@ class _FocusPageState extends ConsumerState<FocusPage>
     );
 
     return Scaffold(
-      body: Stack(
-        children: [
-          NestedScrollView(
-            headerSliverBuilder:
-                (context, innerBoxIsScrolled) => [
-                  SliverAppBar(
-                    floating: true,
-                    snap: true,
-                    title: Text(l10n.focusTitle),
-                    actions: [
-                      IconButton(
-                        onPressed: () {
-                          final goalId = focusState.selectedGoalId;
-                          if (goalId == null) {
-                            context.push(RoutePaths.history);
-                            return;
-                          }
-                          context.push('${RoutePaths.history}?goalId=$goalId');
-                        },
-                        icon: const Icon(Icons.history),
-                        tooltip: l10n.focusHistory,
-                      ),
-                      IconButton(
-                        onPressed:
-                            () => _openManualFocusSheet(
-                              hierarchy: hierarchy,
-                              state: focusState,
-                            ),
-                        icon: const Icon(Icons.add),
-                        tooltip: l10n.focusManualAddTooltip,
-                      ),
-                    ],
+      appBar: AppBar(
+        title: Text(l10n.focusTitle),
+        actions: [
+          PopupMenuButton<_FocusTopAction>(
+            icon: const Icon(Icons.more_horiz),
+            position: PopupMenuPosition.under,
+            elevation: 6,
+            constraints: const BoxConstraints(minWidth: 146, maxWidth: 156),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+            ),
+            onSelected: (_FocusTopAction action) {
+              if (action == _FocusTopAction.history) {
+                final goalId = focusState.selectedGoalId;
+                if (goalId == null) {
+                  context.push(RoutePaths.history);
+                  return;
+                }
+                context.push('${RoutePaths.history}?goalId=$goalId');
+                return;
+              }
+              _openManualFocusSheet(hierarchy: hierarchy, state: focusState);
+            },
+            itemBuilder:
+                (menuContext) => [
+                  PopupMenuItem<_FocusTopAction>(
+                    value: _FocusTopAction.history,
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: _FocusMenuActionRow(
+                      icon: Icons.history,
+                      label: l10n.historyTitle,
+                    ),
+                  ),
+                  PopupMenuItem<_FocusTopAction>(
+                    value: _FocusTopAction.manual,
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: _FocusMenuActionRow(
+                      icon: Icons.add_circle_outline,
+                      label: l10n.focusManualAddTooltip,
+                    ),
                   ),
                 ],
-            body: ListView(
-              padding: EdgeInsets.fromLTRB(
-                layoutMetrics.horizontalPadding,
-                layoutMetrics.topPadding,
-                layoutMetrics.horizontalPadding,
-                layoutMetrics.bottomPadding,
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          ListView(
+            padding: EdgeInsets.fromLTRB(
+              layoutMetrics.horizontalPadding,
+              layoutMetrics.topPadding,
+              layoutMetrics.horizontalPadding,
+              layoutMetrics.bottomPadding,
+            ),
+            children: [
+              _FocusModeTabSwitch(
+                mode: focusState.mode,
+                onChange: focusController.setMode,
+                pomodoroLabel: l10n.focusModePomodoro,
+                freeLabel: l10n.focusModeFree,
               ),
-              children: [
-                _FocusModeTabSwitch(
-                  mode: focusState.mode,
-                  onChange: focusController.setMode,
-                  pomodoroLabel: l10n.focusModePomodoro,
-                  freeLabel: l10n.focusModeFree,
-                ),
-                SizedBox(height: layoutMetrics.modeToTargetSpacing),
-                _FocusTargetEntry(
-                  enabled: focusState.status != FocusTimerStatus.running,
-                  pathText:
-                      selectedTarget?.displayPath ??
-                      AppLocalizations.of(context)!.focusContextEmpty,
+              SizedBox(height: layoutMetrics.modeToTargetSpacing),
+              _FocusTargetEntry(
+                enabled: focusState.status != FocusTimerStatus.running,
+                pathText:
+                    selectedTarget?.displayPath ??
+                    AppLocalizations.of(context)!.focusContextEmpty,
+                onTap:
+                    () => _openFocusTargetPicker(
+                      hierarchy: hierarchy,
+                      state: focusState,
+                    ),
+              ),
+              SizedBox(height: layoutMetrics.targetToTimerSpacing),
+              Center(
+                child: GestureDetector(
                   onTap:
-                      () => _openFocusTargetPicker(
-                        hierarchy: hierarchy,
-                        state: focusState,
-                      ),
-                ),
-                SizedBox(height: layoutMetrics.targetToTimerSpacing),
-                Center(
-                  child: GestureDetector(
-                    onTap:
-                        focusState.mode == FocusMode.pomodoro
-                            ? _openPomodoroDurationPicker
-                            : null,
-                    child: SizedBox(
-                      width: layoutMetrics.timerSize,
-                      height: layoutMetrics.timerSize,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: layoutMetrics.timerSize,
-                            height: layoutMetrics.timerSize,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.outlineVariant,
-                                  width: layoutMetrics.timerStrokeWidth,
-                                ),
+                      focusState.mode == FocusMode.pomodoro
+                          ? _openPomodoroDurationPicker
+                          : null,
+                  child: SizedBox(
+                    width: layoutMetrics.timerSize,
+                    height: layoutMetrics.timerSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: layoutMetrics.timerSize,
+                          height: layoutMetrics.timerSize,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                width: layoutMetrics.timerStrokeWidth,
                               ),
                             ),
                           ),
-                          if (focusState.mode == FocusMode.pomodoro)
-                            CircularProgressIndicator(
-                              value: focusState.progressRatio,
-                              strokeWidth: layoutMetrics.timerStrokeWidth,
-                              backgroundColor: Colors.transparent,
-                            ),
-                          if (focusState.mode == FocusMode.free &&
-                              focusState.status != FocusTimerStatus.idle)
-                            CircularProgressIndicator(
-                              value: 1,
-                              strokeWidth: layoutMetrics.timerStrokeWidth,
-                              backgroundColor: Colors.transparent,
-                            ),
-                          SizedBox(
-                            width:
-                                layoutMetrics.timerSize -
-                                (layoutMetrics.timerStrokeWidth * 2),
-                            height:
-                                layoutMetrics.timerSize -
-                                (layoutMetrics.timerStrokeWidth * 2),
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Theme.of(context).colorScheme.surface,
-                              ),
+                        ),
+                        if (focusState.mode == FocusMode.pomodoro)
+                          CircularProgressIndicator(
+                            value: focusState.progressRatio,
+                            strokeWidth: layoutMetrics.timerStrokeWidth,
+                            backgroundColor: Colors.transparent,
+                          ),
+                        if (focusState.mode == FocusMode.free &&
+                            focusState.status != FocusTimerStatus.idle)
+                          CircularProgressIndicator(
+                            value: 1,
+                            strokeWidth: layoutMetrics.timerStrokeWidth,
+                            backgroundColor: Colors.transparent,
+                          ),
+                        SizedBox(
+                          width:
+                              layoutMetrics.timerSize -
+                              (layoutMetrics.timerStrokeWidth * 2),
+                          height:
+                              layoutMetrics.timerSize -
+                              (layoutMetrics.timerStrokeWidth * 2),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Theme.of(context).colorScheme.surface,
                             ),
                           ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                focusState.mode == FocusMode.pomodoro
-                                    ? formatClockFromSeconds(
-                                      focusState.remainingSeconds,
-                                    )
-                                    : formatClockFromSeconds(
-                                      focusState.displayElapsedSeconds,
-                                    ),
-                                style: timerTextStyle,
-                              ),
-                              SizedBox(height: layoutMetrics.timerLabelSpacing),
-                              Text(
-                                focusState.mode == FocusMode.pomodoro
-                                    ? l10n.focusRemaining
-                                    : l10n.focusElapsed,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              if (focusState.mode == FocusMode.pomodoro) ...[
-                                SizedBox(
-                                  height: layoutMetrics.timerPresetTopSpacing,
-                                ),
-                                Text(
-                                  l10n.focusPomodoroPreset(
-                                    focusState.pomodoroMinutes.toString(),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              focusState.mode == FocusMode.pomodoro
+                                  ? formatClockFromSeconds(
+                                    focusState.remainingSeconds,
+                                  )
+                                  : formatClockFromSeconds(
+                                    focusState.displayElapsedSeconds,
                                   ),
-                                  style: Theme.of(context).textTheme.bodySmall,
+                              style: timerTextStyle,
+                            ),
+                            SizedBox(height: layoutMetrics.timerLabelSpacing),
+                            Text(
+                              focusState.mode == FocusMode.pomodoro
+                                  ? l10n.focusRemaining
+                                  : l10n.focusElapsed,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            if (focusState.mode == FocusMode.pomodoro) ...[
+                              SizedBox(
+                                height: layoutMetrics.timerPresetTopSpacing,
+                              ),
+                              Text(
+                                l10n.focusPomodoroPreset(
+                                  focusState.pomodoroMinutes.toString(),
                                 ),
-                              ],
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
                             ],
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: layoutMetrics.timerToControlSpacing),
-                _FocusControlSection(
-                  state: focusState,
-                  canStart: focusState.selectedTaskId != null,
-                  onStart: focusController.startOrResume,
-                  onPause: focusController.pause,
-                  onTerminate: () async {
-                    final confirm = await _confirmTerminate();
-                    if (confirm) {
-                      focusController.terminate(isAbandoned: false);
-                    }
-                  },
-                  onChangeDuration: _openPomodoroDurationPicker,
-                  l10n: l10n,
-                ),
-              ],
-            ),
+              ),
+              SizedBox(height: layoutMetrics.timerToControlSpacing),
+              _FocusControlSection(
+                state: focusState,
+                canStart: focusState.selectedTaskId != null,
+                onStart: focusController.startOrResume,
+                onPause: focusController.pause,
+                onTerminate: () async {
+                  final confirm = await _confirmTerminate();
+                  if (confirm) {
+                    focusController.terminate(isAbandoned: false);
+                  }
+                },
+                onChangeDuration: _openPomodoroDurationPicker,
+                l10n: l10n,
+              ),
+            ],
           ),
           if (hierarchyAsync.isLoading)
             const Positioned(
@@ -580,7 +595,40 @@ class _FocusPageState extends ConsumerState<FocusPage>
   }
 }
 
-class _FocusTargetEntry extends StatelessWidget {
+enum _FocusTopAction { history, manual }
+
+class _FocusMenuActionRow extends StatelessWidget {
+  const _FocusMenuActionRow({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 112,
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FocusTargetEntry extends StatefulWidget {
   const _FocusTargetEntry({
     required this.enabled,
     required this.pathText,
@@ -592,36 +640,163 @@ class _FocusTargetEntry extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_FocusTargetEntry> createState() => _FocusTargetEntryState();
+}
+
+class _FocusTargetEntryState extends State<_FocusTargetEntry> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mutedColor = theme.colorScheme.onSurfaceVariant;
-    final pathStyle = theme.textTheme.titleMedium?.copyWith(
-      color: enabled ? null : mutedColor,
-      fontWeight: FontWeight.w600,
-    );
+    final fgColor =
+        widget.enabled
+            ? theme.colorScheme.onSurface
+            : theme.colorScheme.onSurfaceVariant;
+    final bgColor =
+        _isPressed
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.48)
+            : theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.42);
+    final borderColor =
+        _isPressed
+            ? theme.colorScheme.outlineVariant.withValues(alpha: 0.66)
+            : theme.colorScheme.outlineVariant.withValues(alpha: 0.42);
 
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Text(
-                pathText,
-                style: pathStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        border: Border.all(color: borderColor),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.enabled ? widget.onTap : null,
+          onHighlightChanged:
+              (value) => setState(() {
+                _isPressed = value;
+              }),
+          borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(9, 8, 7, 8),
+            child: Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.surface.withValues(alpha: 0.92),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.45,
+                      ),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.flag_outlined,
+                      size: 12,
+                      color: mutedColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _FocusTargetBreadcrumb(
+                    pathText: widget.pathText,
+                    color: fgColor,
+                    separatorColor: mutedColor,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                AnimatedRotation(
+                  duration: const Duration(milliseconds: 140),
+                  turns: _isPressed ? 0.03 : 0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.surface.withValues(alpha: 0.88),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 14,
+                        color: mutedColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: mutedColor),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _FocusTargetBreadcrumb extends StatelessWidget {
+  const _FocusTargetBreadcrumb({
+    required this.pathText,
+    required this.color,
+    required this.separatorColor,
+  });
+
+  final String pathText;
+  final Color color;
+  final Color separatorColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final parts =
+        pathText
+            .split('>')
+            .map((segment) => segment.trim())
+            .where((segment) => segment.isNotEmpty)
+            .toList();
+
+    if (parts.isEmpty) {
+      return Text(
+        pathText,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: separatorColor,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+    }
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          for (var i = 0; i < parts.length; i++) ...[
+            TextSpan(
+              text: parts[i],
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: color,
+                fontWeight:
+                    i == parts.length - 1 ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            if (i != parts.length - 1)
+              TextSpan(
+                text: '  >  ',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: separatorColor.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -645,6 +820,7 @@ class _FocusModeTabSwitch extends StatelessWidget {
     final activeColor = theme.colorScheme.onSurface;
     final inactiveColor = theme.colorScheme.onSurfaceVariant;
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _FocusModeTabItem(
           label: pomodoroLabel,
@@ -653,7 +829,7 @@ class _FocusModeTabSwitch extends StatelessWidget {
           inactiveColor: inactiveColor,
           onTap: () => onChange(FocusMode.pomodoro),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 20),
         _FocusModeTabItem(
           label: freeLabel,
           selected: mode == FocusMode.free,
@@ -684,7 +860,7 @@ class _FocusModeTabItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 6),
@@ -736,7 +912,7 @@ class _DurationChoiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
       onTap: onTap,
       child: Ink(
         width: width,
@@ -748,7 +924,7 @@ class _DurationChoiceButton extends StatelessWidget {
                   : theme.colorScheme.surfaceContainerHighest.withValues(
                     alpha: 0.55,
                   ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
           border:
               selected
                   ? Border.all(color: theme.colorScheme.primary, width: 1.2)
@@ -987,11 +1163,11 @@ class _FocusLayoutMetrics {
 
     return _FocusLayoutMetrics(
       horizontalPadding: compactWidth ? 12 : 16,
-      topPadding: compactHeight ? 14 : 20,
-      bottomPadding: 20,
-      modeToTargetSpacing: compactHeight ? 24 : 36,
-      targetToTimerSpacing: compactHeight ? 26 : 52,
-      timerToControlSpacing: compactHeight ? 26 : 54,
+      topPadding: compactHeight ? 24 : 32,
+      bottomPadding: 24,
+      modeToTargetSpacing: compactHeight ? 30 : 40,
+      targetToTimerSpacing: compactHeight ? 24 : 34,
+      timerToControlSpacing: compactHeight ? 24 : 38,
       timerSize: timerSize,
       timerStrokeWidth: compactWidth ? 8 : 10,
       timerTextSize: compactWidth ? 32 : 36,

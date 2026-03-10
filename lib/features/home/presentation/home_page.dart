@@ -43,12 +43,9 @@ class HomePage extends ConsumerWidget {
           child: ListView(
             padding: LayoutTokens.listPagePadding,
             children: [
-              HomeHeaderCard(
+              HomeCurrentGoalCard(
                 dateLabel: headerDate,
                 effectiveMinutes: state.todayEffectiveMinutes,
-              ),
-              const SizedBox(height: LayoutTokens.sectionGap),
-              HomeCurrentGoalCard(
                 summary: state.currentGoal,
                 onOpenGoals: () => context.go(RoutePaths.goals),
               ),

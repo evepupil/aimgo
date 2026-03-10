@@ -7,53 +7,17 @@ import 'package:aimgo/features/home/application/home_dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class HomeHeaderCard extends StatelessWidget {
-  const HomeHeaderCard({
-    required this.dateLabel,
-    required this.effectiveMinutes,
-    super.key,
-  });
-
-  final String dateLabel;
-  final double effectiveMinutes;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(dateLabel, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text(
-              l10n.homeTodayEffectiveFocus,
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              formatMinutes(effectiveMinutes),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class HomeCurrentGoalCard extends StatelessWidget {
   const HomeCurrentGoalCard({
+    required this.dateLabel,
+    required this.effectiveMinutes,
     required this.summary,
     required this.onOpenGoals,
     super.key,
   });
 
+  final String dateLabel;
+  final double effectiveMinutes;
   final CurrentGoalSummary? summary;
   final VoidCallback onOpenGoals;
 
@@ -62,12 +26,33 @@ class HomeCurrentGoalCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     if (summary == null) {
-      return Card(
+      return _HomePanel(
         child: Padding(
           padding: const EdgeInsets.all(LayoutTokens.cardPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                dateLabel,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(l10n.homeTodayOverview, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 4),
+              Text(
+                formatMinutes(effectiveMinutes),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Divider(
+                height: 1,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.52),
+              ),
+              const SizedBox(height: 12),
               Text(l10n.homeCurrentGoal, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(l10n.goalsNoGoal),
@@ -83,16 +68,42 @@ class HomeCurrentGoalCard extends StatelessWidget {
     }
 
     final progressPercent = (summary!.goal.progressRatio * 100).round();
-    return Card(
+    return _HomePanel(
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              dateLabel,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(l10n.homeTodayOverview, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            Text(
+              formatMinutes(effectiveMinutes),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.52),
+            ),
+            const SizedBox(height: 12),
             Text(l10n.homeCurrentGoal, style: theme.textTheme.titleMedium),
             const SizedBox(height: 10),
-            Text(summary!.goal.title, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 14),
+            Text(
+              summary!.goal.title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -103,9 +114,14 @@ class HomeCurrentGoalCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  '${formatMinutes(summary!.goal.effectiveMinutes)} / ${formatMinutes(summary!.goal.estimateMinutes)}',
-                  style: theme.textTheme.bodySmall,
+                Flexible(
+                  child: Text(
+                    '${formatMinutes(summary!.goal.effectiveMinutes)} / ${formatMinutes(summary!.goal.estimateMinutes)}',
+                    style: theme.textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
                 ),
               ],
             ),
@@ -118,6 +134,14 @@ class HomeCurrentGoalCard extends StatelessWidget {
                 '${summary!.totalMilestones}',
               ),
               style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onOpenGoals,
+                child: Text(l10n.homeOpenGoals),
+              ),
             ),
           ],
         ),
@@ -141,7 +165,7 @@ class HomeLastSessionCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final localeName = Localizations.localeOf(context).toLanguageTag();
-    return Card(
+    return _HomePanel(
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
@@ -198,7 +222,7 @@ class HomeLastSessionCard extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: FilledButton(
@@ -243,7 +267,7 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
             ? 0.0
             : weeks.length * _cellSize + (weeks.length - 1) * _gap;
 
-    return Card(
+    return _HomePanel(
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
@@ -441,6 +465,27 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
   }
 }
 
+class _HomePanel extends StatelessWidget {
+  const _HomePanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _OverflowProgressBar extends StatelessWidget {
   const _OverflowProgressBar({required this.progressRatio});
 
@@ -498,13 +543,17 @@ class _MetricChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
       ),
-      child: Text(label, style: Theme.of(context).textTheme.labelMedium),
+      child: Text(label, style: theme.textTheme.labelMedium),
     );
   }
 }

@@ -23,18 +23,6 @@ class ProfilePage extends ConsumerWidget {
                 floating: true,
                 snap: true,
                 title: Text(l10n.profileTitle),
-                actions: [
-                  IconButton(
-                    onPressed: () => ref.invalidate(profileDashboardProvider),
-                    icon: const Icon(Icons.refresh),
-                    tooltip: l10n.goalsFilterReset,
-                  ),
-                  IconButton(
-                    onPressed: () => context.push(RoutePaths.settings),
-                    icon: const Icon(Icons.settings_outlined),
-                    tooltip: l10n.settingsTitle,
-                  ),
-                ],
               ),
             ],
         body: asyncData.when(
@@ -52,23 +40,32 @@ class ProfilePage extends ConsumerWidget {
                 child: ListView(
                   padding: LayoutTokens.listPagePadding,
                   children: [
-                    _IdentityPanel(
-                      title: l10n.profileDefaultName,
-                      status: _resolveStatus(l10n, data),
-                      streakLabel: l10n.profileStreakDays(
-                        data.streakDays.toString(),
-                      ),
-                      activeGoalLabel: l10n.profileActiveGoals(
-                        data.activeGoalCount.toString(),
-                      ),
-                      overdueLabel:
-                          data.overdueTaskCount > 0
-                              ? l10n.profileOverdueTasks(
-                                data.overdueTaskCount.toString(),
-                              )
-                              : null,
+                    // ── Identity card ──
+                    _IdentityCard(
+                      name: l10n.profileDefaultName,
+                      signature: l10n.profileWelcome,
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
+
+                    // ── Profile info rows (like Tain's 我的目标 / 高级版) ──
+                    _ProfileCard(
+                      children: [
+                        _ProfileNavRow(
+                          icon: Icons.flag_outlined,
+                          title: l10n.profileActiveGoals(''),
+                          value: data.activeGoalCount.toString(),
+                          onTap: () => context.go(RoutePaths.goals),
+                        ),
+                        _ProfileNavRow(
+                          icon: Icons.local_fire_department_outlined,
+                          title: l10n.profileStreakDays(''),
+                          value: data.streakDays.toString(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+
+                    // ── Overview strip ──
                     _OverviewStrip(
                       items: [
                         _OverviewItem(
@@ -86,72 +83,90 @@ class ProfilePage extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-                    _Section(
+
+                    // ── Quick access section ──
+                    _ProfileSection(
                       title: l10n.profileSectionQuickAccess,
-                      children: [
-                        _ActionRow(
-                          icon: Icons.history,
-                          title: l10n.historyTitle,
-                          onTap: () => context.push(RoutePaths.history),
-                        ),
-                        _ActionRow(
-                          icon: Icons.analytics_outlined,
-                          title: l10n.profileAnalytics,
-                          onTap: () => context.push(RoutePaths.analytics),
-                        ),
-                        _ActionRow(
-                          icon: Icons.alt_route,
-                          title: l10n.goalsMilestoneProgress,
-                          onTap: () => context.push(RoutePaths.goalMilestones),
-                        ),
-                      ],
+                      child: _ProfileCard(
+                        children: [
+                          _ProfileNavRow(
+                            icon: Icons.history,
+                            title: l10n.historyTitle,
+                            onTap: () => context.push(RoutePaths.history),
+                          ),
+                          _ProfileNavRow(
+                            icon: Icons.analytics_outlined,
+                            title: l10n.profileAnalytics,
+                            onTap: () => context.push(RoutePaths.analytics),
+                          ),
+                          _ProfileNavRow(
+                            icon: Icons.alt_route,
+                            title: l10n.goalsMilestoneProgress,
+                            onTap:
+                                () =>
+                                    context.push(RoutePaths.goalMilestones),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-                    _Section(
-                      title: l10n.profileSectionPreferences,
-                      children: [
-                        _ActionRow(
-                          icon: Icons.settings_outlined,
-                          title: l10n.settingsTitle,
-                          onTap: () => context.push(RoutePaths.settings),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: LayoutTokens.sectionGapLarge),
-                    _Section(
+
+                    // ── Data section ──
+                    _ProfileSection(
                       title: l10n.profileSectionData,
-                      children: [
-                        _ActionRow(
-                          icon: Icons.checklist_outlined,
-                          title: l10n.profilePendingItems,
-                          trailingText:
-                              data.pendingTaskCount == 0
-                                  ? l10n.profilePendingNone
-                                  : data.pendingTaskCount.toString(),
-                          onTap: () => context.go(RoutePaths.goals),
-                        ),
-                        _ActionRow(
-                          icon: Icons.shield_outlined,
-                          title: l10n.settingsBackupRestore,
-                          onTap: () => context.push(RoutePaths.settings),
-                        ),
-                      ],
+                      child: _ProfileCard(
+                        children: [
+                          _ProfileNavRow(
+                            icon: Icons.checklist_outlined,
+                            title: l10n.profilePendingItems,
+                            value:
+                                data.pendingTaskCount == 0
+                                    ? l10n.profilePendingNone
+                                    : data.pendingTaskCount.toString(),
+                            onTap: () => context.go(RoutePaths.goals),
+                          ),
+                          _ProfileNavRow(
+                            icon: Icons.shield_outlined,
+                            title: l10n.settingsBackupRestore,
+                            onTap: () => context.push(RoutePaths.settings),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-                    _Section(
+
+                    // ── Settings & About section ──
+                    _ProfileSection(
+                      title: l10n.profileSectionPreferences,
+                      child: _ProfileCard(
+                        children: [
+                          _ProfileNavRow(
+                            icon: Icons.settings_outlined,
+                            title: l10n.settingsTitle,
+                            onTap: () => context.push(RoutePaths.settings),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+
+                    // ── About section ──
+                    _ProfileSection(
                       title: l10n.profileSectionAbout,
-                      children: [
-                        _ActionRow(
-                          icon: Icons.info_outline,
-                          title: l10n.profileAbout,
-                          onTap: () => context.push(RoutePaths.about),
-                        ),
-                        _ActionRow(
-                          icon: Icons.tag_outlined,
-                          title: l10n.profileVersionLabel,
-                          trailingText: l10n.aboutVersion,
-                        ),
-                      ],
+                      child: _ProfileCard(
+                        children: [
+                          _ProfileNavRow(
+                            icon: Icons.info_outline,
+                            title: l10n.profileAbout,
+                            onTap: () => context.push(RoutePaths.about),
+                          ),
+                          _ProfileNavRow(
+                            icon: Icons.tag_outlined,
+                            title: l10n.profileVersionLabel,
+                            value: l10n.aboutVersion,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -161,148 +176,235 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  String _resolveStatus(AppLocalizations l10n, ProfileDashboardData data) {
-    if (data.overdueTaskCount > 0) {
-      return l10n.profileStatusOverdue(data.overdueTaskCount.toString());
-    }
-    if (data.pendingTaskCount > 0) {
-      return l10n.profileStatusPending(data.pendingTaskCount.toString());
-    }
-    if (data.streakDays > 0) {
-      return l10n.profileStatusOnTrack;
-    }
-    return l10n.profileStatusStartToday;
-  }
 }
 
-class _IdentityPanel extends StatelessWidget {
-  const _IdentityPanel({
-    required this.title,
-    required this.status,
-    required this.streakLabel,
-    required this.activeGoalLabel,
-    required this.overdueLabel,
-  });
+// ---------------------------------------------------------------------------
+// Identity card — avatar left, name + signature right (Tain style)
+// ---------------------------------------------------------------------------
 
-  final String title;
-  final String status;
-  final String streakLabel;
-  final String activeGoalLabel;
-  final String? overdueLabel;
+class _IdentityCard extends StatelessWidget {
+  const _IdentityCard({required this.name, required this.signature});
+
+  final String name;
+  final String signature;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+              child: Icon(
+                Icons.person,
+                size: 30,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    signature,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+          ],
         ),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: LayoutTokens.cardPadding,
-        vertical: 11,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// White card group (same style as settings page)
+// ---------------------------------------------------------------------------
+
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const CircleAvatar(radius: 20, child: Icon(Icons.person_outline)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      status,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+          for (var i = 0; i < children.length; i++) ...[
+            children[i],
+            if (i < children.length - 1)
+              Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.28),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
-                ),
-                child: Text(
-                  streakLabel,
-                  style: theme.textTheme.labelMedium,
-                  maxLines: 1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _CompactTag(text: activeGoalLabel),
-              if (overdueLabel != null)
-                _CompactTag(text: overdueLabel!, emphasized: true),
-            ],
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _CompactTag extends StatelessWidget {
-  const _CompactTag({required this.text, this.emphasized = false});
+// ---------------------------------------------------------------------------
+// Section title (small gray label above card)
+// ---------------------------------------------------------------------------
 
-  final String text;
-  final bool emphasized;
+class _ProfileSection extends StatelessWidget {
+  const _ProfileSection({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor =
-        emphasized
-            ? const Color(0xFFB71C1C)
-            : theme.colorScheme.onSurface.withValues(alpha: 0.86);
-    final bgColor =
-        emphasized
-            ? const Color(0xFFFFEBEE)
-            : theme.colorScheme.surface.withValues(alpha: 0.78);
-    final borderColor =
-        emphasized
-            ? const Color(0xFFFFCDD2).withValues(alpha: 0.65)
-            : theme.colorScheme.outlineVariant.withValues(alpha: 0);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
-        border: emphasized ? Border.all(color: borderColor) : null,
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.labelSmall?.copyWith(color: textColor),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Text(
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        child,
+      ],
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Nav row: icon + label + value + chevron (Tain style)
+// ---------------------------------------------------------------------------
+
+class _ProfileNavRow extends StatelessWidget {
+  const _ProfileNavRow({
+    required this.icon,
+    required this.title,
+    this.value,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 22,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              title,
+              style: theme.textTheme.bodyMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (value != null) ...[
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(
+                value!,
+                textAlign: TextAlign.right,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: content,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Overview strip — 3-column metrics
+// ---------------------------------------------------------------------------
 
 class _OverviewStrip extends StatelessWidget {
   const _OverviewStrip({required this.items});
@@ -312,48 +414,57 @@ class _OverviewStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dividerColor = theme.colorScheme.outlineVariant.withValues(
-      alpha: 0.52,
-    );
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-      child: Row(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 11,
-                  horizontal: 8,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              Expanded(
                 child: Column(
                   children: [
                     Text(
-                      items[i].title,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      items[i].value,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
-                      items[i].value,
-                      style: theme.textTheme.titleSmall,
+                      items[i].title,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-            ),
-            if (i != items.length - 1)
-              Container(width: 1, height: 32, color: dividerColor),
+              if (i != items.length - 1)
+                Container(
+                  width: 1,
+                  height: 28,
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.35,
+                  ),
+                ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -364,132 +475,4 @@ class _OverviewItem {
 
   final String title;
   final String value;
-}
-
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final divider = theme.colorScheme.outlineVariant.withValues(alpha: 0.42);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.84),
-            ),
-          ),
-        ),
-        const SizedBox(height: LayoutTokens.compactGap),
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow.withValues(
-              alpha: 0.36,
-            ),
-            borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              for (var i = 0; i < children.length; i++) ...[
-                children[i],
-                if (i != children.length - 1)
-                  Divider(height: 1, thickness: 1, color: divider),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.icon,
-    required this.title,
-    this.trailingText,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String? trailingText;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final rowContent = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: LayoutTokens.cardPadding - 1,
-        vertical: 10,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          if (trailingText != null)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 130),
-              child: Text(
-                trailingText!,
-                textAlign: TextAlign.right,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.9,
-                  ),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          if (onTap != null) ...[
-            const SizedBox(width: 6),
-            Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ],
-        ],
-      ),
-    );
-
-    if (onTap == null) {
-      return rowContent;
-    }
-    return InkWell(
-      borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
-      onTap: onTap,
-      child: rowContent,
-    );
-  }
 }

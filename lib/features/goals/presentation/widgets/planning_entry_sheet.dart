@@ -570,7 +570,7 @@ class _SelectionPopupFrame extends StatelessWidget {
                   child: Material(
                     color: Theme.of(context).colorScheme.surface,
                     elevation: 12,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(14),
                     clipBehavior: Clip.antiAlias,
                     child: child,
                   ),
@@ -745,10 +745,7 @@ class _ComposerTabChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color:
-          selected
-              ? theme.colorScheme.surfaceContainerLow
-              : theme.colorScheme.surface,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -758,30 +755,27 @@ class _ComposerTabChip extends StatelessWidget {
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
+            color:
+                selected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color:
-                  selected
-                      ? theme.colorScheme.onSurface.withValues(alpha: 0.10)
-                      : theme.colorScheme.outlineVariant.withValues(
+            border:
+                selected
+                    ? null
+                    : Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
                         alpha: 0.62,
                       ),
-            ),
-            boxShadow:
-                selected
-                    ? const [
-                      BoxShadow(
-                        color: Color(0x0F000000),
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                    : null,
+                    ),
           ),
           child: Text(
             label,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.94),
+              color:
+                  selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.94),
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: -0.1,
             ),
@@ -803,10 +797,10 @@ class _ComposerMetaChip extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.75),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.28),
         ),
       ),
       child: Padding(
@@ -842,8 +836,8 @@ class _ComposerSubmitButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             padding: EdgeInsets.zero,
             elevation: 0,
-            backgroundColor: const Color(0xFFE95F37),
-            foregroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),

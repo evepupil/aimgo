@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 final class LayoutTokens {
   static const double pageHorizontal = 12;
@@ -11,11 +11,24 @@ final class LayoutTokens {
   static const double radiusSmall = 8;
   static const double radiusMedium = 10;
   static const double radiusLarge = 12;
+  static const double radiusCard = 14;
 
   static const EdgeInsets listPagePadding = EdgeInsets.fromLTRB(
     pageHorizontal,
     pageTop,
     pageHorizontal,
     pageBottom,
+  );
+
+  static BoxDecoration tainCardDecoration(ThemeData theme) => BoxDecoration(
+    color: theme.colorScheme.surface,
+    borderRadius: BorderRadius.circular(radiusCard),
+    boxShadow: [
+      BoxShadow(
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
+        blurRadius: 8,
+        offset: const Offset(0, 1),
+      ),
+    ],
   );
 }

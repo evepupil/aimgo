@@ -276,6 +276,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (context) {
         return GoalSwitcherSheet(
           goals: state.goalTree,
@@ -331,78 +332,147 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            final sheetTheme = Theme.of(context);
             return SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-                child: Wrap(
+                padding: const EdgeInsets.fromLTRB(
+                  LayoutTokens.pageHorizontal,
+                  0,
+                  LayoutTokens.pageHorizontal,
+                  20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.goalsFilterCompletionTitle,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final filter in GoalCompletionFilter.values)
-                          ChoiceChip(
-                            label: Text(_completionFilterLabel(l10n, filter)),
-                            selected: completionFilter == filter,
-                            onSelected: (_) {
-                              setSheetState(() {
-                                completionFilter = filter;
-                              });
-                            },
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                            tooltip: l10n.commonClose,
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      l10n.goalsFilterProgressTitle,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final filter in GoalProgressFilter.values)
-                          ChoiceChip(
-                            label: Text(_progressFilterLabel(l10n, filter)),
-                            selected: progressFilter == filter,
-                            onSelected: (_) {
-                              setSheetState(() {
-                                progressFilter = filter;
-                              });
-                            },
+                          Expanded(
+                            child: Text(
+                              l10n.goalsFilterTooltip,
+                              textAlign: TextAlign.center,
+                              style: sheetTheme.textTheme.titleMedium,
+                            ),
                           ),
-                      ],
+                          const SizedBox(width: 48),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 14),
-                    Text(
-                      l10n.goalsFilterUpdatedTitle,
-                      style: Theme.of(context).textTheme.titleSmall,
+                    const SizedBox(height: LayoutTokens.sectionGap),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 10),
+                      child: Text(
+                        l10n.goalsFilterCompletionTitle,
+                        style: sheetTheme.textTheme.bodySmall?.copyWith(
+                          color: sheetTheme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final filter in GoalUpdatedFilter.values)
-                          ChoiceChip(
-                            label: Text(_updatedFilterLabel(l10n, filter)),
-                            selected: updatedFilter == filter,
-                            onSelected: (_) {
-                              setSheetState(() {
-                                updatedFilter = filter;
-                              });
-                            },
-                          ),
-                      ],
+                    DecoratedBox(
+                      decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                      child: Padding(
+                        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final filter in GoalCompletionFilter.values)
+                              ChoiceChip(
+                                label: Text(
+                                  _completionFilterLabel(l10n, filter),
+                                ),
+                                selected: completionFilter == filter,
+                                onSelected: (_) {
+                                  setSheetState(() {
+                                    completionFilter = filter;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 10),
+                      child: Text(
+                        l10n.goalsFilterProgressTitle,
+                        style: sheetTheme.textTheme.bodySmall?.copyWith(
+                          color: sheetTheme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                      child: Padding(
+                        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final filter in GoalProgressFilter.values)
+                              ChoiceChip(
+                                label: Text(
+                                  _progressFilterLabel(l10n, filter),
+                                ),
+                                selected: progressFilter == filter,
+                                onSelected: (_) {
+                                  setSheetState(() {
+                                    progressFilter = filter;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 10),
+                      child: Text(
+                        l10n.goalsFilterUpdatedTitle,
+                        style: sheetTheme.textTheme.bodySmall?.copyWith(
+                          color: sheetTheme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                      child: Padding(
+                        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final filter in GoalUpdatedFilter.values)
+                              ChoiceChip(
+                                label: Text(
+                                  _updatedFilterLabel(l10n, filter),
+                                ),
+                                selected: updatedFilter == filter,
+                                onSelected: (_) {
+                                  setSheetState(() {
+                                    updatedFilter = filter;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -452,42 +522,107 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 
     await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) {
+        final sheetTheme = Theme.of(context);
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-            child: Wrap(
+            padding: const EdgeInsets.fromLTRB(
+              LayoutTokens.pageHorizontal,
+              0,
+              LayoutTokens.pageHorizontal,
+              20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.goalsMenuSortTitle,
-                  style: Theme.of(context).textTheme.titleSmall,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        tooltip: l10n.commonClose,
+                      ),
+                      Expanded(
+                        child: Text(
+                          l10n.goalsMenuTooltip,
+                          textAlign: TextAlign.center,
+                          style: sheetTheme.textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 6),
-                for (final mode in GoalSortMode.values)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      state.sortMode == mode
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
+                const SizedBox(height: LayoutTokens.sectionGap),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Text(
+                    l10n.goalsMenuSortTitle,
+                    style: sheetTheme.textTheme.bodySmall?.copyWith(
+                      color: sheetTheme.colorScheme.onSurfaceVariant,
                     ),
-                    title: Text(_sortModeLabel(l10n, mode)),
-                    onTap: () async {
-                      await controller.setSortMode(mode);
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                  child: Column(
+                    children: [
+                      for (final mode in GoalSortMode.values) ...[
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: LayoutTokens.cardPadding,
+                          ),
+                          leading: Icon(
+                            state.sortMode == mode
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                          ),
+                          title: Text(_sortModeLabel(l10n, mode)),
+                          onTap: () async {
+                            await controller.setSortMode(mode);
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                        if (mode != GoalSortMode.values.last)
+                          Divider(
+                            indent: 16,
+                            endIndent: 16,
+                            height: 1,
+                            color: sheetTheme.colorScheme.outlineVariant
+                                .withValues(alpha: 0.28),
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: LayoutTokens.sectionGapLarge),
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: LayoutTokens.cardPadding,
+                    ),
+                    leading: const Icon(Icons.done_all_outlined),
+                    title: Text(l10n.goalsMenuBatchManage),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        LayoutTokens.radiusCard,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _openBatchManageSheet();
                     },
                   ),
-                const Divider(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.done_all_outlined),
-                  title: Text(l10n.goalsMenuBatchManage),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _openBatchManageSheet();
-                  },
                 ),
               ],
             ),
@@ -503,39 +638,105 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 
     await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) {
+        final sheetTheme = Theme.of(context);
         return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                title: Text(l10n.goalsBatchTitle),
-                leading: const Icon(Icons.tune_outlined),
-              ),
-              ListTile(
-                leading: const Icon(Icons.check_circle_outline),
-                title: Text(l10n.goalsBatchCompleteVisible),
-                onTap: () async {
-                  final changed = await controller
-                      .bulkSetVisibleTasksCompletion(completed: true);
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                    _showInfoToast(l10n.goalsBatchResult(changed.toString()));
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.remove_circle_outline),
-                title: Text(l10n.goalsBatchUncompleteVisible),
-                onTap: () async {
-                  final changed = await controller
-                      .bulkSetVisibleTasksCompletion(completed: false);
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                    _showInfoToast(l10n.goalsBatchResult(changed.toString()));
-                  }
-                },
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              LayoutTokens.pageHorizontal,
+              0,
+              LayoutTokens.pageHorizontal,
+              20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        tooltip: l10n.commonClose,
+                      ),
+                      Expanded(
+                        child: Text(
+                          l10n.goalsBatchTitle,
+                          textAlign: TextAlign.center,
+                          style: sheetTheme.textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: LayoutTokens.sectionGap),
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: LayoutTokens.cardPadding,
+                        ),
+                        leading: const Icon(Icons.check_circle_outline),
+                        title: Text(l10n.goalsBatchCompleteVisible),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(LayoutTokens.radiusCard),
+                          ),
+                        ),
+                        onTap: () async {
+                          final changed = await controller
+                              .bulkSetVisibleTasksCompletion(completed: true);
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            _showInfoToast(
+                              l10n.goalsBatchResult(changed.toString()),
+                            );
+                          }
+                        },
+                      ),
+                      Divider(
+                        indent: 16,
+                        endIndent: 16,
+                        height: 1,
+                        color: sheetTheme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.28),
+                      ),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: LayoutTokens.cardPadding,
+                        ),
+                        leading: const Icon(Icons.remove_circle_outline),
+                        title: Text(l10n.goalsBatchUncompleteVisible),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            bottom: Radius.circular(LayoutTokens.radiusCard),
+                          ),
+                        ),
+                        onTap: () async {
+                          final changed = await controller
+                              .bulkSetVisibleTasksCompletion(completed: false);
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            _showInfoToast(
+                              l10n.goalsBatchResult(changed.toString()),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

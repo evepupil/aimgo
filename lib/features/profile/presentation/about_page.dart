@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:flutter/material.dart';
 
 class AboutPage extends StatelessWidget {
@@ -7,22 +8,54 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profileAbout)),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: NestedScrollView(
+        headerSliverBuilder:
+            (context, innerBoxIsScrolled) => [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                title: Text(l10n.profileAbout),
+              ),
+            ],
+        body: ListView(
+          padding: LayoutTokens.listPagePadding,
           children: [
-            Text(
-              l10n.appTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
+            DecoratedBox(
+              decoration: LayoutTokens.tainCardDecoration(theme),
+              child: Padding(
+                padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.appTitle,
+                      style: theme.textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.aboutVersion,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(l10n.aboutVersion),
-            const SizedBox(height: 16),
-            Text(l10n.aboutDescription),
+            const SizedBox(height: LayoutTokens.sectionGap),
+            DecoratedBox(
+              decoration: LayoutTokens.tainCardDecoration(theme),
+              child: Padding(
+                padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                child: Text(
+                  l10n.aboutDescription,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ),
           ],
         ),
       ),

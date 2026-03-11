@@ -1,3 +1,4 @@
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/time_progress_bar.dart';
@@ -63,21 +64,25 @@ class _GoalSwitcherSheetState extends State<GoalSwitcherSheet> {
                   final goal = node.goal;
                   final selected = goal.id == widget.selectedGoalId;
                   return InkWell(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
                     onTap: () => widget.onSelectGoal(goal.id),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              selected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(
-                                    context,
-                                  ).colorScheme.outlineVariant,
-                        ),
+                        color:
+                            selected
+                                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.06)
+                                : Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
                       child: Column(
                         children: [
                           Row(
@@ -119,6 +124,7 @@ class _GoalSwitcherSheetState extends State<GoalSwitcherSheet> {
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ),
                   );

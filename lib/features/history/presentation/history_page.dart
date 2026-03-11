@@ -92,26 +92,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                       LayoutTokens.pageHorizontal,
                       LayoutTokens.compactGap,
                     ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SegmentedButton<HistoryViewMode>(
-                        selected: {data.viewMode},
-                        segments: [
-                          ButtonSegment(
-                            value: HistoryViewMode.timeline,
-                            icon: const Icon(Icons.timeline),
-                            label: Text(l10n.historyTimelineTab),
-                          ),
-                          ButtonSegment(
-                            value: HistoryViewMode.calendar,
-                            icon: const Icon(Icons.calendar_month_outlined),
-                            label: Text(l10n.historyCalendarTab),
-                          ),
-                        ],
-                        onSelectionChanged: (selection) {
-                          controller.setViewMode(selection.first);
-                        },
-                      ),
+                    child: _HistoryViewModeTabs(
+                      selectedMode: data.viewMode,
+                      onModeChanged: controller.setViewMode,
                     ),
                   ),
                   Expanded(
@@ -223,97 +206,157 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) {
+        final sheetTheme = Theme.of(context);
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-            child: Wrap(
+            padding: const EdgeInsets.fromLTRB(
+              LayoutTokens.pageHorizontal,
+              0,
+              LayoutTokens.pageHorizontal,
+              20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.historyGoalFilter,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: LayoutTokens.compactGap),
-                DropdownButtonFormField<int?>(
-                  value: data.goalFilterId,
-                  items: [
-                    DropdownMenuItem(
-                      value: null,
-                      child: Text(l10n.historyAllGoals),
-                    ),
-                    for (final goal in data.goalOptions)
-                      DropdownMenuItem(value: goal.id, child: Text(goal.title)),
-                  ],
-                  onChanged: controller.setGoalFilter,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                      Expanded(
+                        child: Text(
+                          l10n.goalsFilterTooltip,
+                          textAlign: TextAlign.center,
+                          style: sheetTheme.textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
-                Text(
-                  l10n.historyRangeFilter,
-                  style: Theme.of(context).textTheme.titleSmall,
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Text(
+                    l10n.historyGoalFilter,
+                    style: sheetTheme.textTheme.bodySmall?.copyWith(
+                      color: sheetTheme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: LayoutTokens.compactGap),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _RangeChip(
-                      selected: data.rangeFilter == HistoryRangeFilter.all,
-                      label: l10n.historyRangeAll,
-                      onTap:
-                          () =>
-                              controller.setRangeFilter(HistoryRangeFilter.all),
-                    ),
-                    _RangeChip(
-                      selected: data.rangeFilter == HistoryRangeFilter.today,
-                      label: l10n.historyRangeToday,
-                      onTap:
-                          () => controller.setRangeFilter(
-                            HistoryRangeFilter.today,
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                  child: Padding(
+                    padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                    child: DropdownButtonFormField<int?>(
+                      value: data.goalFilterId,
+                      items: [
+                        DropdownMenuItem(
+                          value: null,
+                          child: Text(l10n.historyAllGoals),
+                        ),
+                        for (final goal in data.goalOptions)
+                          DropdownMenuItem(
+                            value: goal.id,
+                            child: Text(goal.title),
                           ),
+                      ],
+                      onChanged: controller.setGoalFilter,
                     ),
-                    _RangeChip(
-                      selected: data.rangeFilter == HistoryRangeFilter.thisWeek,
-                      label: l10n.historyRangeThisWeek,
-                      onTap:
-                          () => controller.setRangeFilter(
-                            HistoryRangeFilter.thisWeek,
-                          ),
+                  ),
+                ),
+                const SizedBox(height: LayoutTokens.sectionGapLarge),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Text(
+                    l10n.historyRangeFilter,
+                    style: sheetTheme.textTheme.bodySmall?.copyWith(
+                      color: sheetTheme.colorScheme.onSurfaceVariant,
                     ),
-                    _RangeChip(
-                      selected:
-                          data.rangeFilter == HistoryRangeFilter.thisMonth,
-                      label: l10n.historyRangeThisMonth,
-                      onTap:
-                          () => controller.setRangeFilter(
-                            HistoryRangeFilter.thisMonth,
-                          ),
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                  child: Padding(
+                    padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _RangeChip(
+                          selected:
+                              data.rangeFilter == HistoryRangeFilter.all,
+                          label: l10n.historyRangeAll,
+                          onTap:
+                              () => controller.setRangeFilter(
+                                HistoryRangeFilter.all,
+                              ),
+                        ),
+                        _RangeChip(
+                          selected:
+                              data.rangeFilter == HistoryRangeFilter.today,
+                          label: l10n.historyRangeToday,
+                          onTap:
+                              () => controller.setRangeFilter(
+                                HistoryRangeFilter.today,
+                              ),
+                        ),
+                        _RangeChip(
+                          selected:
+                              data.rangeFilter == HistoryRangeFilter.thisWeek,
+                          label: l10n.historyRangeThisWeek,
+                          onTap:
+                              () => controller.setRangeFilter(
+                                HistoryRangeFilter.thisWeek,
+                              ),
+                        ),
+                        _RangeChip(
+                          selected:
+                              data.rangeFilter == HistoryRangeFilter.thisMonth,
+                          label: l10n.historyRangeThisMonth,
+                          onTap:
+                              () => controller.setRangeFilter(
+                                HistoryRangeFilter.thisMonth,
+                              ),
+                        ),
+                        _RangeChip(
+                          selected:
+                              data.rangeFilter == HistoryRangeFilter.custom,
+                          label: l10n.historyRangeCustom,
+                          onTap: () async {
+                            final picked = await showDateRangePicker(
+                              context: context,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                              initialDateRange:
+                                  data.customRangeStart != null &&
+                                          data.customRangeEnd != null
+                                      ? DateTimeRange(
+                                        start: data.customRangeStart!,
+                                        end: data.customRangeEnd!,
+                                      )
+                                      : null,
+                            );
+                            if (picked != null) {
+                              await controller.setCustomDateRange(
+                                picked.start,
+                                picked.end,
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                    _RangeChip(
-                      selected: data.rangeFilter == HistoryRangeFilter.custom,
-                      label: l10n.historyRangeCustom,
-                      onTap: () async {
-                        final picked = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2100),
-                          initialDateRange:
-                              data.customRangeStart != null &&
-                                      data.customRangeEnd != null
-                                  ? DateTimeRange(
-                                    start: data.customRangeStart!,
-                                    end: data.customRangeEnd!,
-                                  )
-                                  : null,
-                        );
-                        if (picked != null) {
-                          await controller.setCustomDateRange(
-                            picked.start,
-                            picked.end,
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -406,6 +449,69 @@ class _RangeChip extends StatelessWidget {
       selected: selected,
       label: Text(label),
       onSelected: (_) => onTap(),
+    );
+  }
+}
+
+class _HistoryViewModeTabs extends StatelessWidget {
+  const _HistoryViewModeTabs({
+    required this.selectedMode,
+    required this.onModeChanged,
+  });
+
+  final HistoryViewMode selectedMode;
+  final void Function(HistoryViewMode) onModeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final tabs = {
+      HistoryViewMode.timeline: l10n.historyTimelineTab,
+      HistoryViewMode.calendar: l10n.historyCalendarTab,
+    };
+
+    return DecoratedBox(
+      decoration: LayoutTokens.tainCardDecoration(theme),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            for (final entry in tabs.entries)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onModeChanged(entry.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color:
+                          selectedMode == entry.key
+                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      entry.value,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            selectedMode == entry.key
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                        fontWeight:
+                            selectedMode == entry.key
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1013,7 +1119,8 @@ class _MonthCalendar extends StatelessWidget {
         DateFormat.E(locale).format(DateTime(2024, 1, 1 + i)),
     ];
 
-    return Card(
+    return DecoratedBox(
+      decoration: LayoutTokens.tainCardDecoration(Theme.of(context)),
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
@@ -1157,9 +1264,11 @@ class _HistorySessionCard extends StatelessWidget {
         entry.goalTitle ??
         l10n.focusContextEmpty;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
+      child: DecoratedBox(
+        decoration: LayoutTokens.tainCardDecoration(Theme.of(context)),
+        child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Stack(
           children: [
@@ -1215,6 +1324,7 @@ class _HistorySessionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

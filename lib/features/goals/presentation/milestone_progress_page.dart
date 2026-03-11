@@ -124,7 +124,10 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
             return ListView(
               padding: LayoutTokens.listPagePadding,
               children: [
-                Card(
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(
+                    Theme.of(context),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(LayoutTokens.cardPadding),
                     child: Column(
@@ -171,26 +174,13 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
                   ),
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SegmentedButton<_MilestoneProgressSort>(
-                    selected: {_sort},
-                    segments: [
-                      ButtonSegment(
-                        value: _MilestoneProgressSort.completionTime,
-                        label: Text(l10n.milestoneProgressSortByCompletion),
-                      ),
-                      ButtonSegment(
-                        value: _MilestoneProgressSort.manual,
-                        label: Text(l10n.milestoneProgressSortByPlan),
-                      ),
-                    ],
-                    onSelectionChanged: (selection) {
-                      setState(() {
-                        _sort = selection.first;
-                      });
-                    },
-                  ),
+                _MilestoneSortTabs(
+                  selectedSort: _sort,
+                  onSortChanged: (sort) {
+                    setState(() {
+                      _sort = sort;
+                    });
+                  },
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
                 Text(
@@ -304,7 +294,7 @@ class _MilestoneTimelineTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final completed = item.isCompleted;
-    final accentColor = completed ? Colors.green : theme.colorScheme.outline;
+    final accentColor = completed ? theme.colorScheme.primary : theme.colorScheme.outline;
 
     return IntrinsicHeight(
       child: Row(
@@ -337,11 +327,13 @@ class _MilestoneTimelineTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Card(
-              margin: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
-              child: Padding(
-                padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-                child: Column(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
+              child: DecoratedBox(
+                decoration: LayoutTokens.tainCardDecoration(theme),
+                child: Padding(
+                  padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -358,7 +350,7 @@ class _MilestoneTimelineTile extends StatelessWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         color:
                             completed
-                                ? Colors.green.shade700
+                                ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -382,8 +374,73 @@ class _MilestoneTimelineTile extends StatelessWidget {
                 ),
               ),
             ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MilestoneSortTabs extends StatelessWidget {
+  const _MilestoneSortTabs({
+    required this.selectedSort,
+    required this.onSortChanged,
+  });
+
+  final _MilestoneProgressSort selectedSort;
+  final void Function(_MilestoneProgressSort) onSortChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final tabs = {
+      _MilestoneProgressSort.completionTime:
+          l10n.milestoneProgressSortByCompletion,
+      _MilestoneProgressSort.manual: l10n.milestoneProgressSortByPlan,
+    };
+
+    return DecoratedBox(
+      decoration: LayoutTokens.tainCardDecoration(theme),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            for (final entry in tabs.entries)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onSortChanged(entry.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color:
+                          selectedSort == entry.key
+                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      entry.value,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            selectedSort == entry.key
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                        fontWeight:
+                            selectedSort == entry.key
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

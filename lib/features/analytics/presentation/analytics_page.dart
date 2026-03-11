@@ -77,32 +77,9 @@ class AnalyticsPage extends ConsumerWidget {
           child: ListView(
             padding: LayoutTokens.listPagePadding,
             children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SegmentedButton<AnalyticsRange>(
-                  selected: {state.range},
-                  segments: [
-                    ButtonSegment(
-                      value: AnalyticsRange.day,
-                      label: Text(l10n.analyticsRangeDay),
-                    ),
-                    ButtonSegment(
-                      value: AnalyticsRange.week,
-                      label: Text(l10n.analyticsRangeWeek),
-                    ),
-                    ButtonSegment(
-                      value: AnalyticsRange.month,
-                      label: Text(l10n.analyticsRangeMonth),
-                    ),
-                    ButtonSegment(
-                      value: AnalyticsRange.year,
-                      label: Text(l10n.analyticsRangeYear),
-                    ),
-                  ],
-                  onSelectionChanged: (selection) {
-                    controller.setRange(selection.first);
-                  },
-                ),
+              _AnalyticsTabBar(
+                selectedRange: state.range,
+                onRangeChanged: controller.setRange,
               ),
               const SizedBox(height: LayoutTokens.sectionGap),
               _SummaryCard(
@@ -441,6 +418,71 @@ class AnalyticsPage extends ConsumerWidget {
   }
 }
 
+class _AnalyticsTabBar extends StatelessWidget {
+  const _AnalyticsTabBar({
+    required this.selectedRange,
+    required this.onRangeChanged,
+  });
+
+  final AnalyticsRange selectedRange;
+  final void Function(AnalyticsRange) onRangeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final labels = {
+      AnalyticsRange.day: l10n.analyticsRangeDay,
+      AnalyticsRange.week: l10n.analyticsRangeWeek,
+      AnalyticsRange.month: l10n.analyticsRangeMonth,
+      AnalyticsRange.year: l10n.analyticsRangeYear,
+    };
+
+    return DecoratedBox(
+      decoration: LayoutTokens.tainCardDecoration(theme),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            for (final range in AnalyticsRange.values)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => onRangeChanged(range),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color:
+                          selectedRange == range
+                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      labels[range]!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            selectedRange == range
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                        fontWeight:
+                            selectedRange == range
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
     required this.totalFocusLabel,
@@ -482,13 +524,7 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.38),
-        ),
-      ),
+      decoration: LayoutTokens.tainCardDecoration(theme),
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
@@ -608,7 +644,7 @@ class _SummaryMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
+        color: theme.colorScheme.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -772,13 +808,7 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
-        ),
-      ),
+      decoration: LayoutTokens.tainCardDecoration(theme),
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(

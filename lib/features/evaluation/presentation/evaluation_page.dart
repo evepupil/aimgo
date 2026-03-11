@@ -35,11 +35,20 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
 
     if (draft == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.evaluationTitle)),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(l10n.evaluationNoDraft, textAlign: TextAlign.center),
+        body: NestedScrollView(
+          headerSliverBuilder:
+              (context, innerBoxIsScrolled) => [
+                SliverAppBar(
+                  floating: true,
+                  snap: true,
+                  title: Text(l10n.evaluationTitle),
+                ),
+              ],
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(l10n.evaluationNoDraft, textAlign: TextAlign.center),
+            ),
           ),
         ),
       );
@@ -55,17 +64,23 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.evaluationTitle),
-        actions: [
-          IconButton(
-            onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close),
-            tooltip: l10n.commonClose,
-          ),
-        ],
-      ),
-      body: ListView(
+      body: NestedScrollView(
+        headerSliverBuilder:
+            (context, innerBoxIsScrolled) => [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                title: Text(l10n.evaluationTitle),
+                actions: [
+                  IconButton(
+                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    tooltip: l10n.commonClose,
+                  ),
+                ],
+              ),
+            ],
+        body: ListView(
         padding: LayoutTokens.listPagePadding,
         children: [
           _EvaluationPanel(
@@ -197,6 +212,7 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
             child: Text(l10n.evaluationSkip),
           ),
         ],
+        ),
       ),
     );
   }
@@ -309,10 +325,7 @@ class _EvaluationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-      ),
+      decoration: LayoutTokens.tainCardDecoration(theme),
       child: child,
     );
   }

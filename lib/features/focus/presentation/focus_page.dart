@@ -1143,7 +1143,7 @@ class _FocusLayoutMetrics {
 
     return _FocusLayoutMetrics(
       horizontalPadding: compactWidth ? 12 : 16,
-      topPadding: compactHeight ? 30 : 40,
+      topPadding: compactHeight ? 10 : 14,
       bottomPadding: 30,
       modeToTargetSpacing: compactHeight ? 18 : 24,
       targetToTimerSpacing: compactHeight ? 30 : 40,

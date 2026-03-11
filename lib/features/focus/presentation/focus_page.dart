@@ -102,7 +102,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             icon: const Icon(Icons.more_horiz),
             position: PopupMenuPosition.under,
             elevation: 6,
-            constraints: const BoxConstraints(minWidth: 146, maxWidth: 156),
+            constraints: const BoxConstraints(minWidth: 132, maxWidth: 142),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
             ),
@@ -607,24 +607,21 @@ class _FocusMenuActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: 112,
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -657,12 +654,12 @@ class _FocusTargetEntryState extends State<_FocusTargetEntry> {
             : theme.colorScheme.onSurfaceVariant;
     final bgColor =
         _isPressed
-            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.48)
-            : theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.42);
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.58)
+            : theme.colorScheme.surfaceContainerLowest;
     final borderColor =
         _isPressed
-            ? theme.colorScheme.outlineVariant.withValues(alpha: 0.66)
-            : theme.colorScheme.outlineVariant.withValues(alpha: 0.42);
+            ? theme.colorScheme.outlineVariant.withValues(alpha: 0.78)
+            : theme.colorScheme.outlineVariant.withValues(alpha: 0.48);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
@@ -682,29 +679,29 @@ class _FocusTargetEntryState extends State<_FocusTargetEntry> {
               }),
           borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(9, 8, 7, 8),
+            padding: const EdgeInsets.fromLTRB(10, 7, 8, 7),
             child: Row(
               children: [
                 DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: theme.colorScheme.surface.withValues(alpha: 0.92),
+                    color: theme.colorScheme.surface,
                     border: Border.all(
                       color: theme.colorScheme.outlineVariant.withValues(
-                        alpha: 0.45,
+                        alpha: 0.42,
                       ),
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(3),
                     child: Icon(
                       Icons.flag_outlined,
-                      size: 12,
+                      size: 11,
                       color: mutedColor,
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 7),
                 Expanded(
                   child: _FocusTargetBreadcrumb(
                     pathText: widget.pathText,
@@ -820,25 +817,40 @@ class _FocusModeTabSwitch extends StatelessWidget {
     final theme = Theme.of(context);
     final activeColor = theme.colorScheme.onSurface;
     final inactiveColor = theme.colorScheme.onSurfaceVariant;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _FocusModeTabItem(
-          label: pomodoroLabel,
-          selected: mode == FocusMode.pomodoro,
-          activeColor: activeColor,
-          inactiveColor: inactiveColor,
-          onTap: () => onChange(FocusMode.pomodoro),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
         ),
-        const SizedBox(width: 20),
-        _FocusModeTabItem(
-          label: freeLabel,
-          selected: mode == FocusMode.free,
-          activeColor: activeColor,
-          inactiveColor: inactiveColor,
-          onTap: () => onChange(FocusMode.free),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(3),
+        child: Row(
+          children: [
+            Expanded(
+              child: _FocusModeTabItem(
+                label: pomodoroLabel,
+                selected: mode == FocusMode.pomodoro,
+                activeColor: activeColor,
+                inactiveColor: inactiveColor,
+                onTap: () => onChange(FocusMode.pomodoro),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _FocusModeTabItem(
+                label: freeLabel,
+                selected: mode == FocusMode.free,
+                activeColor: activeColor,
+                inactiveColor: inactiveColor,
+                onTap: () => onChange(FocusMode.free),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -860,36 +872,36 @@ class _FocusModeTabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
+      borderRadius: BorderRadius.circular(999),
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: selected ? activeColor : inactiveColor,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-              ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: selected ? theme.colorScheme.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow:
+              selected
+                  ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : null,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        child: Center(
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: selected ? activeColor : inactiveColor,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
             ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              height: 2.5,
-              width: 52,
-              decoration: BoxDecoration(
-                color:
-                    selected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1164,11 +1176,11 @@ class _FocusLayoutMetrics {
 
     return _FocusLayoutMetrics(
       horizontalPadding: compactWidth ? 12 : 16,
-      topPadding: compactHeight ? 24 : 32,
-      bottomPadding: 24,
-      modeToTargetSpacing: compactHeight ? 30 : 40,
-      targetToTimerSpacing: compactHeight ? 24 : 34,
-      timerToControlSpacing: compactHeight ? 24 : 38,
+      topPadding: compactHeight ? 30 : 40,
+      bottomPadding: 30,
+      modeToTargetSpacing: compactHeight ? 18 : 24,
+      targetToTimerSpacing: compactHeight ? 30 : 40,
+      timerToControlSpacing: compactHeight ? 28 : 42,
       timerSize: timerSize,
       timerStrokeWidth: compactWidth ? 8 : 10,
       timerTextSize: compactWidth ? 32 : 36,

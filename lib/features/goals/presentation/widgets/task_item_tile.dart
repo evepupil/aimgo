@@ -41,17 +41,13 @@ class TaskItemTile extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 6, 0, 6),
+      padding: const EdgeInsets.fromLTRB(2, 7, 2, 7),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: GestureDetector(
-              onTap: onTapToggle,
-              behavior: HitTestBehavior.opaque,
-              child: _TaskStatusIcon(task: task, progressRatio: effectiveRatio),
-            ),
+          GestureDetector(
+            onTap: onTapToggle,
+            behavior: HitTestBehavior.opaque,
+            child: _TaskStatusIcon(task: task, progressRatio: effectiveRatio),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -59,29 +55,28 @@ class TaskItemTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               onTap: onEdit,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 1),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HighlightText(
-                      text: task.title,
-                      query: searchQuery,
-                      baseStyle: titleStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: HighlightText(
+                  text: task.title,
+                  query: searchQuery,
+                  baseStyle: titleStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 74, maxWidth: 98),
+            child: Text(
+              '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
             ),
           ),
         ],

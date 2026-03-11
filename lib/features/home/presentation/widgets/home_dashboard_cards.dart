@@ -9,14 +9,12 @@ import 'package:intl/intl.dart';
 
 class HomeCurrentGoalCard extends StatelessWidget {
   const HomeCurrentGoalCard({
-    required this.dateLabel,
     required this.effectiveMinutes,
     required this.summary,
     required this.onOpenGoals,
     super.key,
   });
 
-  final String dateLabel;
   final double effectiveMinutes;
   final CurrentGoalSummary? summary;
   final VoidCallback onOpenGoals;
@@ -32,13 +30,6 @@ class HomeCurrentGoalCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                dateLabel,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 10),
               Text(l10n.homeTodayOverview, style: theme.textTheme.bodySmall),
               const SizedBox(height: 4),
               Text(
@@ -74,13 +65,6 @@ class HomeCurrentGoalCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              dateLabel,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
             Text(l10n.homeTodayOverview, style: theme.textTheme.bodySmall),
             const SizedBox(height: 4),
             Text(
@@ -475,10 +459,10 @@ class _HomePanel extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
         ),
       ),
       child: child,
@@ -547,11 +531,8 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.9),
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-        ),
       ),
       child: Text(label, style: theme.textTheme.labelMedium),
     );

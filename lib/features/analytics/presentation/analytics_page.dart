@@ -53,6 +53,14 @@ class AnalyticsPage extends ConsumerWidget {
                   (sum, session) => sum + session.efficiencyPercent,
                 ) /
                 sessionCount;
+    final modeMinutes = state.modeEffectiveMinutes();
+    final pomodoroMinutes = modeMinutes[FocusSessionMode.pomodoro] ?? 0;
+    final freeMinutes = modeMinutes[FocusSessionMode.free] ?? 0;
+    final totalModeMinutes = pomodoroMinutes + freeMinutes;
+    final pomodoroRatio =
+        totalModeMinutes <= 0 ? 0 : (pomodoroMinutes / totalModeMinutes) * 100;
+    final freeRatio =
+        totalModeMinutes <= 0 ? 0 : (freeMinutes / totalModeMinutes) * 100;
 
     return Scaffold(
       body: NestedScrollView(
@@ -110,6 +118,12 @@ class AnalyticsPage extends ConsumerWidget {
                 completedValue: completedCount.toString(),
                 abandonedLabel: l10n.historyStatusAbandoned,
                 abandonedValue: abandonedCount.toString(),
+                pomodoroLabel: l10n.focusModePomodoro,
+                pomodoroValue:
+                    '${pomodoroRatio.toStringAsFixed(0)}% · ${formatMinutes(pomodoroMinutes)}',
+                freeLabel: l10n.focusModeFree,
+                freeValue:
+                    '${freeRatio.toStringAsFixed(0)}% · ${formatMinutes(freeMinutes)}',
               ),
               const SizedBox(height: LayoutTokens.sectionGap),
               _SectionCard(
@@ -140,10 +154,7 @@ class AnalyticsPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.analyticsHeatmap,
-                      style: theme.textTheme.titleSmall,
-                    ),
+                    _SectionSubHeader(label: l10n.analyticsHeatmap),
                     const SizedBox(height: 6),
                     _HeatLegend(
                       lowLabel: l10n.analyticsHeatLegendLow,
@@ -170,10 +181,7 @@ class AnalyticsPage extends ConsumerWidget {
                     const SizedBox(height: LayoutTokens.sectionGap),
                     Divider(color: theme.colorScheme.outlineVariant),
                     const SizedBox(height: LayoutTokens.compactGap),
-                    Text(
-                      l10n.analyticsEfficiencyPeriod,
-                      style: theme.textTheme.titleSmall,
-                    ),
+                    _SectionSubHeader(label: l10n.analyticsEfficiencyPeriod),
                     const SizedBox(height: 6),
                     _EfficiencyRow(
                       label: l10n.analyticsMorning,
@@ -191,10 +199,7 @@ class AnalyticsPage extends ConsumerWidget {
                     const SizedBox(height: LayoutTokens.sectionGap),
                     Divider(color: theme.colorScheme.outlineVariant),
                     const SizedBox(height: LayoutTokens.compactGap),
-                    Text(
-                      l10n.analyticsGoalContribution,
-                      style: theme.textTheme.titleSmall,
-                    ),
+                    _SectionSubHeader(label: l10n.analyticsGoalContribution),
                     const SizedBox(height: 6),
                     SizedBox(
                       height: 230,
@@ -450,6 +455,10 @@ class _SummaryCard extends StatelessWidget {
     required this.completedValue,
     required this.abandonedLabel,
     required this.abandonedValue,
+    required this.pomodoroLabel,
+    required this.pomodoroValue,
+    required this.freeLabel,
+    required this.freeValue,
   });
 
   final String totalFocusLabel;
@@ -464,11 +473,22 @@ class _SummaryCard extends StatelessWidget {
   final String completedValue;
   final String abandonedLabel;
   final String abandonedValue;
+  final String pomodoroLabel;
+  final String pomodoroValue;
+  final String freeLabel;
+  final String freeValue;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.38),
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
@@ -538,11 +558,7 @@ class _SummaryCard extends StatelessWidget {
                     value: efficiencyValue,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: LayoutTokens.compactGap),
-            Row(
-              children: [
+                const SizedBox(width: LayoutTokens.compactGap),
                 Expanded(
                   child: _SummaryMetric(
                     label: completedLabel,
@@ -555,6 +571,21 @@ class _SummaryCard extends StatelessWidget {
                     label: abandonedLabel,
                     value: abandonedValue,
                   ),
+                ),
+              ],
+            ),
+            const SizedBox(height: LayoutTokens.compactGap),
+            Row(
+              children: [
+                Expanded(
+                  child: _SummaryMetric(
+                    label: pomodoroLabel,
+                    value: pomodoroValue,
+                  ),
+                ),
+                const SizedBox(width: LayoutTokens.compactGap),
+                Expanded(
+                  child: _SummaryMetric(label: freeLabel, value: freeValue),
                 ),
               ],
             ),
@@ -580,24 +611,25 @@ class _SummaryMetric extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(height: 3),
           Text(
             value,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -738,18 +770,42 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleSmall),
+            Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: LayoutTokens.sectionGap),
             child,
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionSubHeader extends StatelessWidget {
+  const _SectionSubHeader({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: Theme.of(
+        context,
+      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 }

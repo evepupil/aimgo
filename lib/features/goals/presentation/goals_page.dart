@@ -1,6 +1,6 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
-import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
+import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
 import 'package:aimgo/features/goals/presentation/widgets/milestone_card.dart';
@@ -8,7 +8,7 @@ import 'package:aimgo/features/goals/presentation/widgets/planning_entry_sheet.d
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 class GoalsPage extends ConsumerStatefulWidget {
   const GoalsPage({super.key});
@@ -80,12 +80,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                         SliverAppBar(
                           floating: true,
                           snap: true,
-                          title: Text(
-                            data.selectedGoalTree?.goal.title ??
-                                l10n.goalsMyGoalsTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          title: Text(l10n.goalsMyGoalsTitle),
                           actions: [
                             IconButton(
                               onPressed: () => _openGoalSwitcher(data),
@@ -106,16 +101,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                               onPressed: () => _openFilterSheet(data),
                               icon: const Icon(Icons.filter_list),
                               tooltip: l10n.goalsFilterTooltip,
-                            ),
-                            IconButton(
-                              onPressed:
-                                  data.selectedGoalTree == null
-                                      ? null
-                                      : () => context.push(
-                                        '${RoutePaths.goalMilestones}?goalId=${data.selectedGoalTree!.goal.id}',
-                                      ),
-                              icon: const Icon(Icons.alt_route),
-                              tooltip: l10n.goalsMilestoneProgress,
                             ),
                             IconButton(
                               onPressed: () => _openMenuSheet(data),
@@ -146,91 +131,141 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   Widget _buildBody(GoalsPageState state) {
     final l10n = AppLocalizations.of(context)!;
     final selectedGoal = state.selectedGoalTree;
+    final controller = ref.read(goalsPageControllerProvider.notifier);
 
     if (state.goalTree.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: LayoutTokens.pageHorizontal * 2,
-          ),
-          child: Text(l10n.goalsNoGoal, textAlign: TextAlign.center),
+      return RefreshIndicator(
+        onRefresh: controller.refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: LayoutTokens.listPagePadding,
+          children: [
+            _GoalsEmptyStatePanel(
+              title: l10n.goalsNoGoal,
+              actionLabel: l10n.goalsAddGoal,
+              onAction: () {
+                _openCreateComposer(
+                  state: state,
+                  initialType: PlanningComposerType.goal,
+                );
+              },
+            ),
+          ],
         ),
       );
     }
 
     if (selectedGoal == null) {
-      return const SizedBox.shrink();
-    }
-
-    final milestones = state.visibleMilestones;
-    final hasSearchQuery = state.searchQuery.trim().isNotEmpty;
-    if (milestones.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: LayoutTokens.pageHorizontal * 2,
-          ),
-          child: Text(
-            hasSearchQuery ? l10n.goalsNoSearchResult : l10n.goalsNoMilestone,
-            textAlign: TextAlign.center,
-          ),
+      return RefreshIndicator(
+        onRefresh: controller.refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: LayoutTokens.listPagePadding,
+          children: [
+            _GoalsEmptyStatePanel(
+              title: l10n.goalsSelectGoalFirst,
+              actionLabel: l10n.goalsSwitchTooltip,
+              onAction: () => _openGoalSwitcher(state),
+            ),
+          ],
         ),
       );
     }
 
-    final controller = ref.read(goalsPageControllerProvider.notifier);
+    final milestones = state.visibleMilestones;
+    final hasSearchQuery = state.searchQuery.trim().isNotEmpty;
+    final taskCount = selectedGoal.milestones.fold<int>(
+      0,
+      (sum, node) => sum + node.tasks.length,
+    );
 
     return RefreshIndicator(
       onRefresh: controller.refresh,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(0, LayoutTokens.pageTop, 0, 84),
-        itemCount: milestones.length,
-        itemBuilder: (context, index) {
-          final node = milestones[index];
-          final milestoneId = node.milestone.id;
-          return MilestoneCard(
-            milestoneNode: node,
-            searchQuery: state.searchQuery,
-            expanded: state.isMilestoneExpanded(milestoneId),
-            editLabel: l10n.commonEdit,
-            deleteLabel: l10n.commonDelete,
-            addTaskLabel: l10n.goalsAddTask,
-            onToggleExpanded: () {
-              controller.toggleMilestoneExpanded(milestoneId);
-            },
-            onEditMilestone:
-                () => _editMilestoneDialog(
-                  goalId: selectedGoal.goal.id,
-                  milestone: node.milestone,
-                ),
-            onDeleteMilestone:
-                () => _deleteMilestone(
-                  goalId: selectedGoal.goal.id,
-                  milestone: node.milestone,
-                ),
-            onAddTask:
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          LayoutTokens.pageHorizontal,
+          LayoutTokens.pageTop,
+          LayoutTokens.pageHorizontal,
+          84,
+        ),
+        children: [
+          _GoalSummaryPanel(
+            goal: selectedGoal.goal,
+            milestoneCount: selectedGoal.milestones.length,
+            taskCount: taskCount,
+            onEdit: () => _showGoalDialog(existingGoal: selectedGoal.goal),
+          ),
+          const SizedBox(height: LayoutTokens.sectionGap),
+          _GoalActionRow(
+            icon: Icons.add_task_outlined,
+            label: l10n.goalsAddMilestone,
+            onTap:
                 () => _openCreateComposer(
                   state: state,
-                  initialType: PlanningComposerType.task,
+                  initialType: PlanningComposerType.milestone,
                   initialGoalId: selectedGoal.goal.id,
-                  initialMilestoneId: milestoneId,
                 ),
-            onToggleTask:
-                (taskId, targetCompleted) => controller.toggleTaskCompletion(
-                  goalId: selectedGoal.goal.id,
-                  taskId: taskId,
-                  completed: targetCompleted,
-                ),
-            onEditTask:
-                (taskId) => _editTaskDialog(
-                  goalId: selectedGoal.goal.id,
-                  taskId: taskId,
-                ),
-            onDeleteTask:
-                (taskId) =>
-                    _deleteTask(goalId: selectedGoal.goal.id, taskId: taskId),
-          );
-        },
+          ),
+          const SizedBox(height: LayoutTokens.compactGap),
+          if (milestones.isEmpty)
+            _GoalsEmptyStatePanel(
+              title:
+                  hasSearchQuery
+                      ? l10n.goalsNoSearchResult
+                      : l10n.goalsNoMilestone,
+              actionLabel: hasSearchQuery ? l10n.goalsFilterReset : null,
+              onAction: hasSearchQuery ? () => controller.clearSearch() : null,
+            )
+          else ...[
+            for (final node in milestones)
+              MilestoneCard(
+                milestoneNode: node,
+                searchQuery: state.searchQuery,
+                expanded: state.isMilestoneExpanded(node.milestone.id),
+                editLabel: l10n.commonEdit,
+                deleteLabel: l10n.commonDelete,
+                addTaskLabel: l10n.goalsAddTask,
+                onToggleExpanded: () {
+                  controller.toggleMilestoneExpanded(node.milestone.id);
+                },
+                onEditMilestone:
+                    () => _editMilestoneDialog(
+                      goalId: selectedGoal.goal.id,
+                      milestone: node.milestone,
+                    ),
+                onDeleteMilestone:
+                    () => _deleteMilestone(
+                      goalId: selectedGoal.goal.id,
+                      milestone: node.milestone,
+                    ),
+                onAddTask:
+                    () => _openCreateComposer(
+                      state: state,
+                      initialType: PlanningComposerType.task,
+                      initialGoalId: selectedGoal.goal.id,
+                      initialMilestoneId: node.milestone.id,
+                    ),
+                onToggleTask:
+                    (taskId, targetCompleted) =>
+                        controller.toggleTaskCompletion(
+                          goalId: selectedGoal.goal.id,
+                          taskId: taskId,
+                          completed: targetCompleted,
+                        ),
+                onEditTask:
+                    (taskId) => _editTaskDialog(
+                      goalId: selectedGoal.goal.id,
+                      taskId: taskId,
+                    ),
+                onDeleteTask:
+                    (taskId) => _deleteTask(
+                      goalId: selectedGoal.goal.id,
+                      taskId: taskId,
+                    ),
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -912,6 +947,265 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   void _showInfoToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+    );
+  }
+}
+
+class _GoalSummaryPanel extends StatelessWidget {
+  const _GoalSummaryPanel({
+    required this.goal,
+    required this.milestoneCount,
+    required this.taskCount,
+    required this.onEdit,
+  });
+
+  final GoalModel goal;
+  final int milestoneCount;
+  final int taskCount;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final progressPercent = (goal.progressRatio * 100).round();
+    final dueAt = goal.dueAt;
+    final dueLabel =
+        dueAt == null ? null : DateFormat.yMMMd(locale).format(dueAt);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          LayoutTokens.cardPadding,
+          LayoutTokens.cardPadding,
+          LayoutTokens.cardPadding,
+          10,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: onEdit,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text(
+                        goal.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                if (goal.isCompleted)
+                  Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: Colors.green.shade600,
+                  ),
+              ],
+            ),
+            if (goal.description != null && goal.description!.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  goal.description!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$progressPercent%',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${formatMinutes(goal.effectiveMinutes)} / ${formatMinutes(goal.estimateMinutes)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: goal.progressRatio.clamp(0, 1).toDouble(),
+              minHeight: 7,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _GoalSummaryChip(
+                  icon: Icons.flag_outlined,
+                  label: '$milestoneCount',
+                ),
+                _GoalSummaryChip(
+                  icon: Icons.checklist_rtl_outlined,
+                  label: '$taskCount',
+                ),
+                if (dueLabel != null)
+                  _GoalSummaryChip(icon: Icons.event_outlined, label: dueLabel),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalSummaryChip extends StatelessWidget {
+  const _GoalSummaryChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoalActionRow extends StatelessWidget {
+  const _GoalActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalsEmptyStatePanel extends StatelessWidget {
+  const _GoalsEmptyStatePanel({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+        child: Column(
+          children: [
+            Icon(
+              Icons.inbox_outlined,
+              color: theme.colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 10),
+              TextButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

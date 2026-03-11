@@ -1,3 +1,4 @@
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/highlight_text.dart';
@@ -40,24 +41,24 @@ class MilestoneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dividerColor =
-        theme.brightness == Brightness.dark
-            ? Colors.white.withValues(alpha: 0.14)
-            : const Color(0xFFE4E4E4);
+    final dividerColor = theme.colorScheme.outlineVariant.withValues(
+      alpha: 0.45,
+    );
     final milestone = milestoneNode.milestone;
     final tasks = milestoneNode.tasks;
     final completedCount = tasks.where((task) => task.isCompleted).length;
-    final progressPercent = (milestone.progressRatio * 100).toStringAsFixed(0);
     final timeProgressText =
         '${formatMinutes(milestone.effectiveMinutes)} / ${formatMinutes(milestone.estimateMinutes)}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 2),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: dividerColor, width: 1)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        border: Border.all(color: dividerColor),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -81,13 +82,23 @@ class MilestoneCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: onAddTask,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.add_circle_outline,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                InkWell(
                   borderRadius: BorderRadius.circular(4),
                   onTap: onToggleExpanded,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.all(2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -111,13 +122,25 @@ class MilestoneCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Row(
               children: [
-                Text(
-                  '$progressPercent%',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.45,
+                    ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${tasks.length}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -145,25 +168,47 @@ class MilestoneCard extends StatelessWidget {
               firstChild: const SizedBox.shrink(),
               secondChild: Column(
                 children: [
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Divider(height: 1, color: dividerColor),
-                  for (var index = 0; index < tasks.length; index++) ...[
-                    TaskItemTile(
-                      task: tasks[index],
-                      searchQuery: searchQuery,
-                      editLabel: editLabel,
-                      deleteLabel: deleteLabel,
-                      onTapToggle: () {
-                        onToggleTask(
-                          tasks[index].id,
-                          !tasks[index].isCompleted,
-                        );
-                      },
-                      onEdit: () => onEditTask(tasks[index].id),
-                      onDelete: () => onDeleteTask(tasks[index].id),
+                  if (tasks.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              addTaskLabel,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: onAddTask,
+                            child: Text(addTaskLabel),
+                          ),
+                        ],
+                      ),
                     ),
-                    if (index != tasks.length - 1)
-                      Divider(height: 1, color: dividerColor),
+                  if (tasks.isNotEmpty) ...[
+                    for (var index = 0; index < tasks.length; index++) ...[
+                      TaskItemTile(
+                        task: tasks[index],
+                        searchQuery: searchQuery,
+                        editLabel: editLabel,
+                        deleteLabel: deleteLabel,
+                        onTapToggle: () {
+                          onToggleTask(
+                            tasks[index].id,
+                            !tasks[index].isCompleted,
+                          );
+                        },
+                        onEdit: () => onEditTask(tasks[index].id),
+                        onDelete: () => onDeleteTask(tasks[index].id),
+                      ),
+                      if (index != tasks.length - 1)
+                        Divider(height: 1, color: dividerColor),
+                    ],
                   ],
                 ],
               ),

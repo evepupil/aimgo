@@ -106,8 +106,8 @@ class _HomeSummaryStrip extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -126,6 +126,7 @@ class _HomeSummaryStrip extends StatelessWidget {
               formatMinutes(effectiveMinutes),
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],

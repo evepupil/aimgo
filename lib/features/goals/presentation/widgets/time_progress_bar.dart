@@ -11,6 +11,7 @@ class TimeProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
     final clamped = progressRatio.isNaN ? 0.0 : progressRatio;
     final normalPart = clamped.clamp(0, 1).toDouble();
     final overflowPart = math.max(0, clamped - 1).toDouble();
@@ -27,9 +28,7 @@ class TimeProgressBar extends StatelessWidget {
           borderRadius: borderRadius,
           child: Container(
             height: 6,
-            color: theme.colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.6,
-            ),
+            color: theme.colorScheme.primary.withValues(alpha: 0.12),
             child: Stack(
               children: [
                 Positioned(
@@ -37,7 +36,7 @@ class TimeProgressBar extends StatelessWidget {
                   top: 0,
                   bottom: 0,
                   width: normalWidth,
-                  child: const ColoredBox(color: Color(0xFF2E7D32)),
+                  child: ColoredBox(color: primaryColor),
                 ),
                 if (overflowWidth > 0)
                   Positioned(
@@ -45,10 +44,10 @@ class TimeProgressBar extends StatelessWidget {
                     top: 0,
                     bottom: 0,
                     width: overflowWidth + 1,
-                    child: const DecoratedBox(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFF2E7D32), Color(0xFFF57C00)],
+                          colors: [primaryColor, const Color(0xFFF57C00)],
                         ),
                       ),
                     ),

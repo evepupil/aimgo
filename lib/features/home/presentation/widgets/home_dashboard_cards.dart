@@ -460,10 +460,14 @@ class _HomePanel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
-        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: child,
     );
@@ -486,7 +490,7 @@ class _OverflowProgressBar extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -494,7 +498,7 @@ class _OverflowProgressBar extends StatelessWidget {
             widthFactor: clamped,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.green.shade600,
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -531,7 +535,7 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
+        color: theme.colorScheme.primary.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(label, style: theme.textTheme.labelMedium),
@@ -616,10 +620,10 @@ class _HeatCell extends StatelessWidget {
     final value = day.effectiveMinutes;
     final color = switch (_level(value)) {
       0 => isFuture ? emptyFutureColor : emptyPastColor,
-      1 => Colors.green.shade100,
-      2 => Colors.green.shade300,
-      3 => Colors.green.shade500,
-      _ => Colors.green.shade700,
+      1 => const Color(0xFFDBE8FE),
+      2 => const Color(0xFFA3C4FD),
+      3 => const Color(0xFF5B9BF8),
+      _ => const Color(0xFF2563EB),
     };
     return GestureDetector(
       onTap: onTap,

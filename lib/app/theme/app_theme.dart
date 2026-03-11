@@ -8,38 +8,48 @@ final class AppTheme {
   static ThemeData get lightTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: Color(0xFF1E1E1E),
+      primary: Color(0xFF3478F6),
       onPrimary: Color(0xFFFFFFFF),
-      secondary: Color(0xFF4A4A4A),
+      secondary: Color(0xFF5B9BF8),
       onSecondary: Color(0xFFFFFFFF),
       error: Color(0xFFB00020),
       onError: Color(0xFFFFFFFF),
       surface: Color(0xFFFFFFFF),
       onSurface: Color(0xFF111111),
+      surfaceContainerLowest: Color(0xFFF6F9FF),
+      surfaceContainerLow: Color(0xFFF0F5FF),
+      surfaceContainer: Color(0xFFE8F0FE),
+      surfaceContainerHigh: Color(0xFFDDE6F9),
+      surfaceContainerHighest: Color(0xFFD0DDEF),
     );
 
     return _buildTheme(
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFFFFFFF),
-      appBarBackground: const Color(0xFFFFFFFF),
+      scaffoldBackgroundColor: const Color(0xFFF4F7FC),
+      appBarBackground: const Color(0xFFF4F7FC),
       appBarForeground: const Color(0xFF111111),
-      navigationBarBackground: const Color(0xFFF8F8F8),
+      navigationBarBackground: const Color(0xFFFFFFFF),
       textColor: const Color(0xFF111111),
-      secondaryTextColor: const Color(0xFF565656),
+      secondaryTextColor: const Color(0xFF6B7280),
     );
   }
 
   static ThemeData get darkTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: Color(0xFFFFFFFF),
+      primary: Color(0xFF6EA8FE),
       onPrimary: Color(0xFF101010),
-      secondary: Color(0xFFBEBEBE),
+      secondary: Color(0xFF93C0FF),
       onSecondary: Color(0xFF101010),
       error: Color(0xFFCF6679),
       onError: Color(0xFF101010),
       surface: Color(0xFF141414),
       onSurface: Color(0xFFF5F5F5),
+      surfaceContainerLowest: Color(0xFF1A1A1A),
+      surfaceContainerLow: Color(0xFF1E1E1E),
+      surfaceContainer: Color(0xFF222222),
+      surfaceContainerHigh: Color(0xFF282828),
+      surfaceContainerHighest: Color(0xFF303030),
     );
 
     return _buildTheme(
@@ -180,7 +190,7 @@ final class AppTheme {
       ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_radiusSmall),
+          borderRadius: BorderRadius.circular(_radiusMedium),
         ),
         side: BorderSide(color: colorScheme.outlineVariant),
         labelStyle: textTheme.labelLarge,

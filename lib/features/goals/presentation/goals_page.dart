@@ -976,18 +976,17 @@ class _GoalSummaryPanel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          LayoutTokens.cardPadding,
-          LayoutTokens.cardPadding,
-          LayoutTokens.cardPadding,
-          10,
-        ),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1016,7 +1015,7 @@ class _GoalSummaryPanel extends StatelessWidget {
                   Icon(
                     Icons.check_circle,
                     size: 18,
-                    color: Colors.green.shade600,
+                    color: theme.colorScheme.primary,
                   ),
               ],
             ),
@@ -1032,7 +1031,7 @@ class _GoalSummaryPanel extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -1040,6 +1039,7 @@ class _GoalSummaryPanel extends StatelessWidget {
                     '$progressPercent%',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ),
@@ -1057,7 +1057,7 @@ class _GoalSummaryPanel extends StatelessWidget {
               minHeight: 7,
               borderRadius: BorderRadius.circular(999),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -1093,13 +1093,13 @@ class _GoalSummaryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: theme.colorScheme.primary.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+          Icon(icon, size: 14, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 5),
           Text(
             label,
@@ -1128,17 +1128,17 @@ class _GoalActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: theme.colorScheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+      color: theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
-              const SizedBox(width: 8),
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
@@ -1176,11 +1176,8 @@ class _GoalsEmptyStatePanel extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),

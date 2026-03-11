@@ -94,11 +94,11 @@ class _TaskStatusIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const baseBorder = Color(0xFFB0B0B0);
-    const activeColor = Color(0xFF2E7D32);
+    final activeColor = Theme.of(context).colorScheme.primary;
     final normalizedProgress = progressRatio.clamp(0, 1).toDouble();
 
     if (task.isCompleted) {
-      return const Icon(Icons.check_circle, color: activeColor, size: 22);
+      return Icon(Icons.check_circle, color: activeColor, size: 22);
     }
 
     final centerColor =

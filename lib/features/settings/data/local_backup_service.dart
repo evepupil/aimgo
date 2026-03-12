@@ -22,11 +22,12 @@ final class LocalBackupService {
 
   static const _schemaVersion = 1;
   static const _backupDirectoryName = 'backups';
+  static const _backupFilePrefix = 'aimgo_backup_';
 
   final AppDatabase _database;
   final LocalStorageService _storage;
 
-  Future<String> exportBackup() async {
+  Future<File> exportBackup() async {
     final goals = await _database.select(_database.goals).get();
     final milestones = await _database.select(_database.milestones).get();
     final tasks = await _database.select(_database.tasks).get();
@@ -40,6 +41,7 @@ final class LocalBackupService {
         'localePreference': _storage.getLocalePreference(),
         'notificationEnabled': _storage.getNotificationEnabled(),
         'soundEnabled': _storage.getSoundEnabled(),
+        'autoOpenEvaluationEnabled': _storage.getAutoOpenEvaluationEnabled(),
       },
       'goals': goals.map((item) => item.toJson()).toList(growable: false),
       'milestones': milestones
@@ -51,19 +53,19 @@ final class LocalBackupService {
           .toList(growable: false),
     };
 
-    final backupDirectory = await _ensureBackupDirectory();
+    final backupDirectory = await _ensureExportDirectory();
     final timestamp = DateTime.now()
         .toIso8601String()
         .replaceAll(':', '-')
         .replaceAll('.', '-');
     final file = File(
-      p.join(backupDirectory.path, 'aimgo_backup_$timestamp.json'),
+      p.join(backupDirectory.path, '$_backupFilePrefix$timestamp.json'),
     );
     await file.writeAsString(
       const JsonEncoder.withIndent('  ').convert(payload),
       flush: true,
     );
-    return file.path;
+    return file;
   }
 
   Future<String?> restoreLatestBackup() async {
@@ -72,24 +74,42 @@ final class LocalBackupService {
       return null;
     }
 
-    final content = await file.readAsString();
+    await _restoreFromJson(await file.readAsString());
+    return file.path;
+  }
+
+  Future<void> restoreFromFile(String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists()) {
+      throw FileSystemException('Backup file not found.', filePath);
+    }
+    await _restoreFromJson(await file.readAsString());
+  }
+
+  Future<bool> hasBackupFile() async {
+    final file = await _findLatestBackupFile();
+    return file != null;
+  }
+
+  Future<void> _restoreFromJson(String content) async {
     final decoded = jsonDecode(content);
-    if (decoded is! Map<String, dynamic>) {
+    if (decoded is! Map) {
       throw const FormatException('Invalid backup payload.');
     }
 
-    final schemaVersion = decoded['schemaVersion'];
+    final data = Map<String, dynamic>.from(decoded);
+    final schemaVersion = data['schemaVersion'];
     if (schemaVersion != _schemaVersion) {
       throw const FormatException('Unsupported backup schema version.');
     }
 
-    final goals = _decodeRows<Goal>(decoded['goals'], Goal.fromJson);
+    final goals = _decodeRows<Goal>(data['goals'], Goal.fromJson);
     final milestones = _decodeRows<Milestone>(
-      decoded['milestones'],
+      data['milestones'],
       Milestone.fromJson,
     );
-    final tasks = _decodeRows<Task>(decoded['tasks'], Task.fromJson);
-    final focusSessions = _decodeFocusSessions(decoded['focusSessions']);
+    final tasks = _decodeRows<Task>(data['tasks'], Task.fromJson);
+    final focusSessions = _decodeFocusSessions(data['focusSessions']);
 
     await _database.transaction(() async {
       await _database.delete(_database.focusSessions).go();
@@ -136,17 +156,10 @@ final class LocalBackupService {
       }
     });
 
-    final settings = decoded['settings'];
-    if (settings is Map<String, dynamic>) {
-      await _restoreSettings(settings);
+    final settings = data['settings'];
+    if (settings is Map) {
+      await _restoreSettings(Map<String, dynamic>.from(settings));
     }
-
-    return file.path;
-  }
-
-  Future<bool> hasBackupFile() async {
-    final file = await _findLatestBackupFile();
-    return file != null;
   }
 
   Future<void> _restoreSettings(Map<String, dynamic> settings) async {
@@ -154,6 +167,7 @@ final class LocalBackupService {
     final localePreference = settings['localePreference'];
     final notificationEnabled = settings['notificationEnabled'];
     final soundEnabled = settings['soundEnabled'];
+    final autoOpenEvaluationEnabled = settings['autoOpenEvaluationEnabled'];
 
     if (themePreference is String && themePreference.isNotEmpty) {
       await _storage.setThemePreference(themePreference);
@@ -166,6 +180,9 @@ final class LocalBackupService {
     }
     if (soundEnabled is bool) {
       await _storage.setSoundEnabled(soundEnabled);
+    }
+    if (autoOpenEvaluationEnabled is bool) {
+      await _storage.setAutoOpenEvaluationEnabled(autoOpenEvaluationEnabled);
     }
   }
 
@@ -202,7 +219,15 @@ final class LocalBackupService {
         .toList(growable: false);
   }
 
-  Future<Directory> _ensureBackupDirectory() async {
+  Future<Directory> _ensureExportDirectory() async {
+    final downloadsDirectory = await getDownloadsDirectory();
+    if (downloadsDirectory != null) {
+      if (!await downloadsDirectory.exists()) {
+        await downloadsDirectory.create(recursive: true);
+      }
+      return downloadsDirectory;
+    }
+
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final backupDirectory = Directory(
       p.join(documentsDirectory.path, _backupDirectoryName),
@@ -214,11 +239,15 @@ final class LocalBackupService {
   }
 
   Future<File?> _findLatestBackupFile() async {
-    final backupDirectory = await _ensureBackupDirectory();
+    final backupDirectory = await _ensureExportDirectory();
     final entries = backupDirectory
         .listSync()
         .whereType<File>()
-        .where((file) => file.path.endsWith('.json'))
+        .where((file) {
+          final fileName = p.basename(file.path);
+          return fileName.startsWith(_backupFilePrefix) &&
+              fileName.endsWith('.json');
+        })
         .toList(growable: false);
     if (entries.isEmpty) {
       return null;

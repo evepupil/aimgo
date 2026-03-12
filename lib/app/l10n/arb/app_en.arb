@@ -355,8 +355,11 @@
   "settingsBackupActionSheetTitle": "Backup Actions",
   "settingsBackupExport": "Export Backup",
   "settingsBackupImportLatest": "Restore Latest Backup",
+  "settingsBackupRestoreFromFile": "Restore from File",
+  "settingsBackupRestoreFromFileHint": "Select a previously exported backup file",
   "settingsBackupNoFile": "No local backup file found.",
   "settingsBackupExportSuccess": "Backup exported: {path}",
+  "settingsBackupExportShareSuccess": "Backup saved to Downloads",
   "@settingsBackupExportSuccess": {
     "placeholders": {
       "path": {
@@ -364,6 +367,7 @@
       }
     }
   },
+  "@settingsBackupExportShareSuccess": {},
   "settingsBackupImportSuccess": "Restore completed: {path}",
   "@settingsBackupImportSuccess": {
     "placeholders": {

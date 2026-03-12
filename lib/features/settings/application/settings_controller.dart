@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:aimgo/core/services/local_storage_service.dart';
 import 'package:aimgo/core/services/notification_service.dart';
 import 'package:aimgo/features/settings/data/local_backup_service.dart';
@@ -67,31 +69,35 @@ final class SettingsController extends Notifier<SettingsState> {
 
   Future<void> clearCache() async {
     await ref.read(localStorageServiceProvider).clearTransientCache();
-    final storage = ref.read(localStorageServiceProvider);
-    state = state.copyWith(
-      notificationsEnabled: storage.getNotificationEnabled(),
-      soundEnabled: storage.getSoundEnabled(),
-      autoOpenEvaluationEnabled: storage.getAutoOpenEvaluationEnabled(),
-    );
+    _reloadSettingsState();
   }
 
-  Future<String> exportBackup() {
+  Future<File> exportBackup() {
     return ref.read(localBackupServiceProvider).exportBackup();
   }
 
   Future<String?> importLatestBackup() async {
     final restoredPath =
         await ref.read(localBackupServiceProvider).restoreLatestBackup();
+    _reloadSettingsState();
+    return restoredPath;
+  }
+
+  Future<void> restoreFromFile(String path) async {
+    await ref.read(localBackupServiceProvider).restoreFromFile(path);
+    _reloadSettingsState();
+  }
+
+  Future<bool> hasBackupFile() {
+    return ref.read(localBackupServiceProvider).hasBackupFile();
+  }
+
+  void _reloadSettingsState() {
     final storage = ref.read(localStorageServiceProvider);
     state = state.copyWith(
       notificationsEnabled: storage.getNotificationEnabled(),
       soundEnabled: storage.getSoundEnabled(),
       autoOpenEvaluationEnabled: storage.getAutoOpenEvaluationEnabled(),
     );
-    return restoredPath;
-  }
-
-  Future<bool> hasBackupFile() {
-    return ref.read(localBackupServiceProvider).hasBackupFile();
   }
 }

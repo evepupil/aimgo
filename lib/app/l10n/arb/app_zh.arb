@@ -355,8 +355,11 @@
   "settingsBackupActionSheetTitle": "备份操作",
   "settingsBackupExport": "导出备份",
   "settingsBackupImportLatest": "恢复最近备份",
+  "settingsBackupRestoreFromFile": "从文件恢复",
+  "settingsBackupRestoreFromFileHint": "选择之前导出的备份文件",
   "settingsBackupNoFile": "未找到可恢复的本地备份。",
   "settingsBackupExportSuccess": "备份导出成功：{path}",
+  "settingsBackupExportShareSuccess": "备份已保存到下载文件夹",
   "@settingsBackupExportSuccess": {
     "placeholders": {
       "path": {
@@ -364,6 +367,7 @@
       }
     }
   },
+  "@settingsBackupExportShareSuccess": {},
   "settingsBackupImportSuccess": "恢复完成：{path}",
   "@settingsBackupImportSuccess": {
     "placeholders": {

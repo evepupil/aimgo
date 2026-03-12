@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('renders four tabs and profile settings entry', (
+  testWidgets('renders four tabs and switches to profile tab', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -27,9 +27,10 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(4));
 
-    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.tap(find.byIcon(Icons.person_outline).last);
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byIcon(Icons.settings_outlined), findsAtLeastNWidgets(1));
+    expect(find.byIcon(Icons.person), findsAtLeastNWidgets(1));
   });
 }

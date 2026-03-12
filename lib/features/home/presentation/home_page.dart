@@ -59,8 +59,11 @@ class HomePage extends ConsumerWidget {
                   effectiveMinutes: state.todayEffectiveMinutes,
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
-                HomeCurrentGoalCard(
+                HomeTodayOverviewCard(
                   effectiveMinutes: state.todayEffectiveMinutes,
+                ),
+                const SizedBox(height: LayoutTokens.sectionGap),
+                HomeCurrentGoalCard(
                   summary: state.currentGoal,
                   onOpenGoals: () => context.go(RoutePaths.goals),
                 ),
@@ -105,10 +108,7 @@ class _HomeSummaryStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: LayoutTokens.tainCardDecoration(theme),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Row(

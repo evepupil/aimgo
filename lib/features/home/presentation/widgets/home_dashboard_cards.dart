@@ -7,15 +7,46 @@ import 'package:aimgo/features/home/application/home_dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+class HomeTodayOverviewCard extends StatelessWidget {
+  const HomeTodayOverviewCard({
+    required this.effectiveMinutes,
+    super.key,
+  });
+
+  final double effectiveMinutes;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return _HomePanel(
+      child: Padding(
+        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.homeTodayOverview, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 4),
+            Text(
+              formatMinutes(effectiveMinutes),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class HomeCurrentGoalCard extends StatelessWidget {
   const HomeCurrentGoalCard({
-    required this.effectiveMinutes,
     required this.summary,
     required this.onOpenGoals,
     super.key,
   });
 
-  final double effectiveMinutes;
   final CurrentGoalSummary? summary;
   final VoidCallback onOpenGoals;
 
@@ -25,34 +56,27 @@ class HomeCurrentGoalCard extends StatelessWidget {
     final theme = Theme.of(context);
     if (summary == null) {
       return _HomePanel(
-        child: Padding(
-          padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.homeTodayOverview, style: theme.textTheme.bodySmall),
-              const SizedBox(height: 4),
-              Text(
-                formatMinutes(effectiveMinutes),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+        child: InkWell(
+          onTap: onOpenGoals,
+          borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.homeCurrentGoal,
+                  style: theme.textTheme.titleSmall,
                 ),
-              ),
-              const SizedBox(height: 12),
-              Divider(
-                height: 1,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.52),
-              ),
-              const SizedBox(height: 12),
-              Text(l10n.homeCurrentGoal, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(l10n.goalsNoGoal),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: onOpenGoals,
-                child: Text(l10n.homeOpenGoals),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(l10n.goalsNoGoal),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: onOpenGoals,
+                  child: Text(l10n.homeOpenGoals),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -60,74 +84,62 @@ class HomeCurrentGoalCard extends StatelessWidget {
 
     final progressPercent = (summary!.goal.progressRatio * 100).round();
     return _HomePanel(
-      child: Padding(
-        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.homeTodayOverview, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 4),
-            Text(
-              formatMinutes(effectiveMinutes),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+      child: InkWell(
+        onTap: onOpenGoals,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+        child: Padding(
+          padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.homeCurrentGoal,
+                style: theme.textTheme.titleSmall,
               ),
-            ),
-            const SizedBox(height: 12),
-            Divider(
-              height: 1,
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.52),
-            ),
-            const SizedBox(height: 12),
-            Text(l10n.homeCurrentGoal, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Text(
-              summary!.goal.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+              const SizedBox(height: 10),
+              Text(
+                summary!.goal.title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '$progressPercent%',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$progressPercent%',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
-                ),
-                Flexible(
-                  child: Text(
-                    '${formatMinutes(summary!.goal.effectiveMinutes)} / ${formatMinutes(summary!.goal.estimateMinutes)}',
-                    style: theme.textTheme.bodySmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.right,
+                  Flexible(
+                    child: Text(
+                      '${formatMinutes(summary!.goal.effectiveMinutes)} / ${formatMinutes(summary!.goal.estimateMinutes)}',
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _OverflowProgressBar(
+                progressRatio: summary!.goal.progressRatio,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.homeCompletedMilestones(
+                  '${summary!.completedMilestones}',
+                  '${summary!.totalMilestones}',
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _OverflowProgressBar(progressRatio: summary!.goal.progressRatio),
-            const SizedBox(height: 12),
-            Text(
-              l10n.homeCompletedMilestones(
-                '${summary!.completedMilestones}',
-                '${summary!.totalMilestones}',
+                style: theme.textTheme.bodyMedium,
               ),
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: onOpenGoals,
-                child: Text(l10n.homeOpenGoals),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -155,7 +167,7 @@ class HomeLastSessionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.homeLastFocus, style: theme.textTheme.titleMedium),
+            Text(l10n.homeLastFocus, style: theme.textTheme.titleSmall),
             const SizedBox(height: 10),
             if (entry == null) ...[
               Text(
@@ -259,12 +271,14 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
           children: [
             Text(
               l10n.homeHeatmapTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 4),
             Text(
               l10n.homeHeatmapSubtitle,
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
             SingleChildScrollView(
@@ -336,6 +350,15 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
                                               context,
                                               weeks[index][dayIndex],
                                             ),
+                                        tooltipMessage: l10n.homeHeatmapDetail(
+                                          DateFormat.yMMMd(localeName).format(
+                                            weeks[index][dayIndex].date,
+                                          ),
+                                          formatMinutes(
+                                            weeks[index][dayIndex]
+                                                .effectiveMinutes,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                 ],
@@ -358,19 +381,6 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
     setState(() {
       _selectedDate = _normalizeDate(day.date);
     });
-    _showDayDetail(context, day);
-  }
-
-  void _showDayDetail(BuildContext context, HeatmapDayPoint day) {
-    final l10n = AppLocalizations.of(context)!;
-    final localeName = Localizations.localeOf(context).toLanguageTag();
-    final message = l10n.homeHeatmapDetail(
-      DateFormat.yMMMd(localeName).format(day.date),
-      formatMinutes(day.effectiveMinutes),
-    );
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
   List<List<HeatmapDayPoint>> _buildWeeks(List<HeatmapDayPoint> source) {
@@ -456,19 +466,8 @@ class _HomePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: LayoutTokens.tainCardDecoration(Theme.of(context)),
       child: child,
     );
   }
@@ -538,7 +537,7 @@ class _MetricChip extends StatelessWidget {
         color: theme.colorScheme.primary.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(label, style: theme.textTheme.labelMedium),
+      child: Text(label, style: theme.textTheme.labelSmall),
     );
   }
 }
@@ -599,6 +598,7 @@ class _HeatCell extends StatelessWidget {
     required this.today,
     required this.isSelected,
     required this.onTap,
+    required this.tooltipMessage,
   });
 
   final HeatmapDayPoint day;
@@ -606,6 +606,7 @@ class _HeatCell extends StatelessWidget {
   final DateTime today;
   final bool isSelected;
   final VoidCallback onTap;
+  final String tooltipMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -625,23 +626,28 @@ class _HeatCell extends StatelessWidget {
       3 => const Color(0xFF5B9BF8),
       _ => const Color(0xFF2563EB),
     };
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(3),
-          border: Border.all(
-            color:
-                isSelected
-                    ? colorScheme.primary
-                    : isToday
-                    ? colorScheme.primary
-                    : colorScheme.outlineVariant.withValues(alpha: 0.35),
-            width: isSelected ? 1.8 : (isToday ? 1.4 : 0.6),
+    return Tooltip(
+      message: tooltipMessage,
+      triggerMode: TooltipTriggerMode.tap,
+      preferBelow: false,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+            border: Border.all(
+              color:
+                  isSelected
+                      ? colorScheme.primary
+                      : isToday
+                      ? colorScheme.primary
+                      : colorScheme.outlineVariant.withValues(alpha: 0.35),
+              width: isSelected ? 1.8 : (isToday ? 1.4 : 0.6),
+            ),
           ),
         ),
       ),

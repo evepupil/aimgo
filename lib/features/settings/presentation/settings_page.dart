@@ -88,8 +88,7 @@ class SettingsPage extends ConsumerWidget {
                     icon: Icons.rate_review_outlined,
                     title: l10n.settingsAutoOpenEvaluation,
                     value: settingsState.autoOpenEvaluationEnabled,
-                    onChanged:
-                        settingsController.setAutoOpenEvaluationEnabled,
+                    onChanged: settingsController.setAutoOpenEvaluationEnabled,
                   ),
                   _SettingsNavRow(
                     icon: Icons.backup_outlined,
@@ -210,10 +209,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      style: theme.textTheme.titleSmall,
-                    ),
+                    child: Text(title, style: theme.textTheme.titleSmall),
                   ),
                 ),
                 for (final option in options)
@@ -293,8 +289,7 @@ class SettingsPage extends ConsumerWidget {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                   leading: const Icon(Icons.download_outlined, size: 22),
                   title: Text(l10n.settingsBackupImportLatest),
-                  subtitle:
-                      hasBackup ? null : Text(l10n.settingsBackupNoFile),
+                  subtitle: hasBackup ? null : Text(l10n.settingsBackupNoFile),
                   enabled: hasBackup,
                   onTap: () => Navigator.of(sheetContext).pop('import'),
                 ),
@@ -400,9 +395,9 @@ class _SettingsCard extends StatelessWidget {
             if (i < children.length - 1)
               Divider(
                 height: 1,
-                indent: 52,
+                indent: 16,
                 endIndent: 16,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.28),
               ),
           ],
         ],
@@ -435,7 +430,7 @@ class _SettingsNavRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         child: Row(
           children: [
             Icon(
@@ -444,9 +439,7 @@ class _SettingsNavRow extends StatelessWidget {
               color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
             ),
             const SizedBox(width: 14),
-            Expanded(
-              child: Text(title, style: theme.textTheme.bodyLarge),
-            ),
+            Expanded(child: Text(title, style: theme.textTheme.bodyLarge)),
             if (value != null) ...[
               const SizedBox(width: 8),
               Text(
@@ -493,7 +486,7 @@ class _SettingsSwitchRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       onTap: () => onChanged(!value),
       child: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 8, top: 6, bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         child: Row(
           children: [
             Icon(
@@ -502,10 +495,22 @@ class _SettingsSwitchRow extends StatelessWidget {
               color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
             ),
             const SizedBox(width: 14),
-            Expanded(
-              child: Text(title, style: theme.textTheme.bodyLarge),
+            Expanded(child: Text(title, style: theme.textTheme.bodyLarge)),
+            SizedBox(
+              width: 44,
+              height: 24,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Transform.scale(
+                  scale: 0.82,
+                  child: Switch(
+                    value: value,
+                    onChanged: onChanged,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
             ),
-            Switch(value: value, onChanged: onChanged),
           ],
         ),
       ),

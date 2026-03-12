@@ -104,6 +104,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
             position: PopupMenuPosition.under,
             elevation: 6,
             constraints: const BoxConstraints(minWidth: 132, maxWidth: 142),
+            color: theme.colorScheme.surface,
+            shadowColor: Colors.black.withValues(alpha: 0.14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
             ),
@@ -213,7 +215,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
                               color: theme.colorScheme.surface,
                               boxShadow: [
                                 BoxShadow(
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.06,
+                                  ),
                                   blurRadius: 20,
                                   offset: const Offset(0, 4),
                                 ),
@@ -227,7 +231,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
                             value: 1,
                             strokeWidth: layoutMetrics.timerStrokeWidth,
                             backgroundColor: Colors.transparent,
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
                           ),
                         ),
                         // Progress ring
@@ -640,15 +646,16 @@ class _FocusMenuActionRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+        Icon(icon, size: 18, color: theme.colorScheme.onSurface),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -714,7 +721,9 @@ class _FocusTargetEntry extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 20,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
               ],
             ),
@@ -953,9 +962,7 @@ class _FocusControlSection extends StatelessWidget {
             width: 200,
             height: 48,
             child: FilledButton(
-              style: FilledButton.styleFrom(
-                shape: const StadiumBorder(),
-              ),
+              style: FilledButton.styleFrom(shape: const StadiumBorder()),
               onPressed: canStart ? onStart : null,
               child: Text(l10n.focusStart),
             ),
@@ -1240,9 +1247,11 @@ class _FocusTargetPickerSheet extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
               children: [
-                for (var goalIndex = 0;
-                    goalIndex < hierarchy.length;
-                    goalIndex++) ...[
+                for (
+                  var goalIndex = 0;
+                  goalIndex < hierarchy.length;
+                  goalIndex++
+                ) ...[
                   if (goalIndex > 0) const SizedBox(height: 14),
                   // Goal section label
                   Padding(
@@ -1275,10 +1284,11 @@ class _FocusTargetPickerSheet extends StatelessWidget {
                   else
                     _PickerCard(
                       children: [
-                        for (var mIndex = 0;
-                            mIndex <
-                                hierarchy[goalIndex].milestones.length;
-                            mIndex++) ...[
+                        for (
+                          var mIndex = 0;
+                          mIndex < hierarchy[goalIndex].milestones.length;
+                          mIndex++
+                        ) ...[
                           if (mIndex > 0)
                             Divider(
                               height: 1,
@@ -1523,77 +1533,122 @@ class _ManualFocusSheetState extends State<_ManualFocusSheet> {
     final selectedTimeLabel = _selectedStartTime.format(context);
 
     return Material(
-      color: theme.colorScheme.surface,
+      color: theme.scaffoldBackgroundColor,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      clipBehavior: Clip.antiAlias,
       child: SafeArea(
         child: Column(
           children: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed:
-                      _isSaving ? null : () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                  tooltip: l10n.commonClose,
-                ),
-                Expanded(
-                  child: Text(
-                    l10n.focusManualTitle,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleMedium,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed:
+                        _isSaving ? null : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    tooltip: l10n.commonClose,
                   ),
-                ),
-                const SizedBox(width: 48),
-              ],
+                  Expanded(
+                    child: Text(
+                      l10n.focusManualTitle,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 40),
+                ],
+              ),
             ),
-            const Divider(height: 1),
+            const SizedBox(height: 8),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
                 children: [
-                  _ManualFieldTile(
-                    label: l10n.focusManualDateLabel,
-                    value: selectedDateLabel,
-                    onTap: _isSaving ? null : _pickDate,
+                  _ManualSectionLabel(label: l10n.focusManualDateLabel),
+                  _PickerCard(
+                    children: [
+                      _ManualFieldTile(
+                        icon: Icons.event_outlined,
+                        label: l10n.focusManualDateLabel,
+                        value: selectedDateLabel,
+                        onTap: _isSaving ? null : _pickDate,
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.28,
+                        ),
+                      ),
+                      _ManualFieldTile(
+                        icon: Icons.schedule_outlined,
+                        label: l10n.focusManualStartTimeLabel,
+                        value: selectedTimeLabel,
+                        onTap: _isSaving ? null : _pickStartTime,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  _ManualFieldTile(
-                    label: l10n.focusManualStartTimeLabel,
-                    value: selectedTimeLabel,
-                    onTap: _isSaving ? null : _pickStartTime,
+                  const SizedBox(height: 14),
+                  _ManualSectionLabel(label: l10n.focusManualTargetLabel),
+                  _PickerCard(
+                    children: [
+                      _ManualFieldTile(
+                        icon: Icons.flag_outlined,
+                        label: l10n.focusManualTargetLabel,
+                        value:
+                            _selectedTarget?.pathText ?? l10n.focusContextEmpty,
+                        actionLabel: l10n.focusManualPickTarget,
+                        onTap: _isSaving ? null : _pickTarget,
+                        maxLines: 2,
+                        showLabel: false,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  _ManualFieldTile(
-                    label: l10n.focusManualTargetLabel,
-                    value: _selectedTarget?.pathText ?? l10n.focusContextEmpty,
-                    actionLabel: l10n.focusManualPickTarget,
-                    onTap: _isSaving ? null : _pickTarget,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _durationController,
-                    enabled: !_isSaving,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: l10n.focusManualDurationLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _efficiencyController,
-                    enabled: !_isSaving,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: l10n.focusManualEfficiencyLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _noteController,
-                    enabled: !_isSaving,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      labelText: l10n.focusManualNoteLabel,
-                    ),
+                  const SizedBox(height: 14),
+                  _ManualSectionLabel(label: l10n.focusManualInfoTitle),
+                  _PickerCard(
+                    children: [
+                      _ManualValueInputTile(
+                        label: l10n.focusManualDurationLabel,
+                        controller: _durationController,
+                        enabled: !_isSaving,
+                        keyboardType: TextInputType.number,
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.28,
+                        ),
+                      ),
+                      _ManualValueInputTile(
+                        label: l10n.focusManualEfficiencyLabel,
+                        controller: _efficiencyController,
+                        enabled: !_isSaving,
+                        keyboardType: TextInputType.number,
+                        suffix: '%',
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.28,
+                        ),
+                      ),
+                      _ManualInputTile(
+                        label: l10n.focusManualNoteLabel,
+                        controller: _noteController,
+                        enabled: !_isSaving,
+                        maxLines: 4,
+                        keyboardType: TextInputType.multiline,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1739,62 +1794,219 @@ class _ManualFocusSheetState extends State<_ManualFocusSheet> {
 
 class _ManualFieldTile extends StatelessWidget {
   const _ManualFieldTile({
+    required this.icon,
     required this.label,
     required this.value,
     required this.onTap,
     this.actionLabel,
+    this.maxLines = 1,
+    this.showLabel = true,
   });
 
+  final IconData icon;
   final String label;
   final String value;
   final VoidCallback? onTap;
   final String? actionLabel;
+  final int maxLines;
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: theme.textTheme.labelMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(
+                icon,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              if (actionLabel != null)
-                Text(
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showLabel)
+                    Text(
+                      label,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (showLabel) const SizedBox(height: 4),
+                  Text(
+                    value,
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (actionLabel != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
                   actionLabel!,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              const SizedBox(width: 4),
-              Icon(
+              ),
+            const SizedBox(width: 4),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(
                 Icons.chevron_right,
                 color: theme.colorScheme.onSurfaceVariant,
-                size: 20,
+                size: 18,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _ManualSectionLabel extends StatelessWidget {
+  const _ManualSectionLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+class _ManualInputTile extends StatelessWidget {
+  const _ManualInputTile({
+    required this.label,
+    required this.controller,
+    required this.enabled,
+    required this.keyboardType,
+    this.maxLines = 1,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final bool enabled;
+  final TextInputType keyboardType;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: controller,
+            enabled: enabled,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ManualValueInputTile extends StatelessWidget {
+  const _ManualValueInputTile({
+    required this.label,
+    required this.controller,
+    required this.enabled,
+    required this.keyboardType,
+    this.suffix,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final bool enabled;
+  final TextInputType keyboardType;
+  final String? suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 42, maxWidth: 84),
+            child: TextField(
+              controller: controller,
+              enabled: enabled,
+              keyboardType: keyboardType,
+              textAlign: TextAlign.right,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (suffix != null) ...[
+            const SizedBox(width: 4),
+            Text(
+              suffix!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

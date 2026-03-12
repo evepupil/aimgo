@@ -1,3 +1,4 @@
+import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/highlight_text.dart';
@@ -39,6 +40,7 @@ class MilestoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final dividerColor = theme.colorScheme.outlineVariant.withValues(
       alpha: 0.45,
@@ -129,9 +131,7 @@ class MilestoneCard extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(
-                      alpha: 0.08,
-                    ),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -170,22 +170,30 @@ class MilestoneCard extends StatelessWidget {
                   Divider(height: 1, color: dividerColor),
                   if (tasks.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              addTaskLabel,
+                      padding: const EdgeInsets.fromLTRB(4, 6, 4, 4),
+                      child: Center(
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          children: [
+                            Text(
+                              l10n.goalsNoTaskYet,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: onAddTask,
-                            child: Text(addTaskLabel),
-                          ),
-                        ],
+                            TextButton(
+                              onPressed: onAddTask,
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(0, 24),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: Text(addTaskLabel),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   if (tasks.isNotEmpty) ...[

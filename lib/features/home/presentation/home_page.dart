@@ -1,7 +1,6 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
-import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_timer_controller.dart';
 import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
 import 'package:aimgo/features/home/application/home_dashboard_controller.dart';
@@ -54,12 +53,8 @@ class HomePage extends ConsumerWidget {
             child: ListView(
               padding: LayoutTokens.listPagePadding,
               children: [
-                _HomeSummaryStrip(
-                  dateLabel: headerDate,
-                  effectiveMinutes: state.todayEffectiveMinutes,
-                ),
-                const SizedBox(height: LayoutTokens.sectionGap),
                 HomeTodayOverviewCard(
+                  dateLabel: headerDate,
                   effectiveMinutes: state.todayEffectiveMinutes,
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
@@ -92,46 +87,5 @@ class HomePage extends ConsumerWidget {
     ref.read(selectedGoalIdProvider.notifier).state = goalId;
     ref.read(focusTimerControllerProvider.notifier).selectGoal(goalId);
     context.go(RoutePaths.focus);
-  }
-}
-
-class _HomeSummaryStrip extends StatelessWidget {
-  const _HomeSummaryStrip({
-    required this.dateLabel,
-    required this.effectiveMinutes,
-  });
-
-  final String dateLabel;
-  final double effectiveMinutes;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return DecoratedBox(
-      decoration: LayoutTokens.tainCardDecoration(theme),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                dateLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              formatMinutes(effectiveMinutes),
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

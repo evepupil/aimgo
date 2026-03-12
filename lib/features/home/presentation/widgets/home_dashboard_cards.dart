@@ -9,10 +9,12 @@ import 'package:intl/intl.dart';
 
 class HomeTodayOverviewCard extends StatelessWidget {
   const HomeTodayOverviewCard({
+    required this.dateLabel,
     required this.effectiveMinutes,
     super.key,
   });
 
+  final String dateLabel;
   final double effectiveMinutes;
 
   @override
@@ -25,12 +27,20 @@ class HomeTodayOverviewCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              dateLabel,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
             Text(l10n.homeTodayOverview, style: theme.textTheme.titleSmall),
             const SizedBox(height: 4),
             Text(
               formatMinutes(effectiveMinutes),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
@@ -64,10 +74,7 @@ class HomeCurrentGoalCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.homeCurrentGoal,
-                  style: theme.textTheme.titleSmall,
-                ),
+                Text(l10n.homeCurrentGoal, style: theme.textTheme.titleSmall),
                 const SizedBox(height: 8),
                 Text(l10n.goalsNoGoal),
                 const SizedBox(height: 12),
@@ -92,10 +99,7 @@ class HomeCurrentGoalCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.homeCurrentGoal,
-                style: theme.textTheme.titleSmall,
-              ),
+              Text(l10n.homeCurrentGoal, style: theme.textTheme.titleSmall),
               const SizedBox(height: 10),
               Text(
                 summary!.goal.title,
@@ -127,9 +131,7 @@ class HomeCurrentGoalCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              _OverflowProgressBar(
-                progressRatio: summary!.goal.progressRatio,
-              ),
+              _OverflowProgressBar(progressRatio: summary!.goal.progressRatio),
               const SizedBox(height: 12),
               Text(
                 l10n.homeCompletedMilestones(
@@ -351,9 +353,9 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
                                               weeks[index][dayIndex],
                                             ),
                                         tooltipMessage: l10n.homeHeatmapDetail(
-                                          DateFormat.yMMMd(localeName).format(
-                                            weeks[index][dayIndex].date,
-                                          ),
+                                          DateFormat.yMMMd(
+                                            localeName,
+                                          ).format(weeks[index][dayIndex].date),
                                           formatMinutes(
                                             weeks[index][dayIndex]
                                                 .effectiveMinutes,

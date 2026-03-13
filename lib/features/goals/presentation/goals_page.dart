@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
@@ -8,6 +9,7 @@ import 'package:aimgo/features/goals/presentation/widgets/planning_entry_sheet.d
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 class GoalsPage extends ConsumerStatefulWidget {
@@ -132,6 +134,8 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
           children: [
             _GoalsEmptyStatePanel(
               title: l10n.goalsNoGoal,
+              description: l10n.goalsNoGoalGuide,
+              icon: Icons.flag_outlined,
               actionLabel: l10n.goalsAddGoal,
               onAction: () {
                 _openCreateComposer(
@@ -154,6 +158,8 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
           children: [
             _GoalsEmptyStatePanel(
               title: l10n.goalsSelectGoalFirst,
+              description: l10n.goalsSelectGoalGuide,
+              icon: Icons.swap_horiz_rounded,
               actionLabel: l10n.goalsSwitchTooltip,
               onAction: () => _openGoalSwitcher(state),
             ),
@@ -164,6 +170,11 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 
     final milestones = state.visibleMilestones;
     final hasSearchQuery = state.searchQuery.trim().isNotEmpty;
+    final milestoneCount = selectedGoal.milestones.length;
+    final taskCount = selectedGoal.milestones.fold<int>(
+      0,
+      (sum, node) => sum + node.tasks.length,
+    );
 
     return RefreshIndicator(
       onRefresh: controller.refresh,
@@ -178,9 +189,22 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         children: [
           _GoalSummaryPanel(
             goal: selectedGoal.goal,
+            milestoneCount: milestoneCount,
+            taskCount: taskCount,
             onEdit: () => _showGoalDialog(existingGoal: selectedGoal.goal),
             onSwitchGoal: () => _openGoalSwitcher(state),
+            onOpenMilestoneProgress:
+                () => context.push(
+                  '${RoutePaths.goalMilestones}?goalId=${selectedGoal.goal.id}',
+                ),
           ),
+          if (_hasActiveBrowseState(state)) ...[
+            const SizedBox(height: LayoutTokens.sectionGap),
+            _GoalsBrowseStateBar(
+              chips: _buildBrowseStateChips(context, state),
+              onReset: () => _resetBrowseState(state),
+            ),
+          ],
           const SizedBox(height: LayoutTokens.sectionGapLarge),
           _GoalsSectionHeader(
             title: l10n.goalsMilestonesSection,
@@ -199,13 +223,21 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   hasSearchQuery
                       ? l10n.goalsNoSearchResult
                       : l10n.goalsNoMilestone,
+              description:
+                  hasSearchQuery
+                      ? l10n.goalsNoSearchResultGuide
+                      : l10n.goalsNoMilestoneGuide,
+              icon:
+                  hasSearchQuery
+                      ? Icons.search_off_rounded
+                      : Icons.flag_circle_outlined,
               actionLabel:
                   hasSearchQuery
                       ? l10n.goalsFilterReset
                       : l10n.goalsAddMilestone,
               onAction:
                   hasSearchQuery
-                      ? () => controller.clearSearch()
+                      ? () => _resetBrowseState(state)
                       : () => _openCreateComposer(
                         state: state,
                         initialType: PlanningComposerType.milestone,
@@ -830,7 +862,97 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   }
 
   Future<void> _onTapAdd(GoalsPageState? state) async {
-    await _openCreateComposer(state: state);
+    final entryState =
+        state ?? ref.read(goalsPageControllerProvider).valueOrNull;
+    await _openCreateComposer(
+      state: entryState,
+      initialType: _defaultCreateTypeForState(entryState),
+    );
+  }
+
+  PlanningComposerType _defaultCreateTypeForState(GoalsPageState? state) {
+    final selectedGoal = state?.selectedGoalTree;
+    if (state == null || state.goalTree.isEmpty) {
+      return PlanningComposerType.goal;
+    }
+    if (selectedGoal == null || selectedGoal.milestones.isEmpty) {
+      return PlanningComposerType.milestone;
+    }
+    return PlanningComposerType.task;
+  }
+
+  Future<void> _resetBrowseState(GoalsPageState state) async {
+    final controller = ref.read(goalsPageControllerProvider.notifier);
+    if (state.searchQuery.trim().isNotEmpty) {
+      await controller.clearSearch();
+    }
+    if (state.completionFilter != GoalCompletionFilter.all ||
+        state.progressFilter != GoalProgressFilter.all ||
+        state.updatedFilter != GoalUpdatedFilter.all) {
+      await controller.clearFilters();
+    }
+  }
+
+  bool _hasActiveBrowseState(GoalsPageState state) {
+    return state.searchQuery.trim().isNotEmpty ||
+        state.completionFilter != GoalCompletionFilter.all ||
+        state.progressFilter != GoalProgressFilter.all ||
+        state.updatedFilter != GoalUpdatedFilter.all;
+  }
+
+  List<_GoalsBrowseChipData> _buildBrowseStateChips(
+    BuildContext context,
+    GoalsPageState state,
+  ) {
+    final theme = Theme.of(context);
+    final chips = <_GoalsBrowseChipData>[];
+    final query = state.searchQuery.trim();
+    if (query.isNotEmpty) {
+      chips.add(
+        _GoalsBrowseChipData(
+          label: query,
+          icon: Icons.search_rounded,
+          accentColor: theme.colorScheme.primary,
+        ),
+      );
+    }
+    if (state.completionFilter != GoalCompletionFilter.all) {
+      chips.add(
+        _GoalsBrowseChipData(
+          label: _completionFilterLabel(
+            AppLocalizations.of(context)!,
+            state.completionFilter,
+          ),
+          icon: Icons.done_all_rounded,
+          accentColor: theme.colorScheme.primary,
+        ),
+      );
+    }
+    if (state.progressFilter != GoalProgressFilter.all) {
+      chips.add(
+        _GoalsBrowseChipData(
+          label: _progressFilterLabel(
+            AppLocalizations.of(context)!,
+            state.progressFilter,
+          ),
+          icon: Icons.stacked_bar_chart_rounded,
+          accentColor: theme.colorScheme.primary,
+        ),
+      );
+    }
+    if (state.updatedFilter != GoalUpdatedFilter.all) {
+      chips.add(
+        _GoalsBrowseChipData(
+          label: _updatedFilterLabel(
+            AppLocalizations.of(context)!,
+            state.updatedFilter,
+          ),
+          icon: Icons.schedule_rounded,
+          accentColor: theme.colorScheme.primary,
+        ),
+      );
+    }
+    return chips;
   }
 
   Future<void> _openCreateComposer({
@@ -1185,13 +1307,19 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 class _GoalSummaryPanel extends StatelessWidget {
   const _GoalSummaryPanel({
     required this.goal,
+    required this.milestoneCount,
+    required this.taskCount,
     required this.onEdit,
     required this.onSwitchGoal,
+    required this.onOpenMilestoneProgress,
   });
 
   final GoalModel goal;
+  final int milestoneCount;
+  final int taskCount;
   final VoidCallback onEdit;
   final VoidCallback onSwitchGoal;
+  final VoidCallback onOpenMilestoneProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -1313,33 +1441,108 @@ class _GoalSummaryPanel extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               backgroundColor: colorScheme.primary.withValues(alpha: 0.10),
             ),
-            if (dueLabel != null) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(
-                    Icons.event_outlined,
-                    size: 15,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      dueLabel,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.78,
-                        ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _GoalSummaryChip(
+                        icon: Icons.flag_outlined,
+                        label: '$milestoneCount',
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      _GoalSummaryChip(
+                        icon: Icons.checklist_rtl_outlined,
+                        label: '$taskCount',
+                      ),
+                      if (dueLabel != null)
+                        _GoalSummaryChip(
+                          icon: Icons.event_outlined,
+                          label: dueLabel,
+                        ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 10),
+                _GoalSummaryChip(
+                  icon: Icons.timeline_rounded,
+                  label: l10n.goalsMilestoneProgress,
+                  onTap: onOpenMilestoneProgress,
+                  highlighted: true,
+                ),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GoalSummaryChip extends StatelessWidget {
+  const _GoalSummaryChip({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.highlighted = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: (highlighted ? colorScheme.primary : colorScheme.primary)
+            .withValues(alpha: highlighted ? 0.10 : 0.07),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color:
+                highlighted
+                    ? colorScheme.primary
+                    : colorScheme.primary.withValues(alpha: 0.72),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color:
+                  highlighted
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+              fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (onTap == null) {
+      return chip;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        onTap: onTap,
+        child: chip,
       ),
     );
   }
@@ -1383,14 +1586,100 @@ class _GoalsSectionHeader extends StatelessWidget {
   }
 }
 
+final class _GoalsBrowseChipData {
+  const _GoalsBrowseChipData({
+    required this.label,
+    required this.icon,
+    required this.accentColor,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color accentColor;
+}
+
+class _GoalsBrowseStateBar extends StatelessWidget {
+  const _GoalsBrowseStateBar({required this.chips, required this.onReset});
+
+  final List<_GoalsBrowseChipData> chips;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.045),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final chip in chips)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: chip.accentColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(
+                      LayoutTokens.radiusMedium,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(chip.icon, size: 14, color: chip.accentColor),
+                      const SizedBox(width: 5),
+                      Text(
+                        chip.label,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: onReset,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 30),
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: Text(l10n.goalsFilterReset),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GoalsEmptyStatePanel extends StatelessWidget {
   const _GoalsEmptyStatePanel({
     required this.title,
+    required this.description,
+    required this.icon,
     this.actionLabel,
     this.onAction,
   });
 
   final String title;
+  final String description;
+  final IconData icon;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -1406,17 +1695,22 @@ class _GoalsEmptyStatePanel extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
         child: Column(
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              color: theme.colorScheme.onSurfaceVariant,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
+            Icon(icon, color: theme.colorScheme.onSurfaceVariant, size: 26),
+            const SizedBox(height: 10),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
               ),
             ),
             if (actionLabel != null && onAction != null) ...[

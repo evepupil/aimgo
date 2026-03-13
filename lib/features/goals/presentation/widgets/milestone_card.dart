@@ -49,6 +49,7 @@ class MilestoneCard extends StatelessWidget {
     final milestone = milestoneNode.milestone;
     final tasks = milestoneNode.tasks;
     final completedCount = tasks.where((task) => task.isCompleted).length;
+    final progressPercent = (milestone.progressRatio * 100).round();
     final timeProgressText =
         '${formatMinutes(milestone.effectiveMinutes)} / ${formatMinutes(milestone.estimateMinutes)}';
 
@@ -127,14 +128,15 @@ class MilestoneCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(
-                  child: TimeProgressBar(
-                    progressRatio: milestone.progressRatio,
+                Text(
+                  '$progressPercent%',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 112,
+                const SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     timeProgressText,
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -149,87 +151,99 @@ class MilestoneCard extends StatelessWidget {
                 ),
               ],
             ),
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  Divider(height: 1, color: dividerColor),
-                  if (tasks.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
-                      child: Center(
-                        child: Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 4,
-                          children: [
-                            Text(
-                              l10n.goalsNoTaskYet,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(height: 6),
+            TimeProgressBar(progressRatio: milestone.progressRatio),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child:
+                  expanded
+                      ? Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          Divider(height: 1, color: dividerColor),
+                          if (tasks.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
+                              child: Center(
+                                child: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 4,
+                                  children: [
+                                    Text(
+                                      l10n.goalsNoTaskYet,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color:
+                                                theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                          ),
+                                    ),
+                                    TextButton(
+                                      onPressed: onAddTask,
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: const Size(0, 24),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      child: Text(addTaskLabel),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            TextButton(
-                              onPressed: onAddTask,
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 24),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
+                          if (tasks.isNotEmpty) ...[
+                            for (
+                              var index = 0;
+                              index < tasks.length;
+                              index++
+                            ) ...[
+                              TaskItemTile(
+                                task: tasks[index],
+                                searchQuery: searchQuery,
+                                editLabel: editLabel,
+                                deleteLabel: deleteLabel,
+                                onTapToggle: () {
+                                  onToggleTask(
+                                    tasks[index].id,
+                                    !tasks[index].isCompleted,
+                                  );
+                                },
+                                onEdit: () => onEditTask(tasks[index].id),
+                                onDelete: () => onDeleteTask(tasks[index].id),
                               ),
-                              child: Text(addTaskLabel),
+                              if (index != tasks.length - 1)
+                                Divider(height: 1, color: dividerColor),
+                            ],
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  onPressed: onAddTask,
+                                  style: TextButton.styleFrom(
+                                    minimumSize: const Size(0, 30),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 0,
+                                      vertical: 4,
+                                    ),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  icon: const Icon(Icons.add_rounded, size: 16),
+                                  label: Text(addTaskLabel),
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  if (tasks.isNotEmpty) ...[
-                    for (var index = 0; index < tasks.length; index++) ...[
-                      TaskItemTile(
-                        task: tasks[index],
-                        searchQuery: searchQuery,
-                        editLabel: editLabel,
-                        deleteLabel: deleteLabel,
-                        onTapToggle: () {
-                          onToggleTask(
-                            tasks[index].id,
-                            !tasks[index].isCompleted,
-                          );
-                        },
-                        onEdit: () => onEditTask(tasks[index].id),
-                        onDelete: () => onDeleteTask(tasks[index].id),
-                      ),
-                      if (index != tasks.length - 1)
-                        Divider(height: 1, color: dividerColor),
-                    ],
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: onAddTask,
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(0, 30),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 0,
-                              vertical: 4,
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          icon: const Icon(Icons.add_rounded, size: 16),
-                          label: Text(addTaskLabel),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              crossFadeState:
-                  expanded
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 220),
+                        ],
+                      )
+                      : const SizedBox.shrink(),
             ),
           ],
         ),

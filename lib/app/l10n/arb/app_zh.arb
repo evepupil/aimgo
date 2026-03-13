@@ -314,6 +314,7 @@
   "goalsNoTaskYet": "暂时还没有任务",
   "goalsNoSearchResult": "未找到匹配内容。",
   "goalsAddGoal": "添加目标",
+  "goalsMilestonesSection": "里程碑",
   "goalsAddMilestone": "添加里程碑",
   "goalsAddTask": "添加任务",
   "goalsCreateEntry": "创建",

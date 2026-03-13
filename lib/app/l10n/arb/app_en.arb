@@ -314,6 +314,7 @@
   "goalsNoTaskYet": "No tasks yet",
   "goalsNoSearchResult": "No matching content found.",
   "goalsAddGoal": "Add Goal",
+  "goalsMilestonesSection": "Milestones",
   "goalsAddMilestone": "Add Milestone",
   "goalsAddTask": "Add Task",
   "goalsCreateEntry": "Create",

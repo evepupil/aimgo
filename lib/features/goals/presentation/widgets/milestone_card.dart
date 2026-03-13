@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/highlight_text.dart';
@@ -43,7 +44,7 @@ class MilestoneCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final dividerColor = theme.colorScheme.outlineVariant.withValues(
-      alpha: 0.45,
+      alpha: 0.32,
     );
     final milestone = milestoneNode.milestone;
     final tasks = milestoneNode.tasks;
@@ -52,17 +53,25 @@ class MilestoneCard extends StatelessWidget {
         '${formatMinutes(milestone.effectiveMinutes)} / ${formatMinutes(milestone.estimateMinutes)}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.035),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: InkWell(
@@ -73,32 +82,24 @@ class MilestoneCard extends StatelessWidget {
                       child: HighlightText(
                         text: milestone.title,
                         query: searchQuery,
-                        baseStyle: theme.textTheme.titleSmall,
+                        baseStyle: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
-                  onTap: onAddTask,
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(
-                      Icons.add_circle_outline,
-                      size: 18,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                InkWell(
-                  borderRadius: BorderRadius.circular(4),
                   onTap: onToggleExpanded,
                   child: Padding(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -106,13 +107,14 @@ class MilestoneCard extends StatelessWidget {
                           '$completedCount/${tasks.length}',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 2),
                         Icon(
                           expanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
                           size: 18,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -122,38 +124,23 @@ class MilestoneCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '${tasks.length}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: TimeProgressBar(
                     progressRatio: milestone.progressRatio,
                   ),
                 ),
-                const SizedBox(width: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 118),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 112,
                   child: Text(
                     timeProgressText,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.82,
+                      ),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -166,11 +153,11 @@ class MilestoneCard extends StatelessWidget {
               firstChild: const SizedBox.shrink(),
               secondChild: Column(
                 children: [
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Divider(height: 1, color: dividerColor),
                   if (tasks.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 6, 4, 4),
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
                       child: Center(
                         child: Wrap(
                           crossAxisAlignment: WrapCrossAlignment.center,
@@ -215,6 +202,26 @@ class MilestoneCard extends StatelessWidget {
                       if (index != tasks.length - 1)
                         Divider(height: 1, color: dividerColor),
                     ],
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: onAddTask,
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 30),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 4,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          icon: const Icon(Icons.add_rounded, size: 16),
+                          label: Text(addTaskLabel),
+                        ),
+                      ),
+                    ),
                   ],
                 ],
               ),

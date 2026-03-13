@@ -83,11 +83,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                           title: Text(l10n.goalsMyGoalsTitle),
                           actions: [
                             IconButton(
-                              onPressed: () => _openGoalSwitcher(data),
-                              icon: const Icon(Icons.swap_vert),
-                              tooltip: l10n.goalsSwitchTooltip,
-                            ),
-                            IconButton(
                               onPressed: () {
                                 setState(() {
                                   _isSearching = true;
@@ -98,13 +93,8 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                               tooltip: l10n.goalsSearchHint,
                             ),
                             IconButton(
-                              onPressed: () => _openFilterSheet(data),
-                              icon: const Icon(Icons.filter_list),
-                              tooltip: l10n.goalsFilterTooltip,
-                            ),
-                            IconButton(
                               onPressed: () => _openMenuSheet(data),
-                              icon: const Icon(Icons.more_vert),
+                              icon: const Icon(Icons.more_horiz),
                               tooltip: l10n.goalsMenuTooltip,
                             ),
                           ],
@@ -174,10 +164,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 
     final milestones = state.visibleMilestones;
     final hasSearchQuery = state.searchQuery.trim().isNotEmpty;
-    final taskCount = selectedGoal.milestones.fold<int>(
-      0,
-      (sum, node) => sum + node.tasks.length,
-    );
 
     return RefreshIndicator(
       onRefresh: controller.refresh,
@@ -192,15 +178,14 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         children: [
           _GoalSummaryPanel(
             goal: selectedGoal.goal,
-            milestoneCount: selectedGoal.milestones.length,
-            taskCount: taskCount,
             onEdit: () => _showGoalDialog(existingGoal: selectedGoal.goal),
+            onSwitchGoal: () => _openGoalSwitcher(state),
           ),
-          const SizedBox(height: LayoutTokens.sectionGap),
-          _GoalActionRow(
-            icon: Icons.add_task_outlined,
-            label: l10n.goalsAddMilestone,
-            onTap:
+          const SizedBox(height: LayoutTokens.sectionGapLarge),
+          _GoalsSectionHeader(
+            title: l10n.goalsMilestonesSection,
+            actionLabel: l10n.goalsAddMilestone,
+            onAction:
                 () => _openCreateComposer(
                   state: state,
                   initialType: PlanningComposerType.milestone,
@@ -214,8 +199,18 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   hasSearchQuery
                       ? l10n.goalsNoSearchResult
                       : l10n.goalsNoMilestone,
-              actionLabel: hasSearchQuery ? l10n.goalsFilterReset : null,
-              onAction: hasSearchQuery ? () => controller.clearSearch() : null,
+              actionLabel:
+                  hasSearchQuery
+                      ? l10n.goalsFilterReset
+                      : l10n.goalsAddMilestone,
+              onAction:
+                  hasSearchQuery
+                      ? () => controller.clearSearch()
+                      : () => _openCreateComposer(
+                        state: state,
+                        initialType: PlanningComposerType.milestone,
+                        initialGoalId: selectedGoal.goal.id,
+                      ),
             )
           else ...[
             for (final node in milestones)
@@ -426,9 +421,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                           children: [
                             for (final filter in GoalProgressFilter.values)
                               ChoiceChip(
-                                label: Text(
-                                  _progressFilterLabel(l10n, filter),
-                                ),
+                                label: Text(_progressFilterLabel(l10n, filter)),
                                 selected: progressFilter == filter,
                                 onSelected: (_) {
                                   setSheetState(() {
@@ -460,9 +453,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                           children: [
                             for (final filter in GoalUpdatedFilter.values)
                               ChoiceChip(
-                                label: Text(
-                                  _updatedFilterLabel(l10n, filter),
-                                ),
+                                label: Text(_updatedFilterLabel(l10n, filter)),
                                 selected: updatedFilter == filter,
                                 onSelected: (_) {
                                   setSheetState(() {
@@ -561,6 +552,44 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   ),
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
+                DecoratedBox(
+                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: LayoutTokens.cardPadding,
+                        ),
+                        leading: const Icon(Icons.swap_horiz_rounded),
+                        title: Text(l10n.goalsSwitchTooltip),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          _openGoalSwitcher(state);
+                        },
+                      ),
+                      Divider(
+                        indent: 16,
+                        endIndent: 16,
+                        height: 1,
+                        color: sheetTheme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.28,
+                        ),
+                      ),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: LayoutTokens.cardPadding,
+                        ),
+                        leading: const Icon(Icons.tune_rounded),
+                        title: Text(l10n.goalsFilterTooltip),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          _openFilterSheet(state);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: LayoutTokens.sectionGapLarge),
                 Padding(
                   padding: const EdgeInsets.only(left: 4, bottom: 10),
                   child: Text(
@@ -707,8 +736,9 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                         indent: 16,
                         endIndent: 16,
                         height: 1,
-                        color: sheetTheme.colorScheme.outlineVariant
-                            .withValues(alpha: 0.28),
+                        color: sheetTheme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.28,
+                        ),
                       ),
                       ListTile(
                         contentPadding: const EdgeInsets.symmetric(
@@ -1155,20 +1185,20 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 class _GoalSummaryPanel extends StatelessWidget {
   const _GoalSummaryPanel({
     required this.goal,
-    required this.milestoneCount,
-    required this.taskCount,
     required this.onEdit,
+    required this.onSwitchGoal,
   });
 
   final GoalModel goal;
-  final int milestoneCount;
-  final int taskCount;
   final VoidCallback onEdit;
+  final VoidCallback onSwitchGoal;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final colorScheme = theme.colorScheme;
     final progressPercent = (goal.progressRatio * 100).round();
     final dueAt = goal.dueAt;
     final dueLabel =
@@ -1176,78 +1206,102 @@ class _GoalSummaryPanel extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            color: colorScheme.primary.withValues(alpha: 0.045),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: onEdit,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text(
-                        goal.title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                Text(
+                  l10n.homeCurrentGoal,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: 10),
-                if (goal.isCompleted)
-                  Icon(
-                    Icons.check_circle,
-                    size: 18,
-                    color: theme.colorScheme.primary,
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: onSwitchGoal,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: colorScheme.primary,
                   ),
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                  label: Text(l10n.goalsSwitchTooltip),
+                ),
               ],
+            ),
+            const SizedBox(height: 6),
+            InkWell(
+              borderRadius: BorderRadius.circular(6),
+              onTap: onEdit,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  goal.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
             if (goal.description != null && goal.description!.trim().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   goal.description!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: Text(
                     '$progressPercent%',
-                    style: theme.textTheme.titleLarge?.copyWith(
+                    style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.primary,
+                      color: colorScheme.primary,
                     ),
                   ),
                 ),
-                Text(
-                  '${formatMinutes(goal.effectiveMinutes)} / ${formatMinutes(goal.estimateMinutes)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${formatMinutes(goal.effectiveMinutes)} / ${formatMinutes(goal.estimateMinutes)}',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.primary.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ],
@@ -1255,26 +1309,35 @@ class _GoalSummaryPanel extends StatelessWidget {
             const SizedBox(height: 8),
             LinearProgressIndicator(
               value: goal.progressRatio.clamp(0, 1).toDouble(),
-              minHeight: 7,
+              minHeight: 8,
               borderRadius: BorderRadius.circular(999),
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.10),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _GoalSummaryChip(
-                  icon: Icons.flag_outlined,
-                  label: '$milestoneCount',
-                ),
-                _GoalSummaryChip(
-                  icon: Icons.checklist_rtl_outlined,
-                  label: '$taskCount',
-                ),
-                if (dueLabel != null)
-                  _GoalSummaryChip(icon: Icons.event_outlined, label: dueLabel),
-              ],
-            ),
+            if (dueLabel != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.event_outlined,
+                    size: 15,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      dueLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.78,
+                        ),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1282,81 +1345,40 @@ class _GoalSummaryPanel extends StatelessWidget {
   }
 }
 
-class _GoalSummaryChip extends StatelessWidget {
-  const _GoalSummaryChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GoalActionRow extends StatelessWidget {
-  const _GoalActionRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
+class _GoalsSectionHeader extends StatelessWidget {
+  const _GoalsSectionHeader({
+    required this.title,
+    required this.actionLabel,
+    required this.onAction,
   });
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
+  final String title;
+  final String actionLabel;
+  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-      ),
+        TextButton(
+          onPressed: onAction,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: const Size(0, 30),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(actionLabel),
+        ),
+      ],
     );
   }
 }

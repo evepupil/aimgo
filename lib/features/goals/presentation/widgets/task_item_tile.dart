@@ -33,21 +33,31 @@ class TaskItemTile extends StatelessWidget {
             : task.progressRatio.clamp(0, 1).toDouble();
 
     final titleStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontWeight: isDone ? FontWeight.w400 : FontWeight.w500,
       decoration: isDone ? TextDecoration.lineThrough : null,
       color:
           isDone
-              ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55)
-              : null,
+              ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.72)
+              : theme.colorScheme.onSurface,
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 7, 2, 7),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
       child: Row(
         children: [
           GestureDetector(
             onTap: onTapToggle,
             behavior: HitTestBehavior.opaque,
-            child: _TaskStatusIcon(task: task, progressRatio: effectiveRatio),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: Center(
+                child: _TaskStatusIcon(
+                  task: task,
+                  progressRatio: effectiveRatio,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -66,13 +76,16 @@ class TaskItemTile extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 74, maxWidth: 98),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 96,
             child: Text(
               '${formatMinutes(task.effectiveMinutes)} / ${formatMinutes(task.estimateMinutes)}',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.82,
+                ),
+                fontWeight: FontWeight.w500,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -98,37 +111,37 @@ class _TaskStatusIcon extends StatelessWidget {
     final normalizedProgress = progressRatio.clamp(0, 1).toDouble();
 
     if (task.isCompleted) {
-      return Icon(Icons.check_circle, color: activeColor, size: 22);
+      return Icon(Icons.check_circle_rounded, color: activeColor, size: 20);
     }
 
     final centerColor =
         Color.lerp(
-          baseBorder.withValues(alpha: 0.15),
-          activeColor.withValues(alpha: 0.22),
+          baseBorder.withValues(alpha: 0.12),
+          activeColor.withValues(alpha: 0.20),
           normalizedProgress,
         )!;
     final progressColor =
         Color.lerp(
-          activeColor.withValues(alpha: 0.45),
+          activeColor.withValues(alpha: 0.42),
           activeColor,
           normalizedProgress,
         )!;
 
     return SizedBox(
-      width: 22,
-      height: 22,
+      width: 20,
+      height: 20,
       child: Stack(
         alignment: Alignment.center,
         children: [
           CircularProgressIndicator(
             value: normalizedProgress,
-            strokeWidth: 2.1,
-            backgroundColor: baseBorder.withValues(alpha: 0.45),
+            strokeWidth: 2,
+            backgroundColor: baseBorder.withValues(alpha: 0.38),
             valueColor: AlwaysStoppedAnimation<Color>(progressColor),
           ),
           Container(
-            width: 8,
-            height: 8,
+            width: 7,
+            height: 7,
             decoration: BoxDecoration(
               color: centerColor,
               shape: BoxShape.circle,

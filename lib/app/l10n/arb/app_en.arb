@@ -42,8 +42,18 @@
       }
     }
   },
-  "homeHeatmapTitle": "Last 3 Months Heatmap",
-  "homeHeatmapSubtitle": "Your focus trail for this month and the previous two months",
+  "homeHeatmapTitle": "Focus Heatmap",
+  "homeHeatmapSubtitle": "Your focus trail over the last 3 months",
+  "homeHeatmapLegendLow": "Less",
+  "homeHeatmapLegendHigh": "More",
+  "homeHeatmapSelectedFocus": "Effective focus {duration}",
+  "@homeHeatmapSelectedFocus": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "homeHeatmapDetail": "{date} · Effective focus {duration}",
   "@homeHeatmapDetail": {
     "placeholders": {

@@ -42,8 +42,18 @@
       }
     }
   },
-  "homeHeatmapTitle": "最近三个月专注热力图",
-  "homeHeatmapSubtitle": "本月及前两个月的投入轨迹",
+  "homeHeatmapTitle": "专注热力图",
+  "homeHeatmapSubtitle": "最近三个月的投入轨迹",
+  "homeHeatmapLegendLow": "少",
+  "homeHeatmapLegendHigh": "多",
+  "homeHeatmapSelectedFocus": "有效专注 {duration}",
+  "@homeHeatmapSelectedFocus": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "homeHeatmapDetail": "{date} · 有效专注 {duration}",
   "@homeHeatmapDetail": {
     "placeholders": {

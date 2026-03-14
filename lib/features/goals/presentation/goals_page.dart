@@ -2,6 +2,7 @@ import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/core/widgets/anchored_action_menu.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
 import 'package:aimgo/features/goals/presentation/widgets/milestone_card.dart';
@@ -21,6 +22,7 @@ class GoalsPage extends ConsumerStatefulWidget {
 
 class _GoalsPageState extends ConsumerState<GoalsPage> {
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey _topMenuAnchorKey = GlobalKey();
   bool _isSearching = false;
 
   @override
@@ -32,6 +34,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final asyncState = ref.watch(goalsPageControllerProvider);
     final controller = ref.read(goalsPageControllerProvider.notifier);
     final data = asyncState.valueOrNull;
@@ -44,16 +47,35 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
       appBar:
           _isSearching
               ? AppBar(
+                toolbarHeight: 56,
+                scrolledUnderElevation: 0,
+                leadingWidth: 40,
+                titleSpacing: 0,
+                actionsPadding: const EdgeInsets.only(right: 4),
                 title: TextField(
                   controller: _searchController,
                   autofocus: true,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
+                    isCollapsed: true,
                     border: InputBorder.none,
                     hintText: l10n.goalsSearchHint,
+                    hintStyle: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.48,
+                      ),
+                    ),
                   ),
                   onChanged: (value) => controller.updateSearchQuery(value),
                 ),
-                leading: const Icon(Icons.search),
+                leading: Icon(
+                  Icons.search,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 actions: [
                   IconButton(
                     onPressed: () async {
@@ -75,7 +97,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         children: [
           if (data != null)
             _isSearching
-                ? _buildBody(data)
+                ? _buildBody(data, isSearching: true)
                 : NestedScrollView(
                   headerSliverBuilder:
                       (context, innerBoxIsScrolled) => [
@@ -89,20 +111,99 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                                 setState(() {
                                   _isSearching = true;
                                   _searchController.text = data.searchQuery;
+                                  _searchController
+                                      .selection = TextSelection.collapsed(
+                                    offset: _searchController.text.length,
+                                  );
                                 });
                               },
                               icon: const Icon(Icons.search),
                               tooltip: l10n.goalsSearchHint,
                             ),
                             IconButton(
-                              onPressed: () => _openMenuSheet(data),
+                              key: _topMenuAnchorKey,
+                              onPressed: () async {
+                                final action = await showAnchoredActionMenu<
+                                  _GoalsTopAction
+                                >(
+                                  context: context,
+                                  anchorKey: _topMenuAnchorKey,
+                                  items: [
+                                    AnchoredMenuItem<_GoalsTopAction>(
+                                      value: _GoalsTopAction.switchGoal,
+                                      child: _GoalsMenuActionRow(
+                                        icon: Icons.swap_horiz_rounded,
+                                        label: l10n.goalsSwitchTooltip,
+                                      ),
+                                    ),
+                                    AnchoredMenuItem<_GoalsTopAction>(
+                                      value: _GoalsTopAction.filter,
+                                      child: _GoalsMenuActionRow(
+                                        icon: Icons.tune_rounded,
+                                        label: l10n.goalsFilterTooltip,
+                                        showChevron: true,
+                                      ),
+                                    ),
+                                    AnchoredMenuItem<_GoalsTopAction>(
+                                      value: _GoalsTopAction.sort,
+                                      child: _GoalsMenuActionRow(
+                                        icon: Icons.swap_vert_rounded,
+                                        label: l10n.goalsMenuSortTitle,
+                                        trailingLabel: _sortModeLabel(
+                                          l10n,
+                                          data.sortMode,
+                                        ),
+                                        showChevron: true,
+                                      ),
+                                    ),
+                                    AnchoredMenuItem<_GoalsTopAction>(
+                                      value: _GoalsTopAction.batch,
+                                      child: _GoalsMenuActionRow(
+                                        icon: Icons.done_all_outlined,
+                                        label: l10n.goalsMenuBatchManage,
+                                      ),
+                                    ),
+                                    AnchoredMenuItem<_GoalsTopAction>(
+                                      value: _GoalsTopAction.share,
+                                      child: _GoalsMenuActionRow(
+                                        icon: Icons.ios_share_rounded,
+                                        label: l10n.goalsMenuShare,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                                if (!mounted || action == null) {
+                                  return;
+                                }
+                                switch (action) {
+                                  case _GoalsTopAction.switchGoal:
+                                    await _openGoalSwitcher(data);
+                                    return;
+                                  case _GoalsTopAction.filter:
+                                    await _openFilterSheet(data);
+                                    return;
+                                  case _GoalsTopAction.sort:
+                                    await _openSortSheet(data);
+                                    return;
+                                  case _GoalsTopAction.batch:
+                                    _showGoalsMenuPlaceholder(
+                                      l10n.goalsMenuBatchManage,
+                                    );
+                                    return;
+                                  case _GoalsTopAction.share:
+                                    _showGoalsMenuPlaceholder(
+                                      l10n.goalsMenuShare,
+                                    );
+                                    return;
+                                }
+                              },
                               icon: const Icon(Icons.more_horiz),
                               tooltip: l10n.goalsMenuTooltip,
                             ),
                           ],
                         ),
                       ],
-                  body: _buildBody(data),
+                  body: _buildBody(data, isSearching: false),
                 ),
           if (asyncState.isLoading)
             const Positioned(
@@ -113,14 +214,17 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _onTapAdd(data),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          _isSearching
+              ? null
+              : FloatingActionButton(
+                onPressed: () => _onTapAdd(data),
+                child: const Icon(Icons.add),
+              ),
     );
   }
 
-  Widget _buildBody(GoalsPageState state) {
+  Widget _buildBody(GoalsPageState state, {required bool isSearching}) {
     final l10n = AppLocalizations.of(context)!;
     final selectedGoal = state.selectedGoalTree;
     final controller = ref.read(goalsPageControllerProvider.notifier);
@@ -168,8 +272,15 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
       );
     }
 
-    final milestones = state.visibleMilestones;
     final hasSearchQuery = state.searchQuery.trim().isNotEmpty;
+    final milestones =
+        isSearching && hasSearchQuery
+            ? const <MilestoneWithTasks>[]
+            : state.visibleMilestones;
+    final searchResults =
+        isSearching && hasSearchQuery
+            ? state.visibleSearchResults
+            : const <GoalWithMilestones>[];
     final milestoneCount = selectedGoal.milestones.length;
     final taskCount = selectedGoal.milestones.fold<int>(
       0,
@@ -180,44 +291,77 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
       onRefresh: controller.refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           LayoutTokens.pageHorizontal,
-          LayoutTokens.pageTop,
+          isSearching ? 12 : LayoutTokens.pageTop,
           LayoutTokens.pageHorizontal,
-          84,
+          isSearching ? 24 : 84,
         ),
         children: [
-          _GoalSummaryPanel(
-            goal: selectedGoal.goal,
-            milestoneCount: milestoneCount,
-            taskCount: taskCount,
-            onEdit: () => _showGoalDialog(existingGoal: selectedGoal.goal),
-            onSwitchGoal: () => _openGoalSwitcher(state),
-            onOpenMilestoneProgress:
-                () => context.push(
-                  '${RoutePaths.goalMilestones}?goalId=${selectedGoal.goal.id}',
-                ),
-          ),
+          if (!isSearching)
+            _GoalSummaryPanel(
+              goal: selectedGoal.goal,
+              milestoneCount: milestoneCount,
+              taskCount: taskCount,
+              onEdit: () => _showGoalDialog(existingGoal: selectedGoal.goal),
+              onSwitchGoal: () => _openGoalSwitcher(state),
+              onOpenMilestoneProgress:
+                  () => context.push(
+                    '${RoutePaths.goalMilestones}?goalId=${selectedGoal.goal.id}',
+                  ),
+            ),
           if (_hasActiveBrowseState(state)) ...[
-            const SizedBox(height: LayoutTokens.sectionGap),
+            SizedBox(height: isSearching ? 0 : LayoutTokens.sectionGap),
             _GoalsBrowseStateBar(
               chips: _buildBrowseStateChips(context, state),
               onReset: () => _resetBrowseState(state),
             ),
           ],
-          const SizedBox(height: LayoutTokens.sectionGapLarge),
+          SizedBox(
+            height:
+                _hasActiveBrowseState(state)
+                    ? LayoutTokens.sectionGapLarge
+                    : (isSearching ? 8 : LayoutTokens.sectionGapLarge),
+          ),
           _GoalsSectionHeader(
-            title: l10n.goalsMilestonesSection,
-            actionLabel: l10n.goalsAddMilestone,
+            title:
+                isSearching && hasSearchQuery
+                    ? l10n.goalsSearchResultsSection
+                    : l10n.goalsMilestonesSection,
+            actionLabel: isSearching ? null : l10n.goalsAddMilestone,
             onAction:
-                () => _openCreateComposer(
-                  state: state,
-                  initialType: PlanningComposerType.milestone,
-                  initialGoalId: selectedGoal.goal.id,
-                ),
+                isSearching
+                    ? null
+                    : () => _openCreateComposer(
+                      state: state,
+                      initialType: PlanningComposerType.milestone,
+                      initialGoalId: selectedGoal.goal.id,
+                    ),
           ),
           const SizedBox(height: LayoutTokens.compactGap),
-          if (milestones.isEmpty)
+          if (isSearching && hasSearchQuery)
+            if (searchResults.isEmpty)
+              _GoalsEmptyStatePanel(
+                title: l10n.goalsNoSearchResult,
+                description: l10n.goalsNoSearchResultGuide,
+                icon: Icons.search_off_rounded,
+                actionLabel: l10n.goalsFilterReset,
+                onAction: () => _resetBrowseState(state),
+              )
+            else ...[
+              for (final group in searchResults) ...[
+                _GoalSearchResultHeader(goalTitle: group.goal.title),
+                const SizedBox(height: 8),
+                for (final node in group.milestones)
+                  _buildMilestoneCard(
+                    state: state,
+                    goalId: group.goal.id,
+                    milestoneNode: node,
+                  ),
+                const SizedBox(height: 14),
+              ],
+            ]
+          else if (milestones.isEmpty)
             _GoalsEmptyStatePanel(
               title:
                   hasSearchQuery
@@ -246,54 +390,59 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
             )
           else ...[
             for (final node in milestones)
-              MilestoneCard(
+              _buildMilestoneCard(
+                state: state,
+                goalId: selectedGoal.goal.id,
                 milestoneNode: node,
-                searchQuery: state.searchQuery,
-                expanded: state.isMilestoneExpanded(node.milestone.id),
-                editLabel: l10n.commonEdit,
-                deleteLabel: l10n.commonDelete,
-                addTaskLabel: l10n.goalsAddTask,
-                onToggleExpanded: () {
-                  controller.toggleMilestoneExpanded(node.milestone.id);
-                },
-                onEditMilestone:
-                    () => _editMilestoneDialog(
-                      goalId: selectedGoal.goal.id,
-                      milestone: node.milestone,
-                    ),
-                onDeleteMilestone:
-                    () => _deleteMilestone(
-                      goalId: selectedGoal.goal.id,
-                      milestone: node.milestone,
-                    ),
-                onAddTask:
-                    () => _openCreateComposer(
-                      state: state,
-                      initialType: PlanningComposerType.task,
-                      initialGoalId: selectedGoal.goal.id,
-                      initialMilestoneId: node.milestone.id,
-                    ),
-                onToggleTask:
-                    (taskId, targetCompleted) =>
-                        controller.toggleTaskCompletion(
-                          goalId: selectedGoal.goal.id,
-                          taskId: taskId,
-                          completed: targetCompleted,
-                        ),
-                onEditTask:
-                    (taskId) => _editTaskDialog(
-                      goalId: selectedGoal.goal.id,
-                      taskId: taskId,
-                    ),
-                onDeleteTask:
-                    (taskId) => _deleteTask(
-                      goalId: selectedGoal.goal.id,
-                      taskId: taskId,
-                    ),
               ),
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildMilestoneCard({
+    required GoalsPageState state,
+    required int goalId,
+    required MilestoneWithTasks milestoneNode,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(goalsPageControllerProvider.notifier);
+    return MilestoneCard(
+      milestoneNode: milestoneNode,
+      searchQuery: state.searchQuery,
+      expanded: state.isMilestoneExpanded(milestoneNode.milestone.id),
+      editLabel: l10n.commonEdit,
+      deleteLabel: l10n.commonDelete,
+      addTaskLabel: l10n.goalsAddTask,
+      onToggleExpanded: () {
+        controller.toggleMilestoneExpanded(milestoneNode.milestone.id);
+      },
+      onEditMilestone:
+          () => _editMilestoneDialog(
+            goalId: goalId,
+            milestone: milestoneNode.milestone,
+          ),
+      onDeleteMilestone:
+          () => _deleteMilestone(
+            goalId: goalId,
+            milestone: milestoneNode.milestone,
+          ),
+      onAddTask:
+          () => _openCreateComposer(
+            state: state,
+            initialType: PlanningComposerType.task,
+            initialGoalId: goalId,
+            initialMilestoneId: milestoneNode.milestone.id,
+          ),
+      onToggleTask:
+          (taskId, targetCompleted) => controller.toggleTaskCompletion(
+            goalId: goalId,
+            taskId: taskId,
+            completed: targetCompleted,
+          ),
+      onEditTask: (taskId) => _editTaskDialog(goalId: goalId, taskId: taskId),
+      onDeleteTask: (taskId) => _deleteTask(goalId: goalId, taskId: taskId),
     );
   }
 
@@ -539,7 +688,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     );
   }
 
-  Future<void> _openMenuSheet(GoalsPageState state) async {
+  Future<void> _openSortSheet(GoalsPageState state) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = ref.read(goalsPageControllerProvider.notifier);
 
@@ -574,7 +723,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                       ),
                       Expanded(
                         child: Text(
-                          l10n.goalsMenuTooltip,
+                          l10n.goalsMenuSortTitle,
                           textAlign: TextAlign.center,
                           style: sheetTheme.textTheme.titleMedium,
                         ),
@@ -584,53 +733,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   ),
                 ),
                 const SizedBox(height: LayoutTokens.sectionGap),
-                DecoratedBox(
-                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: LayoutTokens.cardPadding,
-                        ),
-                        leading: const Icon(Icons.swap_horiz_rounded),
-                        title: Text(l10n.goalsSwitchTooltip),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          _openGoalSwitcher(state);
-                        },
-                      ),
-                      Divider(
-                        indent: 16,
-                        endIndent: 16,
-                        height: 1,
-                        color: sheetTheme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.28,
-                        ),
-                      ),
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: LayoutTokens.cardPadding,
-                        ),
-                        leading: const Icon(Icons.tune_rounded),
-                        title: Text(l10n.goalsFilterTooltip),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          _openFilterSheet(state);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: LayoutTokens.sectionGapLarge),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 10),
-                  child: Text(
-                    l10n.goalsMenuSortTitle,
-                    style: sheetTheme.textTheme.bodySmall?.copyWith(
-                      color: sheetTheme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
                 DecoratedBox(
                   decoration: LayoutTokens.tainCardDecoration(sheetTheme),
                   child: Column(
@@ -665,26 +767,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: LayoutTokens.sectionGapLarge),
-                DecoratedBox(
-                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: LayoutTokens.cardPadding,
-                    ),
-                    leading: const Icon(Icons.done_all_outlined),
-                    title: Text(l10n.goalsMenuBatchManage),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        LayoutTokens.radiusCard,
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      _openBatchManageSheet();
-                    },
-                  ),
-                ),
               ],
             ),
           ),
@@ -693,116 +775,11 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     );
   }
 
-  Future<void> _openBatchManageSheet() async {
+  void _showGoalsMenuPlaceholder(String label) {
     final l10n = AppLocalizations.of(context)!;
-    final controller = ref.read(goalsPageControllerProvider.notifier);
-
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        final sheetTheme = Theme.of(context);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              LayoutTokens.pageHorizontal,
-              0,
-              LayoutTokens.pageHorizontal,
-              20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                        tooltip: l10n.commonClose,
-                      ),
-                      Expanded(
-                        child: Text(
-                          l10n.goalsBatchTitle,
-                          textAlign: TextAlign.center,
-                          style: sheetTheme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: LayoutTokens.sectionGap),
-                DecoratedBox(
-                  decoration: LayoutTokens.tainCardDecoration(sheetTheme),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: LayoutTokens.cardPadding,
-                        ),
-                        leading: const Icon(Icons.check_circle_outline),
-                        title: Text(l10n.goalsBatchCompleteVisible),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(LayoutTokens.radiusCard),
-                          ),
-                        ),
-                        onTap: () async {
-                          final changed = await controller
-                              .bulkSetVisibleTasksCompletion(completed: true);
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            _showInfoToast(
-                              l10n.goalsBatchResult(changed.toString()),
-                            );
-                          }
-                        },
-                      ),
-                      Divider(
-                        indent: 16,
-                        endIndent: 16,
-                        height: 1,
-                        color: sheetTheme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.28,
-                        ),
-                      ),
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: LayoutTokens.cardPadding,
-                        ),
-                        leading: const Icon(Icons.remove_circle_outline),
-                        title: Text(l10n.goalsBatchUncompleteVisible),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            bottom: Radius.circular(LayoutTokens.radiusCard),
-                          ),
-                        ),
-                        onTap: () async {
-                          final changed = await controller
-                              .bulkSetVisibleTasksCompletion(completed: false);
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            _showInfoToast(
-                              l10n.goalsBatchResult(changed.toString()),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.commonComingSoon(label))));
   }
 
   String _completionFilterLabel(
@@ -1046,39 +1023,52 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
 
   Future<void> _showGoalDialog({GoalModel? existingGoal}) async {
     final l10n = AppLocalizations.of(context)!;
-    final input = await _showPlanningEntrySheet<CreateGoalInput>(
-      GoalEntrySheet(
-        title:
-            existingGoal == null
-                ? l10n.goalsCreateGoalDialogTitle
-                : l10n.goalsEditGoalDialogTitle,
-        submitLabel:
-            existingGoal == null ? l10n.goalsCreateEntry : l10n.commonSave,
-        initialTitle: existingGoal?.title,
-        initialDescription: existingGoal?.description,
-      ),
-    );
-
-    if (input == null || !mounted) {
-      return;
-    }
-
     final controller = ref.read(goalsPageControllerProvider.notifier);
+
     if (existingGoal == null) {
+      final input = await _showPlanningEntrySheet<CreateGoalInput>(
+        GoalEntrySheet(
+          title: l10n.goalsCreateGoalDialogTitle,
+          submitLabel: l10n.goalsCreateEntry,
+          initialTitle: null,
+          initialDescription: null,
+        ),
+      );
+      if (input == null || !mounted) {
+        return;
+      }
       await controller.createGoal(
         title: input.title,
         description: input.description,
       );
-    } else {
-      await controller.updateGoal(
-        goalId: existingGoal.id,
-        title: input.title,
-        description: input.description,
-        sortOrder: existingGoal.sortOrder,
-        colorHex: existingGoal.colorHex,
-        dueAt: existingGoal.dueAt,
-      );
+      return;
     }
+
+    final state = ref.read(goalsPageControllerProvider).valueOrNull;
+    final request = await _showPlanningEntrySheet<PlanningComposerRequest>(
+      PlanningComposerSheet(
+        goalTree: state?.goalTree ?? const <GoalWithMilestones>[],
+        submitLabel: l10n.commonSave,
+        initialType: PlanningComposerType.goal,
+        initialTitle: existingGoal.title,
+        initialDescription: existingGoal.description,
+        lockType: true,
+        lockSelection: true,
+        isEditing: true,
+      ),
+    );
+    if (request == null || !mounted) {
+      return;
+    }
+
+    await controller.updateGoal(
+      goalId: existingGoal.id,
+      title: request.title,
+      description: request.description,
+      sortOrder: existingGoal.sortOrder,
+      colorHex: existingGoal.colorHex,
+      dueAt: existingGoal.dueAt,
+    );
   }
 
   Future<void> _deleteGoal(GoalModel goal) async {
@@ -1098,41 +1088,55 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     MilestoneModel? existingMilestone,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final input = await _showPlanningEntrySheet<CreateMilestoneInput>(
-      MilestoneEntrySheet(
-        goalId: goalId,
-        title:
-            existingMilestone == null
-                ? l10n.goalsCreateMilestoneDialogTitle
-                : l10n.goalsEditMilestoneDialogTitle,
-        submitLabel:
-            existingMilestone == null ? l10n.goalsCreateEntry : l10n.commonSave,
-        initialTitle: existingMilestone?.title,
-        initialDescription: existingMilestone?.description,
-      ),
-    );
-
-    if (input == null || !mounted) {
-      return;
-    }
-
     final controller = ref.read(goalsPageControllerProvider.notifier);
+
     if (existingMilestone == null) {
+      final input = await _showPlanningEntrySheet<CreateMilestoneInput>(
+        MilestoneEntrySheet(
+          goalId: goalId,
+          title: l10n.goalsCreateMilestoneDialogTitle,
+          submitLabel: l10n.goalsCreateEntry,
+          initialTitle: null,
+          initialDescription: null,
+        ),
+      );
+      if (input == null || !mounted) {
+        return;
+      }
       await controller.createMilestone(
         goalId: goalId,
         title: input.title,
         description: input.description,
       );
-    } else {
-      await controller.updateMilestone(
-        goalId: goalId,
-        milestoneId: existingMilestone.id,
-        title: input.title,
-        description: input.description,
-        sortOrder: existingMilestone.sortOrder,
-        dueAt: existingMilestone.dueAt,
-      );
+      return;
     }
+
+    final state = ref.read(goalsPageControllerProvider).valueOrNull;
+    final request = await _showPlanningEntrySheet<PlanningComposerRequest>(
+      PlanningComposerSheet(
+        goalTree: state?.goalTree ?? const <GoalWithMilestones>[],
+        submitLabel: l10n.commonSave,
+        initialType: PlanningComposerType.milestone,
+        initialGoalId: goalId,
+        initialTitle: existingMilestone.title,
+        initialDescription: existingMilestone.description,
+        lockType: true,
+        lockSelection: false,
+        isEditing: true,
+      ),
+    );
+    if (request == null || !mounted) {
+      return;
+    }
+
+    await controller.updateMilestone(
+      goalId: goalId,
+      milestoneId: existingMilestone.id,
+      title: request.title,
+      description: request.description,
+      sortOrder: existingMilestone.sortOrder,
+      dueAt: existingMilestone.dueAt,
+    );
   }
 
   Future<void> _editMilestoneDialog({
@@ -1166,28 +1170,22 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     TaskModel? existingTask,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final input = await _showPlanningEntrySheet<CreateTaskInput>(
-      TaskEntrySheet(
-        title:
-            existingTask == null
-                ? l10n.goalsCreateTaskDialogTitle
-                : l10n.goalsEditTaskDialogTitle,
-        submitLabel:
-            existingTask == null ? l10n.goalsCreateEntry : l10n.commonSave,
-        availableMilestones: availableMilestones,
-        initialMilestoneId: existingTask?.milestoneId ?? selectedMilestoneId,
-        initialTitle: existingTask?.title,
-        initialDescription: existingTask?.description,
-        initialEstimateMinutes: existingTask?.estimateMinutes ?? 25,
-      ),
-    );
-
-    if (input == null || !mounted) {
-      return;
-    }
-
     final controller = ref.read(goalsPageControllerProvider.notifier);
     if (existingTask == null) {
+      final input = await _showPlanningEntrySheet<CreateTaskInput>(
+        TaskEntrySheet(
+          title: l10n.goalsCreateTaskDialogTitle,
+          submitLabel: l10n.goalsCreateEntry,
+          availableMilestones: availableMilestones,
+          initialMilestoneId: selectedMilestoneId,
+          initialTitle: null,
+          initialDescription: null,
+          initialEstimateMinutes: 25,
+        ),
+      );
+      if (input == null || !mounted) {
+        return;
+      }
       await controller.createTask(
         goalId: goalId,
         milestoneId: input.milestoneId,
@@ -1195,18 +1193,39 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         description: input.description,
         estimateMinutes: input.estimateMinutes,
       );
-    } else {
-      await controller.updateTask(
-        goalId: goalId,
-        taskId: existingTask.id,
-        milestoneId: input.milestoneId,
-        title: input.title,
-        description: input.description,
-        estimateMinutes: input.estimateMinutes,
-        sortOrder: existingTask.sortOrder,
-        dueAt: existingTask.dueAt,
-      );
+      return;
     }
+
+    final state = ref.read(goalsPageControllerProvider).valueOrNull;
+    final request = await _showPlanningEntrySheet<PlanningComposerRequest>(
+      PlanningComposerSheet(
+        goalTree: state?.goalTree ?? const <GoalWithMilestones>[],
+        submitLabel: l10n.commonSave,
+        initialType: PlanningComposerType.task,
+        initialGoalId: goalId,
+        initialMilestoneId: existingTask.milestoneId,
+        initialTitle: existingTask.title,
+        initialDescription: existingTask.description,
+        initialEstimateMinutes: existingTask.estimateMinutes,
+        lockType: true,
+        lockSelection: false,
+        isEditing: true,
+      ),
+    );
+    if (request == null || !mounted) {
+      return;
+    }
+
+    await controller.updateTask(
+      goalId: goalId,
+      taskId: existingTask.id,
+      milestoneId: request.milestoneId!,
+      title: request.title,
+      description: request.description,
+      estimateMinutes: request.estimateMinutes!,
+      sortOrder: existingTask.sortOrder,
+      dueAt: existingTask.dueAt,
+    );
   }
 
   Future<T?> _showPlanningEntrySheet<T>(Widget child) {
@@ -1548,16 +1567,89 @@ class _GoalSummaryChip extends StatelessWidget {
   }
 }
 
+enum _GoalsTopAction { switchGoal, filter, sort, batch, share }
+
+class _GoalsMenuActionRow extends StatelessWidget {
+  const _GoalsMenuActionRow({
+    required this.icon,
+    required this.label,
+    this.trailingLabel,
+    this.showChevron = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? trailingLabel;
+  final bool showChevron;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.onSurface),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        if (trailingLabel != null || showChevron)
+          SizedBox(
+            width: trailingLabel == null ? 26 : 132,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (trailingLabel != null)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        trailingLabel!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.66,
+                          ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (showChevron)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.62,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _GoalsSectionHeader extends StatelessWidget {
   const _GoalsSectionHeader({
     required this.title,
-    required this.actionLabel,
-    required this.onAction,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String title;
-  final String actionLabel;
-  final VoidCallback onAction;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -1572,16 +1664,38 @@ class _GoalsSectionHeader extends StatelessWidget {
             ),
           ),
         ),
-        TextButton(
-          onPressed: onAction,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            minimumSize: const Size(0, 30),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        if (actionLabel != null && onAction != null)
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: const Size(0, 30),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(actionLabel!),
           ),
-          child: Text(actionLabel),
-        ),
       ],
+    );
+  }
+}
+
+class _GoalSearchResultHeader extends StatelessWidget {
+  const _GoalSearchResultHeader({required this.goalTitle});
+
+  final String goalTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        goalTitle,
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

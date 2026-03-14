@@ -277,6 +277,7 @@
   "settingsTitle": "设置",
   "goalsMyGoalsTitle": "我的目标",
   "goalsSearchHint": "搜索目标、里程碑、任务…",
+  "goalsSearchResultsSection": "搜索结果",
   "goalsFilterTooltip": "筛选",
   "goalsFilterCompletionTitle": "完成状态",
   "goalsFilterCompletionAll": "全部",
@@ -296,6 +297,15 @@
   "goalsMenuSortProgressHigh": "进度高到低",
   "goalsMenuSortProgressLow": "进度低到高",
   "goalsMenuBatchManage": "批量管理",
+  "goalsMenuShare": "分享",
+  "commonComingSoon": "{label} 马上推出",
+  "@commonComingSoon": {
+    "placeholders": {
+      "label": {
+        "type": "Object"
+      }
+    }
+  },
   "goalsBatchTitle": "批量操作",
   "goalsBatchCompleteVisible": "将当前筛选任务标记为完成",
   "goalsBatchUncompleteVisible": "将当前筛选任务标记为未完成",

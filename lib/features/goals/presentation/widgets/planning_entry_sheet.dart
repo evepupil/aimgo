@@ -30,6 +30,12 @@ class PlanningComposerSheet extends StatefulWidget {
     this.initialType = PlanningComposerType.task,
     this.initialGoalId,
     this.initialMilestoneId,
+    this.initialTitle,
+    this.initialDescription,
+    this.initialEstimateMinutes,
+    this.lockType = false,
+    this.lockSelection = false,
+    this.isEditing = false,
     super.key,
   });
 
@@ -38,6 +44,12 @@ class PlanningComposerSheet extends StatefulWidget {
   final PlanningComposerType initialType;
   final int? initialGoalId;
   final int? initialMilestoneId;
+  final String? initialTitle;
+  final String? initialDescription;
+  final int? initialEstimateMinutes;
+  final bool lockType;
+  final bool lockSelection;
+  final bool isEditing;
 
   @override
   State<PlanningComposerSheet> createState() => _PlanningComposerSheetState();
@@ -81,9 +93,13 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController();
-    _descriptionController = TextEditingController();
-    _estimateController = TextEditingController(text: '25');
+    _titleController = TextEditingController(text: widget.initialTitle ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.initialDescription ?? '',
+    );
+    _estimateController = TextEditingController(
+      text: (widget.initialEstimateMinutes ?? 25).toString(),
+    );
     _selectedType = widget.initialType;
     _selectedGoalId = widget.initialGoalId ?? _firstGoalId();
     _selectedMilestoneId = widget.initialMilestoneId;
@@ -197,38 +213,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: [
-                                _ComposerTabChip(
-                                  label: l10n.goalsCreateTypeTask,
-                                  selected:
-                                      _selectedType ==
-                                      PlanningComposerType.task,
-                                  onTap:
-                                      () => _onSelectType(
-                                        PlanningComposerType.task,
-                                      ),
-                                ),
-                                _ComposerTabChip(
-                                  label: l10n.goalsCreateTypeMilestone,
-                                  selected:
-                                      _selectedType ==
-                                      PlanningComposerType.milestone,
-                                  onTap:
-                                      () => _onSelectType(
-                                        PlanningComposerType.milestone,
-                                      ),
-                                ),
-                                _ComposerTabChip(
-                                  label: l10n.goalsCreateTypeGoal,
-                                  selected:
-                                      _selectedType ==
-                                      PlanningComposerType.goal,
-                                  onTap:
-                                      () => _onSelectType(
-                                        PlanningComposerType.goal,
-                                      ),
-                                ),
-                              ],
+                              children: _buildTypeChips(l10n),
                             ),
                             if (_selectedType == PlanningComposerType.task) ...[
                               const SizedBox(height: 14),
@@ -267,6 +252,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                           _ComposerSubmitButton(
                             tooltip: widget.submitLabel,
                             onPressed: _submit,
+                            isEditing: widget.isEditing,
                           ),
                         ],
                       ),
@@ -291,7 +277,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
     return Align(
       alignment: Alignment.centerLeft,
       child: InkWell(
-        onTap: _openSelectionSheet,
+        onTap: widget.lockSelection ? null : _openSelectionSheet,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
@@ -316,16 +302,58 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
                 ),
               ),
               const SizedBox(width: 2),
-              Icon(
-                Icons.arrow_drop_down,
-                size: 20,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              if (!widget.lockSelection)
+                Icon(
+                  Icons.arrow_drop_down,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildTypeChips(AppLocalizations l10n) {
+    if (widget.lockType) {
+      return [
+        _ComposerTabChip(
+          label: _typeLabel(l10n, _selectedType),
+          selected: true,
+          onTap: null,
+        ),
+      ];
+    }
+
+    return [
+      _ComposerTabChip(
+        label: l10n.goalsCreateTypeTask,
+        selected: _selectedType == PlanningComposerType.task,
+        onTap: () => _onSelectType(PlanningComposerType.task),
+      ),
+      _ComposerTabChip(
+        label: l10n.goalsCreateTypeMilestone,
+        selected: _selectedType == PlanningComposerType.milestone,
+        onTap: () => _onSelectType(PlanningComposerType.milestone),
+      ),
+      _ComposerTabChip(
+        label: l10n.goalsCreateTypeGoal,
+        selected: _selectedType == PlanningComposerType.goal,
+        onTap: () => _onSelectType(PlanningComposerType.goal),
+      ),
+    ];
+  }
+
+  String _typeLabel(AppLocalizations l10n, PlanningComposerType type) {
+    switch (type) {
+      case PlanningComposerType.goal:
+        return l10n.goalsCreateTypeGoal;
+      case PlanningComposerType.milestone:
+        return l10n.goalsCreateTypeMilestone;
+      case PlanningComposerType.task:
+        return l10n.goalsCreateTypeTask;
+    }
   }
 
   String _selectionLabel(AppLocalizations l10n) {
@@ -342,7 +370,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
   }
 
   void _onSelectType(PlanningComposerType type) {
-    if (_selectedType == type) {
+    if (widget.lockType || _selectedType == type) {
       return;
     }
     setState(() {
@@ -417,7 +445,7 @@ class _PlanningComposerSheetState extends State<PlanningComposerSheet> {
   }
 
   Future<void> _openSelectionSheet() async {
-    if (_selectedType == PlanningComposerType.goal) {
+    if (widget.lockSelection || _selectedType == PlanningComposerType.goal) {
       return;
     }
 
@@ -739,7 +767,7 @@ class _ComposerTabChip extends StatelessWidget {
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -758,6 +786,10 @@ class _ComposerTabChip extends StatelessWidget {
             color:
                 selected
                     ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                    : onTap == null
+                    ? theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.45,
+                    )
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border:
@@ -775,7 +807,9 @@ class _ComposerTabChip extends StatelessWidget {
               color:
                   selected
                       ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.94),
+                      : theme.colorScheme.onSurface.withValues(
+                        alpha: onTap == null ? 0.72 : 0.94,
+                      ),
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: -0.1,
             ),
@@ -819,10 +853,15 @@ class _ComposerMetaChip extends StatelessWidget {
 }
 
 class _ComposerSubmitButton extends StatelessWidget {
-  const _ComposerSubmitButton({required this.tooltip, required this.onPressed});
+  const _ComposerSubmitButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.isEditing,
+  });
 
   final String tooltip;
   final VoidCallback onPressed;
+  final bool isEditing;
 
   @override
   Widget build(BuildContext context) {
@@ -842,7 +881,10 @@ class _ComposerSubmitButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Icon(Icons.send_rounded, size: 20),
+          child: Icon(
+            isEditing ? Icons.save_rounded : Icons.send_rounded,
+            size: 20,
+          ),
         ),
       ),
     );

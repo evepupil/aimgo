@@ -70,54 +70,80 @@ final class GoalsPageState {
     if (selected == null) {
       return const [];
     }
+    return _visibleMilestonesForGoal(selected, query: searchQuery);
+  }
 
+  List<GoalWithMilestones> get visibleSearchResults {
+    final query = searchQuery.trim();
+    if (query.isEmpty) {
+      return const [];
+    }
+
+    final normalizedQuery = query.toLowerCase();
+    final results = <GoalWithMilestones>[];
+    for (final goalNode in goalTree) {
+      final goalMatched =
+          _contains(goalNode.goal.title, normalizedQuery) ||
+          _contains(goalNode.goal.description, normalizedQuery);
+      final milestones =
+          goalMatched
+              ? _visibleMilestonesForGoal(goalNode, query: '')
+              : _visibleMilestonesForGoal(goalNode, query: query);
+      if (milestones.isEmpty) {
+        continue;
+      }
+      results.add(
+        GoalWithMilestones(goal: goalNode.goal, milestones: milestones),
+      );
+    }
+    return results;
+  }
+
+  List<MilestoneWithTasks> _visibleMilestonesForGoal(
+    GoalWithMilestones goalNode, {
+    required String query,
+  }) {
     final now = DateTime.now();
-    final allMilestones = selected.milestones
+    final filteredByBrowseState = goalNode.milestones
         .where(_matchesCompletionFilter)
         .where(_matchesProgressFilter)
         .where((item) => _matchesUpdatedFilter(item, now))
         .toList(growable: false);
 
-    final query = searchQuery.trim().toLowerCase();
-    final List<MilestoneWithTasks> filtered;
-    if (query.isEmpty) {
-      filtered = allMilestones;
-    } else {
-      final goalMatched =
-          _contains(selected.goal.title, query) ||
-          _contains(selected.goal.description, query);
-
-      final searchFiltered = <MilestoneWithTasks>[];
-      for (final milestoneNode in allMilestones) {
-        final milestoneMatched =
-            _contains(milestoneNode.milestone.title, query) ||
-            _contains(milestoneNode.milestone.description, query);
-
-        if (goalMatched || milestoneMatched) {
-          searchFiltered.add(milestoneNode);
-          continue;
-        }
-
-        final matchedTasks = milestoneNode.tasks
-            .where(
-              (task) =>
-                  _contains(task.title, query) ||
-                  _contains(task.description, query),
-            )
-            .toList(growable: false);
-        if (matchedTasks.isNotEmpty) {
-          searchFiltered.add(
-            MilestoneWithTasks(
-              milestone: milestoneNode.milestone,
-              tasks: matchedTasks,
-            ),
-          );
-        }
-      }
-      filtered = searchFiltered;
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return _sortMilestones(filteredByBrowseState);
     }
 
-    return _sortMilestones(filtered);
+    final searchFiltered = <MilestoneWithTasks>[];
+    for (final milestoneNode in filteredByBrowseState) {
+      final milestoneMatched =
+          _contains(milestoneNode.milestone.title, normalizedQuery) ||
+          _contains(milestoneNode.milestone.description, normalizedQuery);
+
+      if (milestoneMatched) {
+        searchFiltered.add(milestoneNode);
+        continue;
+      }
+
+      final matchedTasks = milestoneNode.tasks
+          .where(
+            (task) =>
+                _contains(task.title, normalizedQuery) ||
+                _contains(task.description, normalizedQuery),
+          )
+          .toList(growable: false);
+      if (matchedTasks.isNotEmpty) {
+        searchFiltered.add(
+          MilestoneWithTasks(
+            milestone: milestoneNode.milestone,
+            tasks: matchedTasks,
+          ),
+        );
+      }
+    }
+
+    return _sortMilestones(searchFiltered);
   }
 
   bool _matchesCompletionFilter(MilestoneWithTasks milestoneNode) {
@@ -449,6 +475,7 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
     DateTime? dueAt,
   }) async {
     final repository = ref.read(aimGoRepositoryProvider);
+    final previousMilestone = await repository.getMilestoneById(milestoneId);
     await repository.updateMilestone(
       UpdateMilestoneInput(
         id: milestoneId,
@@ -459,7 +486,10 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
         dueAt: dueAt,
       ),
     );
-    await ref.read(progressSyncServiceProvider).recalculateGoalProgress(goalId);
+    await _recalculateGoalProgresses({
+      goalId,
+      if (previousMilestone != null) previousMilestone.goalId,
+    });
     await _reloadAndPreserve(selectedGoalId: goalId);
   }
 
@@ -506,6 +536,12 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
     DateTime? dueAt,
   }) async {
     final repository = ref.read(aimGoRepositoryProvider);
+    final previousTask = await repository.getTaskById(taskId);
+    final previousMilestone =
+        previousTask == null
+            ? null
+            : await repository.getMilestoneById(previousTask.milestoneId);
+    final nextMilestone = await repository.getMilestoneById(milestoneId);
     await repository.updateTask(
       UpdateTaskInput(
         id: taskId,
@@ -517,8 +553,19 @@ final class GoalsPageController extends AsyncNotifier<GoalsPageState> {
         dueAt: dueAt,
       ),
     );
-    await ref.read(progressSyncServiceProvider).recalculateGoalProgress(goalId);
+    await _recalculateGoalProgresses({
+      goalId,
+      if (previousMilestone != null) previousMilestone.goalId,
+      if (nextMilestone != null) nextMilestone.goalId,
+    });
     await _reloadAndPreserve(selectedGoalId: goalId);
+  }
+
+  Future<void> _recalculateGoalProgresses(Set<int> goalIds) async {
+    final progressSyncService = ref.read(progressSyncServiceProvider);
+    for (final id in goalIds) {
+      await progressSyncService.recalculateGoalProgress(id);
+    }
   }
 
   Future<void> deleteTask({required int goalId, required int taskId}) async {

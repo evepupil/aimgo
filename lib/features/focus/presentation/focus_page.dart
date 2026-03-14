@@ -4,6 +4,7 @@ import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/services/local_storage_service.dart';
+import 'package:aimgo/core/widgets/anchored_action_menu.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
@@ -27,6 +28,7 @@ class FocusPage extends ConsumerStatefulWidget {
 class _FocusPageState extends ConsumerState<FocusPage>
     with WidgetsBindingObserver {
   final List<int> _pomodoroOptions = <int>[15, 25, 40, 60];
+  final GlobalKey _topMenuAnchorKey = GlobalKey();
   bool _isCompletionDialogShowing = false;
 
   @override
@@ -99,17 +101,32 @@ class _FocusPageState extends ConsumerState<FocusPage>
       appBar: AppBar(
         title: Text(l10n.focusTitle),
         actions: [
-          PopupMenuButton<_FocusTopAction>(
-            icon: const Icon(Icons.more_horiz),
-            position: PopupMenuPosition.under,
-            elevation: 6,
-            constraints: const BoxConstraints(minWidth: 132, maxWidth: 142),
-            color: theme.colorScheme.surface,
-            shadowColor: Colors.black.withValues(alpha: 0.14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-            ),
-            onSelected: (_FocusTopAction action) {
+          IconButton(
+            key: _topMenuAnchorKey,
+            onPressed: () async {
+              final action = await showAnchoredActionMenu<_FocusTopAction>(
+                context: context,
+                anchorKey: _topMenuAnchorKey,
+                items: [
+                  AnchoredMenuItem<_FocusTopAction>(
+                    value: _FocusTopAction.history,
+                    child: _FocusMenuActionRow(
+                      icon: Icons.history,
+                      label: l10n.historyTitle,
+                    ),
+                  ),
+                  AnchoredMenuItem<_FocusTopAction>(
+                    value: _FocusTopAction.manual,
+                    child: _FocusMenuActionRow(
+                      icon: Icons.add_circle_outline,
+                      label: l10n.focusManualAddTooltip,
+                    ),
+                  ),
+                ],
+              );
+              if (!context.mounted || action == null) {
+                return;
+              }
               if (action == _FocusTopAction.history) {
                 final goalId = focusState.selectedGoalId;
                 if (goalId == null) {
@@ -121,27 +138,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
               }
               _openManualFocusSheet(hierarchy: hierarchy, state: focusState);
             },
-            itemBuilder:
-                (menuContext) => [
-                  PopupMenuItem<_FocusTopAction>(
-                    value: _FocusTopAction.history,
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: _FocusMenuActionRow(
-                      icon: Icons.history,
-                      label: l10n.historyTitle,
-                    ),
-                  ),
-                  PopupMenuItem<_FocusTopAction>(
-                    value: _FocusTopAction.manual,
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: _FocusMenuActionRow(
-                      icon: Icons.add_circle_outline,
-                      label: l10n.focusManualAddTooltip,
-                    ),
-                  ),
-                ],
+            icon: const Icon(Icons.more_horiz),
+            tooltip: l10n.goalsMenuTooltip,
           ),
         ],
       ),

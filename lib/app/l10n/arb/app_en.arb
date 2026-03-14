@@ -276,7 +276,8 @@
   "evaluationSaveFailed": "Failed to submit evaluation. Please retry.",
   "settingsTitle": "Settings",
   "goalsMyGoalsTitle": "My Goals",
-  "goalsSearchHint": "Search goals, milestones, tasks...",
+  "goalsSearchHint": "Search goals, milestones, and tasks...",
+  "goalsSearchResultsSection": "Results",
   "goalsFilterTooltip": "Filter",
   "goalsFilterCompletionTitle": "Completion",
   "goalsFilterCompletionAll": "All",
@@ -296,6 +297,15 @@
   "goalsMenuSortProgressHigh": "Progress High to Low",
   "goalsMenuSortProgressLow": "Progress Low to High",
   "goalsMenuBatchManage": "Batch Manage",
+  "goalsMenuShare": "Share",
+  "commonComingSoon": "{label} coming soon",
+  "@commonComingSoon": {
+    "placeholders": {
+      "label": {
+        "type": "Object"
+      }
+    }
+  },
   "goalsBatchTitle": "Batch Actions",
   "goalsBatchCompleteVisible": "Mark visible filtered tasks completed",
   "goalsBatchUncompleteVisible": "Mark visible filtered tasks incomplete",

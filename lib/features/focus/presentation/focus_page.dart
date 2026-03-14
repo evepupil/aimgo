@@ -1,8 +1,7 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
-import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/services/local_storage_service.dart';
 import 'package:aimgo/core/widgets/anchored_action_menu.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
@@ -153,7 +152,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               layoutMetrics.bottomPadding,
             ),
             children: [
-              // ── Mode switch in a white card ──
+              // 鈹€鈹€ Mode switch in a white card 鈹€鈹€
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
@@ -178,7 +177,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ),
               SizedBox(height: layoutMetrics.modeToTargetSpacing),
 
-              // ── Target selector in a white card ──
+              // 鈹€鈹€ Target selector in a white card 鈹€鈹€
               _FocusTargetEntry(
                 enabled: focusState.status != FocusTimerStatus.running,
                 pathText:
@@ -192,7 +191,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ),
               SizedBox(height: layoutMetrics.targetToTimerSpacing),
 
-              // ── Timer ring ──
+              // 鈹€鈹€ Timer ring 鈹€鈹€
               Center(
                 child: GestureDetector(
                   onTap:
@@ -299,7 +298,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ),
               SizedBox(height: layoutMetrics.timerToControlSpacing),
 
-              // ── Control buttons ──
+              // 鈹€鈹€ Control buttons 鈹€鈹€
               _FocusControlSection(
                 state: focusState,
                 canStart: focusState.selectedTaskId != null,
@@ -684,12 +683,15 @@ class _FocusTargetEntry extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -697,17 +699,26 @@ class _FocusTargetEntry extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                Icon(
-                  Icons.flag_outlined,
-                  size: 22,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.flag_outlined,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _FocusTargetBreadcrumb(
                     pathText: pathText,
@@ -715,12 +726,12 @@ class _FocusTargetEntry extends StatelessWidget {
                     separatorColor: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 Icon(
-                  Icons.chevron_right,
-                  size: 20,
+                  Icons.chevron_right_rounded,
+                  size: 18,
                   color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.5,
+                    alpha: 0.52,
                   ),
                 ),
               ],
@@ -758,8 +769,8 @@ class _FocusTargetBreadcrumb extends StatelessWidget {
         pathText,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: separatorColor,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: separatorColor.withValues(alpha: 0.88),
           fontWeight: FontWeight.w500,
         ),
       );
@@ -771,17 +782,22 @@ class _FocusTargetBreadcrumb extends StatelessWidget {
           for (var i = 0; i < parts.length; i++) ...[
             TextSpan(
               text: parts[i],
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: color,
-                fontWeight:
-                    i == parts.length - 1 ? FontWeight.w600 : FontWeight.w500,
-              ),
+              style:
+                  i == parts.length - 1
+                      ? theme.textTheme.titleSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      )
+                      : theme.textTheme.bodyMedium?.copyWith(
+                        color: color.withValues(alpha: 0.70),
+                        fontWeight: FontWeight.w500,
+                      ),
             ),
             if (i != parts.length - 1)
               TextSpan(
                 text: '  >  ',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: separatorColor.withValues(alpha: 0.7),
+                  color: separatorColor.withValues(alpha: 0.56),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -810,7 +826,6 @@ class _FocusModeTabSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final activeColor = theme.colorScheme.onSurface;
     final inactiveColor = theme.colorScheme.onSurfaceVariant;
     return Row(
       children: [
@@ -818,17 +833,14 @@ class _FocusModeTabSwitch extends StatelessWidget {
           child: _FocusModeTabItem(
             label: pomodoroLabel,
             selected: mode == FocusMode.pomodoro,
-            activeColor: activeColor,
             inactiveColor: inactiveColor,
             onTap: () => onChange(FocusMode.pomodoro),
           ),
         ),
-        const SizedBox(width: 4),
         Expanded(
           child: _FocusModeTabItem(
             label: freeLabel,
             selected: mode == FocusMode.free,
-            activeColor: activeColor,
             inactiveColor: inactiveColor,
             onTap: () => onChange(FocusMode.free),
           ),
@@ -842,41 +854,37 @@ class _FocusModeTabItem extends StatelessWidget {
   const _FocusModeTabItem({
     required this.label,
     required this.selected,
-    required this.activeColor,
     required this.inactiveColor,
     required this.onTap,
   });
 
   final String label;
   final bool selected;
-  final Color activeColor;
   final Color inactiveColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
+    return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color:
               selected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                  ? theme.colorScheme.primary.withValues(alpha: 0.10)
                   : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(10),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Center(
-          child: Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: selected ? theme.colorScheme.primary : inactiveColor,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-            ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: selected ? theme.colorScheme.primary : inactiveColor,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
       ),
@@ -901,29 +909,35 @@ class _DurationChoiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Ink(
         width: width,
-        height: 44,
+        height: 40,
         decoration: BoxDecoration(
           color:
               selected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                  ? theme.colorScheme.primary.withValues(alpha: 0.10)
                   : theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.55,
+                    alpha: 0.34,
                   ),
-          borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
-          border:
-              selected
-                  ? Border.all(color: theme.colorScheme.primary, width: 1.2)
-                  : null,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                selected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.28)
+                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.16),
+          ),
         ),
         child: Center(
           child: Text(
             label,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: selected ? theme.colorScheme.primary : null,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color:
+                  selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.82),
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
             ),
           ),
         ),
@@ -957,10 +971,17 @@ class _FocusControlSection extends StatelessWidget {
       case FocusTimerStatus.idle:
         return Center(
           child: SizedBox(
-            width: 200,
-            height: 48,
+            width: 196,
+            height: 46,
             child: FilledButton(
-              style: FilledButton.styleFrom(shape: const StadiumBorder()),
+              style: FilledButton.styleFrom(
+                shape: const StadiumBorder(),
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                textStyle: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
               onPressed: canStart ? onStart : null,
               child: Text(l10n.focusStart),
             ),
@@ -1017,26 +1038,29 @@ class _FocusRunningControlRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         _FocusOutlineCircleButton(
           icon: Icons.timer_outlined,
           tooltip: durationTooltip,
           onPressed: showDurationAction ? onDurationTap : null,
-          size: 62,
+          size: 58,
+          activeIconColor: Theme.of(context).colorScheme.primary,
         ),
-        const SizedBox(width: 24),
+        const SizedBox(width: 18),
         _FocusPrimaryCircleButton(
           icon: centerIcon,
           tooltip: centerTooltip,
           onPressed: onCenterTap,
-          size: 90,
+          size: 84,
         ),
-        const SizedBox(width: 24),
+        const SizedBox(width: 18),
         _FocusOutlineCircleButton(
           icon: Icons.stop_rounded,
           tooltip: sideTooltip,
           onPressed: onSideTap,
-          size: 62,
+          size: 58,
+          activeIconColor: Theme.of(context).colorScheme.error,
         ),
       ],
     );
@@ -1058,6 +1082,7 @@ class _FocusPrimaryCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SizedBox(
       width: size,
       height: size,
@@ -1067,11 +1092,25 @@ class _FocusPrimaryCircleButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.zero,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+            elevation: 0,
+            shadowColor: Colors.transparent,
           ),
           onPressed: onPressed,
-          child: Icon(icon, size: size * 0.42),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.24),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: size * 0.40),
+          ),
         ),
       ),
     );
@@ -1084,15 +1123,21 @@ class _FocusOutlineCircleButton extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     required this.size,
+    this.activeIconColor,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
   final double size;
+  final Color? activeIconColor;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = onPressed != null;
+    final iconColor = (activeIconColor ?? theme.colorScheme.onSurface)
+        .withValues(alpha: enabled ? 0.84 : 0.32);
     return SizedBox(
       width: size,
       height: size,
@@ -1102,10 +1147,16 @@ class _FocusOutlineCircleButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.zero,
-            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+            backgroundColor: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: enabled ? 0.42 : 0.22),
+            side: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(
+                alpha: enabled ? 0.22 : 0.10,
+              ),
+            ),
           ),
           onPressed: onPressed,
-          child: Icon(icon, size: size * 0.38),
+          child: Icon(icon, size: size * 0.36, color: iconColor),
         ),
       ),
     );
@@ -1215,7 +1266,7 @@ class _FocusTargetPickerSheet extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       child: Column(
         children: [
-          // ── Header ──
+          // 鈹€鈹€ Header 鈹€鈹€
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
             child: Row(
@@ -1240,7 +1291,7 @@ class _FocusTargetPickerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // ── Content ──
+          // 鈹€鈹€ Content 鈹€鈹€
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),

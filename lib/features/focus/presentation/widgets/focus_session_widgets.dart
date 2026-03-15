@@ -575,8 +575,20 @@ class _FocusOutlineCircleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final enabled = onPressed != null;
-    final iconColor = (activeIconColor ?? theme.colorScheme.onSurface)
-        .withValues(alpha: enabled ? 0.84 : 0.32);
+    final accentColor = activeIconColor ?? theme.colorScheme.onSurface;
+    final iconColor = accentColor.withValues(alpha: enabled ? 0.84 : 0.32);
+    final backgroundColor =
+        activeIconColor != null
+            ? accentColor.withValues(alpha: enabled ? 0.08 : 0.04)
+            : theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: enabled ? 0.42 : 0.22,
+            );
+    final borderColor =
+        activeIconColor != null
+            ? accentColor.withValues(alpha: enabled ? 0.22 : 0.12)
+            : theme.colorScheme.outlineVariant.withValues(
+              alpha: enabled ? 0.22 : 0.10,
+            );
     return SizedBox(
       width: size,
       height: size,
@@ -586,13 +598,8 @@ class _FocusOutlineCircleButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.zero,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest
-                .withValues(alpha: enabled ? 0.42 : 0.22),
-            side: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(
-                alpha: enabled ? 0.22 : 0.10,
-              ),
-            ),
+            backgroundColor: backgroundColor,
+            side: BorderSide(color: borderColor),
           ),
           onPressed: onPressed,
           child: Icon(icon, size: size * 0.36, color: iconColor),

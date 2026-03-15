@@ -178,10 +178,7 @@ class _FocusFullscreenPageState extends ConsumerState<FocusFullscreenPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (_) => const _FocusNoteSheet(),
     );
   }
@@ -215,65 +212,86 @@ class _FocusNoteSheetState extends ConsumerState<_FocusNoteSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 10,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+    final composerTheme = theme.copyWith(
+      inputDecorationTheme: const InputDecorationTheme(
+        isDense: true,
+        isCollapsed: true,
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        disabledBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        focusedErrorBorder: InputBorder.none,
+        contentPadding: EdgeInsets.zero,
+        filled: false,
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 28,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.24,
-                  ),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
+    );
+
+    return Theme(
+      data: composerTheme,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Material(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+          clipBehavior: Clip.antiAlias,
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.focusNoteTitle,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+            child: SafeArea(
+              top: false,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 28,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.24,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
-                  ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                        child: TextField(
+                          controller: _controller,
+                          autofocus: true,
+                          minLines: 8,
+                          maxLines: 16,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            height: 1.4,
+                          ),
+                          decoration: InputDecoration.collapsed(
+                            hintText: l10n.focusNoteHint,
+                            hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                          onChanged:
+                              (value) => ref
+                                  .read(focusTimerControllerProvider.notifier)
+                                  .setNoteDraft(value),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                  tooltip: l10n.commonClose,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              minLines: 6,
-              maxLines: 12,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: l10n.focusNoteHint,
               ),
-              onChanged:
-                  (value) => ref
-                      .read(focusTimerControllerProvider.notifier)
-                      .setNoteDraft(value),
             ),
-          ],
+          ),
         ),
       ),
     );

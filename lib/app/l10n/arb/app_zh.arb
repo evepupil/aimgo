@@ -110,7 +110,7 @@
   "focusPendingEvaluationHint": "你可以稍后提交自评，流程可继续恢复。",
   "focusContextTitle": "专注上下文",
   "focusContextEmpty": "尚未选择专注对象",
-  "focusContextOptional": "??????????",
+  "focusContextOptional": "选择专注目标(可选)",
   "focusNoteEntry": "记录专注笔记",
   "focusNoteTitle": "专注笔记",
   "focusNoteHint": "记录你的专注想法...",

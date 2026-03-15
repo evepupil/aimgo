@@ -165,9 +165,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   padding: const EdgeInsets.all(4),
                   child: FocusSessionModeTabs(
                     mode: focusState.mode,
-                    onChange: focusController.setMode,
+                    onChange: canSwitchMode ? focusController.setMode : null,
                     pomodoroLabel: l10n.focusModePomodoro,
                     freeLabel: l10n.focusModeFree,
+                    enabled: canSwitchMode,
                   ),
                 ),
               ),

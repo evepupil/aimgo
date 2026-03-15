@@ -40,54 +40,19 @@ class ProfilePage extends ConsumerWidget {
                 child: ListView(
                   padding: LayoutTokens.listPagePadding,
                   children: [
-                    // ── Identity card ──
-                    _IdentityCard(
+                    _ProfileHeroCard(
                       name: l10n.profileDefaultName,
                       signature: l10n.profileWelcome,
+                      streakDays: data.streakDays,
+                      activeGoalCount: data.activeGoalCount,
+                      onTap: () => context.go(RoutePaths.goals),
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-
-                    // ── Profile info rows (like Tain's 我的目标 / 高级版) ──
-                    _ProfileCard(
-                      children: [
-                        _ProfileNavRow(
-                          icon: Icons.flag_outlined,
-                          title: l10n.profileActiveGoals(''),
-                          value: data.activeGoalCount.toString(),
-                          onTap: () => context.go(RoutePaths.goals),
-                        ),
-                        _ProfileNavRow(
-                          icon: Icons.local_fire_department_outlined,
-                          title: l10n.profileStreakDays(''),
-                          value: data.streakDays.toString(),
-                        ),
-                      ],
-                    ),
+                    _ProfileSummaryCard(data: data),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-
-                    // ── Overview strip ──
-                    _OverviewStrip(
-                      items: [
-                        _OverviewItem(
-                          title: l10n.profileOverviewWeekFocus,
-                          value: formatMinutes(data.totalEstimateMinutes),
-                        ),
-                        _OverviewItem(
-                          title: l10n.profileOverviewTasksDone,
-                          value: data.focusSessionCount.toString(),
-                        ),
-                        _OverviewItem(
-                          title: l10n.profileOverviewMilestonesDone,
-                          value: formatMinutes(data.focusDurationMinutes),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: LayoutTokens.sectionGapLarge),
-
-                    // ── Quick access section ──
                     _ProfileSection(
                       title: l10n.profileSectionQuickAccess,
-                      child: _ProfileCard(
+                      child: _ProfileGroupCard(
                         children: [
                           _ProfileNavRow(
                             icon: Icons.history,
@@ -102,20 +67,22 @@ class ProfilePage extends ConsumerWidget {
                           _ProfileNavRow(
                             icon: Icons.alt_route,
                             title: l10n.goalsMilestoneProgress,
-                            onTap:
-                                () =>
-                                    context.push(RoutePaths.goalMilestones),
+                            onTap: () => context.push(RoutePaths.goalMilestones),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-
-                    // ── Data section ──
                     _ProfileSection(
                       title: l10n.profileSectionData,
-                      child: _ProfileCard(
+                      child: _ProfileGroupCard(
                         children: [
+                          _ProfileNavRow(
+                            icon: Icons.flag_outlined,
+                            title: l10n.profileActiveGoals(''),
+                            value: data.activeGoalCount.toString(),
+                            onTap: () => context.go(RoutePaths.goals),
+                          ),
                           _ProfileNavRow(
                             icon: Icons.checklist_outlined,
                             title: l10n.profilePendingItems,
@@ -126,6 +93,24 @@ class ProfilePage extends ConsumerWidget {
                             onTap: () => context.go(RoutePaths.goals),
                           ),
                           _ProfileNavRow(
+                            icon: Icons.local_fire_department_outlined,
+                            title: l10n.profileStreakDays(''),
+                            value: data.streakDays.toString(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: LayoutTokens.sectionGapLarge),
+                    _ProfileSection(
+                      title: l10n.profileSectionPreferences,
+                      child: _ProfileGroupCard(
+                        children: [
+                          _ProfileNavRow(
+                            icon: Icons.settings_outlined,
+                            title: l10n.settingsTitle,
+                            onTap: () => context.push(RoutePaths.settings),
+                          ),
+                          _ProfileNavRow(
                             icon: Icons.shield_outlined,
                             title: l10n.settingsBackupRestore,
                             onTap: () => context.push(RoutePaths.settings),
@@ -134,26 +119,9 @@ class ProfilePage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: LayoutTokens.sectionGapLarge),
-
-                    // ── Settings & About section ──
-                    _ProfileSection(
-                      title: l10n.profileSectionPreferences,
-                      child: _ProfileCard(
-                        children: [
-                          _ProfileNavRow(
-                            icon: Icons.settings_outlined,
-                            title: l10n.settingsTitle,
-                            onTap: () => context.push(RoutePaths.settings),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: LayoutTokens.sectionGapLarge),
-
-                    // ── About section ──
                     _ProfileSection(
                       title: l10n.profileSectionAbout,
-                      child: _ProfileCard(
+                      child: _ProfileGroupCard(
                         children: [
                           _ProfileNavRow(
                             icon: Icons.info_outline,
@@ -175,76 +143,213 @@ class ProfilePage extends ConsumerWidget {
       ),
     );
   }
-
 }
 
-// ---------------------------------------------------------------------------
-// Identity card — avatar left, name + signature right (Tain style)
-// ---------------------------------------------------------------------------
-
-class _IdentityCard extends StatelessWidget {
-  const _IdentityCard({required this.name, required this.signature});
+class _ProfileHeroCard extends StatelessWidget {
+  const _ProfileHeroCard({
+    required this.name,
+    required this.signature,
+    required this.streakDays,
+    required this.activeGoalCount,
+    required this.onTap,
+  });
 
   final String name;
   final String signature;
+  final int streakDays;
+  final int activeGoalCount;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DecoratedBox(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+        child: DecoratedBox(
+          decoration: LayoutTokens.tainCardDecoration(theme),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        size: 28,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            signature,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.52,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _HeroMetaChip(
+                      icon: Icons.local_fire_department_outlined,
+                      label: '$streakDays',
+                    ),
+                    _HeroMetaChip(
+                      icon: Icons.flag_outlined,
+                      label: '$activeGoalCount',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroMetaChip extends StatelessWidget {
+  const _HeroMetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ProfileSummaryCard extends StatelessWidget {
+  const _ProfileSummaryCard({required this.data});
+
+  final ProfileDashboardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final hasFocusData = data.focusSessionCount > 0;
+    return DecoratedBox(
+      decoration: LayoutTokens.tainCardDecoration(theme),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-              child: Icon(
-                Icons.person,
-                size: 30,
-                color: theme.colorScheme.primary,
+            Text(
+              l10n.profileTitle,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    signature,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Text(
+              formatMinutes(data.focusDurationMinutes),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.6,
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            const SizedBox(height: 2),
+            Text(
+              l10n.profileOverviewMilestonesDone,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _SummaryMetric(
+                    title: l10n.profileOverviewTasksDone,
+                    value: data.focusSessionCount.toString(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SummaryMetric(
+                    title: l10n.profileOverviewWeekFocus,
+                    value: formatMinutes(data.totalEstimateMinutes),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              hasFocusData
+                  ? '${l10n.profilePendingItems}: ${data.pendingTaskCount == 0 ? l10n.profilePendingNone : data.pendingTaskCount}'
+                  : l10n.profileWelcome,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
             ),
           ],
         ),
@@ -253,51 +358,47 @@ class _IdentityCard extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// White card group (same style as settings page)
-// ---------------------------------------------------------------------------
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({required this.title, required this.value});
 
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.children});
-
-  final List<Widget> children;
+  final String title;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DecoratedBox(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        color: theme.colorScheme.primary.withValues(alpha: 0.055),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var i = 0; i < children.length; i++) ...[
-            children[i],
-            if (i < children.length - 1)
-              Divider(
-                height: 1,
-                indent: 16,
-                endIndent: 16,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.28),
-              ),
-          ],
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Section title (small gray label above card)
-// ---------------------------------------------------------------------------
 
 class _ProfileSection extends StatelessWidget {
   const _ProfileSection({required this.title, required this.child});
@@ -326,9 +427,33 @@ class _ProfileSection extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Nav row: icon + label + value + chevron (Tain style)
-// ---------------------------------------------------------------------------
+class _ProfileGroupCard extends StatelessWidget {
+  const _ProfileGroupCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: LayoutTokens.tainCardDecoration(theme),
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            children[i],
+            if (i < children.length - 1)
+              Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.24),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
 class _ProfileNavRow extends StatelessWidget {
   const _ProfileNavRow({
@@ -347,19 +472,21 @@ class _ProfileNavRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final content = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           Icon(
             icon,
-            size: 22,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
+            size: 20,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.76),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
               title,
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -380,11 +507,11 @@ class _ProfileNavRow extends StatelessWidget {
             ),
           ],
           if (onTap != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.42),
             ),
           ],
         ],
@@ -395,84 +522,9 @@ class _ProfileNavRow extends StatelessWidget {
       return content;
     }
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
       onTap: onTap,
       child: content,
     );
   }
-}
-
-// ---------------------------------------------------------------------------
-// Overview strip — 3-column metrics
-// ---------------------------------------------------------------------------
-
-class _OverviewStrip extends StatelessWidget {
-  const _OverviewStrip({required this.items});
-
-  final List<_OverviewItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            for (var i = 0; i < items.length; i++) ...[
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      items[i].value,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      items[i].title,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (i != items.length - 1)
-                Container(
-                  width: 1,
-                  height: 28,
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.35,
-                  ),
-                ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OverviewItem {
-  const _OverviewItem({required this.title, required this.value});
-
-  final String title;
-  final String value;
 }

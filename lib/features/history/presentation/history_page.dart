@@ -84,38 +84,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           data == null
               ? const SizedBox.shrink()
               : _searchMode
-              ? Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      LayoutTokens.pageHorizontal,
-                      LayoutTokens.pageTop,
-                      LayoutTokens.pageHorizontal,
-                      LayoutTokens.compactGap,
-                    ),
-                    child: _HistoryViewModeTabs(
-                      selectedMode: data.viewMode,
-                      onModeChanged: controller.setViewMode,
-                    ),
-                  ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: controller.refresh,
-                      child:
-                          data.viewMode == HistoryViewMode.timeline
-                              ? _TimelineView(
-                                state: data,
-                                onEdit: _openEditSessionSheet,
-                              )
-                              : _CalendarView(
-                                state: data,
-                                onDateSelected:
-                                    controller.setSelectedCalendarDate,
-                                onEdit: _openEditSessionSheet,
-                              ),
-                    ),
-                  ),
-                ],
+              ? RefreshIndicator(
+                onRefresh: controller.refresh,
+                child: _SearchResultsView(
+                  state: data,
+                  onEdit: _openEditSessionSheet,
+                ),
               )
               : NestedScrollView(
                 headerSliverBuilder:
@@ -152,26 +126,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         LayoutTokens.pageHorizontal,
                         LayoutTokens.compactGap,
                       ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SegmentedButton<HistoryViewMode>(
-                          selected: {data.viewMode},
-                          segments: [
-                            ButtonSegment(
-                              value: HistoryViewMode.timeline,
-                              icon: const Icon(Icons.timeline),
-                              label: Text(l10n.historyTimelineTab),
-                            ),
-                            ButtonSegment(
-                              value: HistoryViewMode.calendar,
-                              icon: const Icon(Icons.calendar_month_outlined),
-                              label: Text(l10n.historyCalendarTab),
-                            ),
-                          ],
-                          onSelectionChanged: (selection) {
-                            controller.setViewMode(selection.first);
-                          },
-                        ),
+                      child: _HistoryViewModeTabs(
+                        selectedMode: data.viewMode,
+                        onModeChanged: controller.setViewMode,
                       ),
                     ),
                     Expanded(
@@ -467,53 +424,142 @@ class _HistoryViewModeTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final tabs = {
-      HistoryViewMode.timeline: l10n.historyTimelineTab,
-      HistoryViewMode.calendar: l10n.historyCalendarTab,
-    };
+    return _HistoryModeSegment(
+      selectedMode: selectedMode,
+      timelineLabel: l10n.historyTimelineTab,
+      calendarLabel: l10n.historyCalendarTab,
+      onModeChanged: onModeChanged,
+    );
+  }
+}
 
+class _HistoryModeSegment extends StatelessWidget {
+  const _HistoryModeSegment({
+    required this.selectedMode,
+    required this.timelineLabel,
+    required this.calendarLabel,
+    required this.onModeChanged,
+  });
+
+  final HistoryViewMode selectedMode;
+  final String timelineLabel;
+  final String calendarLabel;
+  final void Function(HistoryViewMode mode) onModeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: LayoutTokens.tainCardDecoration(theme),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Row(
           children: [
-            for (final entry in tabs.entries)
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => onModeChanged(entry.key),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color:
-                          selectedMode == entry.key
-                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      entry.value,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            selectedMode == entry.key
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurfaceVariant,
-                        fontWeight:
-                            selectedMode == entry.key
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
+            Expanded(
+              child: _HistoryModeSegmentItem(
+                label: timelineLabel,
+                selected: selectedMode == HistoryViewMode.timeline,
+                onTap: () => onModeChanged(HistoryViewMode.timeline),
               ),
+            ),
+            Expanded(
+              child: _HistoryModeSegmentItem(
+                label: calendarLabel,
+                selected: selectedMode == HistoryViewMode.calendar,
+                onTap: () => onModeChanged(HistoryViewMode.calendar),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HistoryModeSegmentItem extends StatelessWidget {
+  const _HistoryModeSegmentItem({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color:
+              selected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.10)
+                  : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color:
+                selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchResultsView extends StatelessWidget {
+  const _SearchResultsView({required this.state, required this.onEdit});
+
+  final HistoryPageState state;
+  final void Function(HistorySessionEntry entry) onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final results = state.filteredSessions;
+    if (results.isEmpty) {
+      return ListView(
+        padding: LayoutTokens.listPagePadding,
+        children: [
+          const SizedBox(height: 80),
+          Center(
+            child: Text(AppLocalizations.of(context)!.goalsNoSearchResult),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      padding: LayoutTokens.listPagePadding,
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final entry = results[index];
+        return _HistorySessionCard(
+          entry: entry,
+          onEdit: () => onEdit(entry),
+        );
+      },
     );
   }
 }

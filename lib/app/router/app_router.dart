@@ -1,5 +1,6 @@
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/widgets/main_tab_shell.dart';
+import 'package:aimgo/features/focus/presentation/focus_fullscreen_page.dart';
 import 'package:aimgo/features/focus/presentation/focus_page.dart';
 import 'package:aimgo/features/goals/presentation/goals_page.dart';
 import 'package:aimgo/features/goals/presentation/milestone_progress_page.dart';
@@ -56,6 +57,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: RoutePaths.focusFullscreen,
+        pageBuilder:
+            (context, state) => _buildFocusFullscreenTransitionPage(
+              state: state,
+              child: const FocusFullscreenPage(),
+            ),
       ),
       GoRoute(
         path: RoutePaths.settings,
@@ -139,6 +148,32 @@ CustomTransitionPage<void> _buildOverlayTransitionPage({
             begin: const Offset(0, 0.03),
             end: Offset.zero,
           ).animate(curvedAnimation),
+          child: pageChild,
+        ),
+      );
+    },
+  );
+}
+
+CustomTransitionPage<void> _buildFocusFullscreenTransitionPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionsBuilder: (context, animation, secondaryAnimation, pageChild) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curvedAnimation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.985, end: 1).animate(curvedAnimation),
           child: pageChild,
         ),
       );

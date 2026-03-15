@@ -122,6 +122,10 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     _syncFocusOngoingNotification();
   }
 
+  void setNoteDraft(String note) {
+    state = state.copyWith(noteDraft: note);
+  }
+
   void syncFromLifecycle() {
     if (state.status != FocusTimerStatus.running) {
       return;
@@ -192,6 +196,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     final selectedTaskId = state.selectedTaskId;
     final mode = state.mode;
     final pomodoroMinutes = state.pomodoroMinutes;
+    final noteDraft = state.noteDraft?.trim();
 
     final input = CreateFocusSessionInput(
       goalId: selectedGoalId,
@@ -203,7 +208,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       focusMode: _toSessionMode(mode),
       startedAt: startedAt,
       endedAt: endedAt,
-      note: null,
+      note: noteDraft == null || noteDraft.isEmpty ? null : noteDraft,
       isAbandoned: isAbandoned,
     );
     state = FocusTimerState.initial(selectedGoalId: selectedGoalId).copyWith(
@@ -211,6 +216,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
       pomodoroMinutes: pomodoroMinutes,
       selectedMilestoneId: selectedMilestoneId,
       selectedTaskId: selectedTaskId,
+      clearNoteDraft: true,
     );
     unawaited(
       _createSessionAndHandleCompletion(
@@ -248,6 +254,7 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
                 endedAt: input.endedAt,
                 focusTargetLevel: input.focusTargetLevel,
                 focusMode: mode,
+                note: input.note,
                 isAbandoned: false,
               ),
             );

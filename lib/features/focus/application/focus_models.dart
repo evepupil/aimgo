@@ -29,6 +29,7 @@ final class FocusEvaluationDraft {
     this.goalId,
     this.milestoneId,
     this.taskId,
+    this.note,
     this.isAbandoned = false,
   });
 
@@ -41,6 +42,7 @@ final class FocusEvaluationDraft {
   final DateTime endedAt;
   final FocusTargetLevel focusTargetLevel;
   final FocusMode focusMode;
+  final String? note;
   final bool isAbandoned;
 }
 
@@ -57,6 +59,7 @@ final class FocusTimerState {
     required this.completionEventId,
     this.sessionStartedAt,
     this.runningStartedAt,
+    this.noteDraft,
   });
 
   final FocusMode mode;
@@ -69,6 +72,7 @@ final class FocusTimerState {
   final int displayElapsedSeconds;
   final DateTime? sessionStartedAt;
   final DateTime? runningStartedAt;
+  final String? noteDraft;
   final int completionEventId;
 
   int get durationSeconds {
@@ -122,6 +126,8 @@ final class FocusTimerState {
     bool clearSessionStart = false,
     DateTime? runningStartedAt,
     bool clearRunningStart = false,
+    String? noteDraft,
+    bool clearNoteDraft = false,
     int? completionEventId,
   }) {
     return FocusTimerState(
@@ -148,6 +154,7 @@ final class FocusTimerState {
           clearRunningStart
               ? null
               : (runningStartedAt ?? this.runningStartedAt),
+      noteDraft: clearNoteDraft ? null : (noteDraft ?? this.noteDraft),
       completionEventId: completionEventId ?? this.completionEventId,
     );
   }
@@ -165,6 +172,7 @@ final class FocusTimerState {
       completionEventId: 0,
       sessionStartedAt: null,
       runningStartedAt: null,
+      noteDraft: null,
     );
   }
 }

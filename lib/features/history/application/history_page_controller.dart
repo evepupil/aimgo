@@ -59,6 +59,8 @@ final class HistoryPageState {
     required this.customRangeStart,
     required this.customRangeEnd,
     required this.selectedCalendarDate,
+    required this.filteredSessions,
+    required this.timelineSections,
   });
 
   final List<HistorySessionEntry> allSessions;
@@ -70,8 +72,10 @@ final class HistoryPageState {
   final DateTime? customRangeStart;
   final DateTime? customRangeEnd;
   final DateTime selectedCalendarDate;
+  final List<HistorySessionEntry> filteredSessions;
+  final List<TimelineSection> timelineSections;
 
-  List<HistorySessionEntry> get filteredSessions {
+  List<HistorySessionEntry> _buildFilteredSessions() {
     final now = DateTime.now();
     final query = searchQuery.trim().toLowerCase();
 
@@ -141,21 +145,8 @@ final class HistoryPageState {
         .toList(growable: false);
   }
 
-  List<TimelineSection> buildTimelineSections() {
-    final sorted = [...filteredSessions]
-      ..sort((a, b) => b.session.startedAt.compareTo(a.session.startedAt));
-    final grouped = <String, List<HistorySessionEntry>>{};
-    for (final entry in sorted) {
-      final key = _groupKey(entry.session.startedAt);
-      grouped.putIfAbsent(key, () => []).add(entry);
-    }
-
-    return grouped.entries
-        .map(
-          (entry) =>
-              TimelineSection(groupKey: entry.key, sessions: entry.value),
-        )
-        .toList(growable: false);
+  List<TimelineSection> _buildTimelineSections() {
+    return _buildTimelineSectionsFrom(filteredSessions);
   }
 
   HistoryPageState copyWith({
@@ -171,7 +162,7 @@ final class HistoryPageState {
     bool clearCustomRange = false,
     DateTime? selectedCalendarDate,
   }) {
-    return HistoryPageState(
+    final nextState = HistoryPageState(
       allSessions: allSessions ?? this.allSessions,
       goalOptions: goalOptions ?? this.goalOptions,
       viewMode: viewMode ?? this.viewMode,
@@ -184,7 +175,42 @@ final class HistoryPageState {
       customRangeEnd:
           clearCustomRange ? null : (customRangeEnd ?? this.customRangeEnd),
       selectedCalendarDate: selectedCalendarDate ?? this.selectedCalendarDate,
+      filteredSessions: const <HistorySessionEntry>[],
+      timelineSections: const <TimelineSection>[],
     );
+    final filteredSessions = nextState._buildFilteredSessions();
+    return HistoryPageState(
+      allSessions: nextState.allSessions,
+      goalOptions: nextState.goalOptions,
+      viewMode: nextState.viewMode,
+      searchQuery: nextState.searchQuery,
+      goalFilterId: nextState.goalFilterId,
+      rangeFilter: nextState.rangeFilter,
+      customRangeStart: nextState.customRangeStart,
+      customRangeEnd: nextState.customRangeEnd,
+      selectedCalendarDate: nextState.selectedCalendarDate,
+      filteredSessions: filteredSessions,
+      timelineSections: nextState._buildTimelineSectionsFrom(filteredSessions),
+    );
+  }
+
+  List<TimelineSection> _buildTimelineSectionsFrom(
+    List<HistorySessionEntry> filtered,
+  ) {
+    final sorted = [...filtered]
+      ..sort((a, b) => b.session.startedAt.compareTo(a.session.startedAt));
+    final grouped = <String, List<HistorySessionEntry>>{};
+    for (final entry in sorted) {
+      final key = _groupKey(entry.session.startedAt);
+      grouped.putIfAbsent(key, () => []).add(entry);
+    }
+
+    return grouped.entries
+        .map(
+          (entry) =>
+              TimelineSection(groupKey: entry.key, sessions: entry.value),
+        )
+        .toList(growable: false);
   }
 
   String _groupKey(DateTime value) {
@@ -376,7 +402,7 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
         })
         .toList(growable: false);
 
-    return HistoryPageState(
+    final baseState = HistoryPageState(
       allSessions: entries,
       goalOptions: goals,
       viewMode: current?.viewMode ?? HistoryViewMode.timeline,
@@ -386,6 +412,22 @@ final class HistoryPageController extends AsyncNotifier<HistoryPageState> {
       customRangeStart: current?.customRangeStart,
       customRangeEnd: current?.customRangeEnd,
       selectedCalendarDate: current?.selectedCalendarDate ?? DateTime.now(),
+      filteredSessions: const <HistorySessionEntry>[],
+      timelineSections: const <TimelineSection>[],
+    );
+    final filteredSessions = baseState._buildFilteredSessions();
+    return HistoryPageState(
+      allSessions: baseState.allSessions,
+      goalOptions: baseState.goalOptions,
+      viewMode: baseState.viewMode,
+      searchQuery: baseState.searchQuery,
+      goalFilterId: baseState.goalFilterId,
+      rangeFilter: baseState.rangeFilter,
+      customRangeStart: baseState.customRangeStart,
+      customRangeEnd: baseState.customRangeEnd,
+      selectedCalendarDate: baseState.selectedCalendarDate,
+      filteredSessions: filteredSessions,
+      timelineSections: baseState._buildTimelineSectionsFrom(filteredSessions),
     );
   }
 }

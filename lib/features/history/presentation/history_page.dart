@@ -931,8 +931,8 @@ class _TimelineView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sections = state.buildTimelineSections();
-    if (sections.isEmpty) {
+    final items = _TimelineListItem.build(state.timelineSections);
+    if (items.isEmpty) {
       return ListView(
         children: [
           const SizedBox(height: 80),
@@ -945,32 +945,77 @@ class _TimelineView extends StatelessWidget {
 
     return ListView.builder(
       padding: LayoutTokens.listPagePadding,
-      itemCount: sections.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        final section = sections[index];
-        final totalMinutes = section.sessions.fold<int>(
-          0,
-          (sum, item) => sum + item.session.durationMinutes,
-        );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _TimelineSectionHeader(
-              title: _timelineSectionTitle(context, section.groupKey),
-              sessionCount: section.sessions.length,
-              totalMinutes: totalMinutes,
-            ),
-            for (var i = 0; i < section.sessions.length; i++)
-              _TimelineSessionItem(
-                entry: section.sessions[i],
-                isLast: i == section.sessions.length - 1,
-                onEdit: onEdit,
-              ),
-          ],
+        final item = items[index];
+        if (item.header != null) {
+          return _TimelineSectionHeader(
+            title: _timelineSectionTitle(context, item.header!.groupKey),
+            sessionCount: item.header!.sessionCount,
+            totalMinutes: item.header!.totalMinutes,
+          );
+        }
+        return _TimelineSessionItem(
+          entry: item.entry!,
+          isLast: item.isLastInSection,
+          onEdit: onEdit,
         );
       },
     );
   }
+}
+
+class _TimelineListItem {
+  const _TimelineListItem.header(this.header)
+    : entry = null,
+      isLastInSection = false;
+
+  const _TimelineListItem.session(this.entry, {required this.isLastInSection})
+    : header = null;
+
+  final _TimelineHeaderData? header;
+  final HistorySessionEntry? entry;
+  final bool isLastInSection;
+
+  static List<_TimelineListItem> build(List<TimelineSection> sections) {
+    final items = <_TimelineListItem>[];
+    for (final section in sections) {
+      final totalMinutes = section.sessions.fold<int>(
+        0,
+        (sum, item) => sum + item.session.durationMinutes,
+      );
+      items.add(
+        _TimelineListItem.header(
+          _TimelineHeaderData(
+            groupKey: section.groupKey,
+            sessionCount: section.sessions.length,
+            totalMinutes: totalMinutes,
+          ),
+        ),
+      );
+      for (var i = 0; i < section.sessions.length; i++) {
+        items.add(
+          _TimelineListItem.session(
+            section.sessions[i],
+            isLastInSection: i == section.sessions.length - 1,
+          ),
+        );
+      }
+    }
+    return items;
+  }
+}
+
+class _TimelineHeaderData {
+  const _TimelineHeaderData({
+    required this.groupKey,
+    required this.sessionCount,
+    required this.totalMinutes,
+  });
+
+  final String groupKey;
+  final int sessionCount;
+  final int totalMinutes;
 }
 
 class _TimelineSectionHeader extends StatelessWidget {

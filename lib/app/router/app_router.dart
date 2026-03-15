@@ -89,7 +89,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.evaluation,
         pageBuilder:
-            (context, state) => _buildOverlayTransitionPage(
+            (context, state) => _buildEvaluationTransitionPage(
               state: state,
               child: const EvaluationPage(),
             ),
@@ -179,4 +179,11 @@ CustomTransitionPage<void> _buildFocusFullscreenTransitionPage({
       );
     },
   );
+}
+
+NoTransitionPage<void> _buildEvaluationTransitionPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return NoTransitionPage<void>(key: state.pageKey, child: child);
 }

@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
@@ -8,6 +9,7 @@ import 'package:aimgo/features/goals/application/progress_sync_service.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class EvaluationPage extends ConsumerStatefulWidget {
   const EvaluationPage({super.key});
@@ -35,23 +37,14 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
     final hierarchy = ref.watch(focusHierarchyProvider).valueOrNull ?? const [];
 
     if (draft == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        context.go(RoutePaths.focus);
+      });
       return Scaffold(
-        body: NestedScrollView(
-          headerSliverBuilder:
-              (context, innerBoxIsScrolled) => [
-                SliverAppBar(
-                  floating: true,
-                  snap: true,
-                  title: Text(l10n.evaluationTitle),
-                ),
-              ],
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(l10n.evaluationNoDraft, textAlign: TextAlign.center),
-            ),
-          ),
-        ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       );
     }
 
@@ -69,158 +62,166 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
       taskId: draft.taskId,
     );
 
-    return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder:
-            (context, innerBoxIsScrolled) => [
-              SliverAppBar(
-                floating: true,
-                snap: true,
-                title: Text(l10n.evaluationTitle),
-                actions: [
-                  IconButton(
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                    tooltip: l10n.commonClose,
-                  ),
-                ],
-              ),
-            ],
-        body: ListView(
-          padding: LayoutTokens.listPagePadding,
-          children: [
-            _EvaluationPanel(
-              child: Padding(
-                padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.evaluationSummaryTitle,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: LayoutTokens.compactGap),
-                    Text(
-                      '${l10n.evaluationDuration}: ${formatMinutes(durationMinutes)}',
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      focusPath.isEmpty ? l10n.focusContextEmpty : focusPath,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: LayoutTokens.sectionGapLarge),
-            _EvaluationPanel(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Text(
-                        l10n.evaluationEfficiencyLabel(
-                          _efficiencyPercent.toString(),
-                        ),
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                    Slider(
-                      value: _efficiencyPercent.toDouble(),
-                      min: 0,
-                      max: 100,
-                      divisions: 100,
-                      label: '$_efficiencyPercent%',
-                      onChanged:
+    return PopScope<void>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || _isSubmitting) {
+          return;
+        }
+        _submitEvaluation(skipEfficiency: true);
+      },
+      child: Scaffold(
+        body: NestedScrollView(
+          headerSliverBuilder:
+              (context, innerBoxIsScrolled) => [
+                SliverAppBar(
+                  floating: true,
+                  snap: true,
+                  title: Text(l10n.evaluationTitle),
+                  actions: [
+                    IconButton(
+                      onPressed:
                           _isSubmitting
                               ? null
-                              : (value) {
-                                setState(() {
-                                  _efficiencyPercent = value.round();
-                                });
-                              },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final value in const [20, 40, 60, 80, 100])
-                            ChoiceChip(
-                              label: Text('$value%'),
-                              selected: _efficiencyPercent == value,
-                              onSelected:
-                                  _isSubmitting
-                                      ? null
-                                      : (_) {
-                                        setState(() {
-                                          _efficiencyPercent = value;
-                                        });
-                                      },
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Text(
-                        '${l10n.evaluationEffectiveDuration}: ${formatMinutes(effectiveMinutes)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                              : () => _submitEvaluation(skipEfficiency: true),
+                      icon: const Icon(Icons.close),
+                      tooltip: l10n.commonClose,
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: LayoutTokens.sectionGapLarge),
-            _EvaluationPanel(
-              child: Padding(
-                padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-                child: TextField(
-                  controller: _noteController,
-                  minLines: 3,
-                  maxLines: 6,
-                  enabled: !_isSubmitting,
-                  decoration: InputDecoration(
-                    labelText: l10n.evaluationNoteLabel,
+              ],
+          body: ListView(
+            padding: LayoutTokens.listPagePadding,
+            children: [
+              _EvaluationPanel(
+                child: Padding(
+                  padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.evaluationSummaryTitle,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: LayoutTokens.compactGap),
+                      Text(
+                        '${l10n.evaluationDuration}: ${formatMinutes(durationMinutes)}',
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        focusPath.isEmpty ? l10n.focusContextEmpty : focusPath,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: LayoutTokens.sectionGapLarge),
-            FilledButton(
-              onPressed:
-                  _isSubmitting
-                      ? null
-                      : () => _submitEvaluation(skipEfficiency: false),
-              child:
-                  _isSubmitting
-                      ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : Text(l10n.evaluationSubmit),
-            ),
-            const SizedBox(height: LayoutTokens.compactGap),
-            OutlinedButton(
-              onPressed:
-                  _isSubmitting
-                      ? null
-                      : () => _submitEvaluation(skipEfficiency: true),
-              child: Text(l10n.evaluationSkip),
-            ),
-          ],
+              const SizedBox(height: LayoutTokens.sectionGapLarge),
+              _EvaluationPanel(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Text(
+                          l10n.evaluationEfficiencyLabel(
+                            _efficiencyPercent.toString(),
+                          ),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+                      Slider(
+                        value: _efficiencyPercent.toDouble(),
+                        min: 0,
+                        max: 100,
+                        divisions: 100,
+                        label: '$_efficiencyPercent%',
+                        onChanged:
+                            _isSubmitting
+                                ? null
+                                : (value) {
+                                  setState(() {
+                                    _efficiencyPercent = value.round();
+                                  });
+                                },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final value in const [20, 40, 60, 80, 100])
+                              ChoiceChip(
+                                label: Text('$value%'),
+                                selected: _efficiencyPercent == value,
+                                onSelected:
+                                    _isSubmitting
+                                        ? null
+                                        : (_) {
+                                          setState(() {
+                                            _efficiencyPercent = value;
+                                          });
+                                        },
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Text(
+                          '${l10n.evaluationEffectiveDuration}: ${formatMinutes(effectiveMinutes)}',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: LayoutTokens.sectionGapLarge),
+              _EvaluationPanel(
+                child: Padding(
+                  padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+                  child: TextField(
+                    controller: _noteController,
+                    minLines: 3,
+                    maxLines: 6,
+                    enabled: !_isSubmitting,
+                    decoration: InputDecoration(
+                      labelText: l10n.evaluationNoteLabel,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: LayoutTokens.sectionGapLarge),
+              FilledButton(
+                onPressed:
+                    _isSubmitting
+                        ? null
+                        : () => _submitEvaluation(skipEfficiency: false),
+                child:
+                    _isSubmitting
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Text(l10n.evaluationSubmit),
+              ),
+              const SizedBox(height: LayoutTokens.compactGap),
+              OutlinedButton(
+                onPressed:
+                    _isSubmitting
+                        ? null
+                        : () => _submitEvaluation(skipEfficiency: true),
+                child: Text(l10n.evaluationSkip),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -259,7 +260,11 @@ class _EvaluationPageState extends ConsumerState<EvaluationPage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.evaluationSaved)));
-        Navigator.of(context).pop();
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          context.go(RoutePaths.focus);
+        }
       }
     } catch (_) {
       if (mounted) {

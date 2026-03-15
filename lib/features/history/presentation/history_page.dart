@@ -1,6 +1,7 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/core/widgets/app_confirm_dialog.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/history/application/history_page_controller.dart';
@@ -293,8 +294,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                       runSpacing: 8,
                       children: [
                         _RangeChip(
-                          selected:
-                              data.rangeFilter == HistoryRangeFilter.all,
+                          selected: data.rangeFilter == HistoryRangeFilter.all,
                           label: l10n.historyRangeAll,
                           onTap:
                               () => controller.setRangeFilter(
@@ -742,28 +742,13 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
 
   Future<void> _confirmDelete() async {
     final l10n = AppLocalizations.of(context)!;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAppConfirmDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.historyDeleteConfirmTitle),
-          content: Text(l10n.historyDeleteConfirmMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
-              ),
-              child: Text(l10n.commonDelete),
-            ),
-          ],
-        );
-      },
+      title: l10n.historyDeleteConfirmTitle,
+      message: l10n.historyDeleteConfirmMessage,
+      confirmText: l10n.commonDelete,
+      cancelText: l10n.commonCancel,
+      destructive: true,
     );
     if (confirm != true || !mounted) {
       return;
@@ -1269,62 +1254,62 @@ class _HistorySessionCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: LayoutTokens.tainCardDecoration(Theme.of(context)),
         child: Padding(
-        padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 84),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleSmall),
-                  if (entry.pathLabel.isNotEmpty) ...[
+          padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 84),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleSmall),
+                    if (entry.pathLabel.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.pathLabel,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: LayoutTokens.compactGap),
+                    Text(
+                      '${DateFormat('HH:mm').format(session.startedAt)} - ${DateFormat('HH:mm').format(session.endedAt)}',
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      entry.pathLabel,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      '${l10n.evaluationDuration}: ${formatMinutes(session.durationMinutes)}',
                     ),
-                  ],
-                  const SizedBox(height: LayoutTokens.compactGap),
-                  Text(
-                    '${DateFormat('HH:mm').format(session.startedAt)} - ${DateFormat('HH:mm').format(session.endedAt)}',
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${l10n.evaluationDuration}: ${formatMinutes(session.durationMinutes)}',
-                  ),
-                  Text(
-                    '${l10n.evaluationEfficiencyLabel(session.efficiencyPercent.toString())} | ${l10n.evaluationEffectiveDuration}: ${formatMinutes(session.effectiveMinutes)}',
-                  ),
-                  if ((session.note ?? '').trim().isNotEmpty) ...[
-                    const SizedBox(height: 4),
                     Text(
-                      '${l10n.evaluationNoteLabel}: ${session.note!.trim()}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      '${l10n.evaluationEfficiencyLabel(session.efficiencyPercent.toString())} | ${l10n.evaluationEffectiveDuration}: ${formatMinutes(session.effectiveMinutes)}',
                     ),
+                    if ((session.note ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${l10n.evaluationNoteLabel}: ${session.note!.trim()}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: _SessionStatusBadge(isAbandoned: session.isAbandoned),
-            ),
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  tooltip: l10n.commonEdit,
-                  visualDensity: VisualDensity.compact,
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                top: 0,
+                right: 0,
+                child: _SessionStatusBadge(isAbandoned: session.isAbandoned),
+              ),
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    tooltip: l10n.commonEdit,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

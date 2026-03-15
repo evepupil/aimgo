@@ -2,6 +2,7 @@ import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/core/widgets/app_confirm_dialog.dart';
 import 'package:aimgo/core/widgets/anchored_action_menu.dart';
 import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
@@ -1294,26 +1295,13 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     required String message,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
+    return showAppConfirmDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n.commonConfirm),
-            ),
-          ],
-        );
-      },
+      title: title,
+      message: message,
+      confirmText: l10n.commonConfirm,
+      cancelText: l10n.commonCancel,
     );
-    return confirmed == true;
   }
 
   void _showInfoToast(String message) {

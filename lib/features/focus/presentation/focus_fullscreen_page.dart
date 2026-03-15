@@ -1,11 +1,16 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/core/services/local_storage_service.dart';
+import 'package:aimgo/core/widgets/app_confirm_dialog.dart';
 import 'package:aimgo/features/focus/application/focus_context_provider.dart';
+import 'package:aimgo/features/focus/application/focus_evaluation_draft_controller.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/focus/application/focus_timer_controller.dart';
 import 'package:aimgo/features/focus/presentation/widgets/focus_session_widgets.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class FocusFullscreenPage extends ConsumerStatefulWidget {
   const FocusFullscreenPage({super.key});
@@ -16,19 +21,65 @@ class FocusFullscreenPage extends ConsumerStatefulWidget {
 }
 
 class _FocusFullscreenPageState extends ConsumerState<FocusFullscreenPage> {
+  ProviderSubscription<FocusTimerState>? _focusTimerSubscription;
+  bool _isClosingRoute = false;
+  bool _isCompletionDialogShowing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusTimerSubscription = ref.listenManual<FocusTimerState>(
+      focusTimerControllerProvider,
+      _handleFocusTimerStateChanged,
+    );
+  }
+
+  @override
+  void dispose() {
+    _focusTimerSubscription?.close();
+    super.dispose();
+  }
+
+  void _handleFocusTimerStateChanged(
+    FocusTimerState? previous,
+    FocusTimerState next,
+  ) {
+    if (previous == null) {
+      return;
+    }
+    if (previous.status != FocusTimerStatus.idle &&
+        next.status == FocusTimerStatus.idle) {
+      final draft = ref.read(focusEvaluationDraftProvider);
+      if (draft == null) {
+        _closeRoute();
+        return;
+      }
+      final autoOpenEvaluation =
+          ref.read(localStorageServiceProvider).getAutoOpenEvaluationEnabled();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        if (autoOpenEvaluation) {
+          context.pushReplacement(RoutePaths.evaluation);
+          return;
+        }
+        _showCompletionDecisionDialog();
+      });
+    }
+  }
+
+  void _closeRoute() {
+    if (_isClosingRoute || !mounted) {
+      return;
+    }
+    _isClosingRoute = true;
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    ref.listen<FocusTimerState>(focusTimerControllerProvider, (previous, next) {
-      if (previous == null) {
-        return;
-      }
-      if (previous.status != FocusTimerStatus.idle &&
-          next.status == FocusTimerStatus.idle &&
-          mounted) {
-        Navigator.of(context).pop();
-      }
-    });
 
     final state = ref.watch(focusTimerControllerProvider);
     final controller = ref.read(focusTimerControllerProvider.notifier);
@@ -133,7 +184,7 @@ class _FocusFullscreenPageState extends ConsumerState<FocusFullscreenPage> {
               child: IconButton(
                 onPressed: () {
                   controller.pause();
-                  Navigator.of(context).pop();
+                  _closeRoute();
                 },
                 icon: const Icon(Icons.arrow_back_rounded),
                 tooltip: l10n.commonClose,
@@ -148,30 +199,41 @@ class _FocusFullscreenPageState extends ConsumerState<FocusFullscreenPage> {
   Future<void> _terminateSession(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = ref.read(focusTimerControllerProvider.notifier);
-    final confirm = await showDialog<bool>(
+    final confirm = await showAppConfirmDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.focusEndTitle),
-          content: Text(l10n.focusEndMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n.focusTerminate),
-            ),
-          ],
-        );
-      },
+      title: l10n.focusEndTitle,
+      message: l10n.focusEndMessage,
+      confirmText: l10n.focusTerminate,
+      cancelText: l10n.commonCancel,
     );
     if (confirm != true || !context.mounted) {
       return;
     }
     controller.terminate(isAbandoned: false);
-    Navigator.of(context).pop();
+  }
+
+  Future<void> _showCompletionDecisionDialog() async {
+    if (_isCompletionDialogShowing || !mounted) {
+      return;
+    }
+    _isCompletionDialogShowing = true;
+    final l10n = AppLocalizations.of(context)!;
+    final shouldEvaluate = await showAppConfirmDialog(
+      context: context,
+      title: l10n.focusCompletedTitle,
+      message: l10n.focusCompletedMessage,
+      confirmText: l10n.focusGoEvaluation,
+      cancelText: l10n.commonClose,
+    );
+    _isCompletionDialogShowing = false;
+    if (!mounted) {
+      return;
+    }
+    if (shouldEvaluate == true) {
+      context.pushReplacement(RoutePaths.evaluation);
+      return;
+    }
+    context.go(RoutePaths.focus);
   }
 
   Future<void> _openNoteSheet(BuildContext context) async {

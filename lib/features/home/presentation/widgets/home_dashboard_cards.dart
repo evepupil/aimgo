@@ -250,16 +250,24 @@ class HomeLastSessionCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _MetricChip(
-                    label: formatMinutes(entry!.session.durationMinutes),
-                  ),
-                  _MetricChip(
-                    label: l10n.homeEfficiency(
-                      entry!.session.efficiencyPercent.toString(),
+                    label: _compactSessionMetricLabel(
+                      context,
+                      type: _CompactSessionMetricType.duration,
+                      value: formatMinutes(entry!.session.durationMinutes),
                     ),
                   ),
                   _MetricChip(
-                    label: l10n.homeEffective(
-                      entry!.session.effectiveMinutes.round().toString(),
+                    label: _compactSessionMetricLabel(
+                      context,
+                      type: _CompactSessionMetricType.efficiency,
+                      value: '${entry!.session.efficiencyPercent}%',
+                    ),
+                  ),
+                  _MetricChip(
+                    label: _compactSessionMetricLabel(
+                      context,
+                      type: _CompactSessionMetricType.effective,
+                      value: formatMinutes(entry!.session.effectiveMinutes),
                     ),
                   ),
                 ],
@@ -302,6 +310,25 @@ class HomeLastSessionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _CompactSessionMetricType { duration, efficiency, effective }
+
+String _compactSessionMetricLabel(
+  BuildContext context, {
+  required _CompactSessionMetricType type,
+  required String value,
+}) {
+  final languageCode = Localizations.localeOf(context).languageCode;
+  final prefix = switch ((languageCode, type)) {
+    ('zh', _CompactSessionMetricType.duration) => '时长',
+    ('zh', _CompactSessionMetricType.efficiency) => '效率',
+    ('zh', _CompactSessionMetricType.effective) => '有效',
+    (_, _CompactSessionMetricType.duration) => 'Time',
+    (_, _CompactSessionMetricType.efficiency) => 'Eff.',
+    (_, _CompactSessionMetricType.effective) => 'Effective',
+  };
+  return '$prefix $value';
 }
 
 class HomeHeatmapCard extends StatefulWidget {

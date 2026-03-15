@@ -871,17 +871,17 @@ class _TimelineView extends StatelessWidget {
       itemCount: sections.length,
       itemBuilder: (context, index) {
         final section = sections[index];
+        final totalMinutes = section.sessions.fold<int>(
+          0,
+          (sum, item) => sum + item.session.durationMinutes,
+        );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: LayoutTokens.compactGap,
-              ),
-              child: Text(
-                _timelineSectionTitle(context, section.groupKey),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+            _TimelineSectionHeader(
+              title: _timelineSectionTitle(context, section.groupKey),
+              sessionCount: section.sessions.length,
+              totalMinutes: totalMinutes,
             ),
             for (var i = 0; i < section.sessions.length; i++)
               _TimelineSessionItem(
@@ -892,6 +892,49 @@ class _TimelineView extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _TimelineSectionHeader extends StatelessWidget {
+  const _TimelineSectionHeader({
+    required this.title,
+    required this.sessionCount,
+    required this.totalMinutes,
+  });
+
+  final String title;
+  final int sessionCount;
+  final int totalMinutes;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: LayoutTokens.compactGap,
+        bottom: LayoutTokens.compactGap,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            '${l10n.analyticsSummarySessions} $sessionCount · ${formatMinutes(totalMinutes)}',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1242,77 +1285,163 @@ class _HistorySessionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final localeName = Localizations.localeOf(context).toLanguageTag();
     final session = entry.session;
     final title =
-        entry.taskTitle ??
-        entry.milestoneTitle ??
-        entry.goalTitle ??
-        l10n.focusContextEmpty;
+        entry.pathLabel.isNotEmpty
+            ? entry.pathLabel
+            : (entry.taskTitle ??
+                entry.milestoneTitle ??
+                entry.goalTitle ??
+                l10n.focusContextEmpty);
+    final timeRange =
+        '${DateFormat.yMMMd(localeName).format(session.startedAt)} · ${DateFormat.Hm(localeName).format(session.startedAt)}-${DateFormat.Hm(localeName).format(session.endedAt)}';
+    final note = (session.note ?? '').trim();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: LayoutTokens.sectionGap),
-      child: DecoratedBox(
-        decoration: LayoutTokens.tainCardDecoration(Theme.of(context)),
-        child: Padding(
-          padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 84),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleSmall),
-                    if (entry.pathLabel.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.pathLabel,
-                        style: Theme.of(context).textTheme.bodySmall,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onEdit,
+          child: DecoratedBox(
+            decoration: LayoutTokens.tainCardDecoration(theme),
+            child: Padding(
+              padding: const EdgeInsets.all(LayoutTokens.cardPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      _SessionStatusBadge(isAbandoned: session.isAbandoned),
                     ],
-                    const SizedBox(height: LayoutTokens.compactGap),
-                    Text(
-                      '${DateFormat('HH:mm').format(session.startedAt)} - ${DateFormat('HH:mm').format(session.endedAt)}',
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${l10n.evaluationDuration}: ${formatMinutes(session.durationMinutes)}',
-                    ),
-                    Text(
-                      '${l10n.evaluationEfficiencyLabel(session.efficiencyPercent.toString())} | ${l10n.evaluationEffectiveDuration}: ${formatMinutes(session.effectiveMinutes)}',
-                    ),
-                    if ((session.note ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '${l10n.evaluationNoteLabel}: ${session.note!.trim()}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Positioned(
-                top: 0,
-                right: 0,
-                child: _SessionStatusBadge(isAbandoned: session.isAbandoned),
-              ),
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    tooltip: l10n.commonEdit,
-                    visualDensity: VisualDensity.compact,
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Text(
+                    timeRange,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _HistoryMetricPill(
+                        label: _compactHistoryMetricLabel(
+                          context,
+                          type: _CompactHistoryMetricType.duration,
+                          value: formatMinutes(session.durationMinutes),
+                        ),
+                      ),
+                      _HistoryMetricPill(
+                        label: _compactHistoryMetricLabel(
+                          context,
+                          type: _CompactHistoryMetricType.efficiency,
+                          value: '${session.efficiencyPercent}%',
+                        ),
+                      ),
+                      _HistoryMetricPill(
+                        label: _compactHistoryMetricLabel(
+                          context,
+                          type: _CompactHistoryMetricType.effective,
+                          value: formatMinutes(session.effectiveMinutes),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (note.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.32),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        note,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _HistoryMetricPill extends StatelessWidget {
+  const _HistoryMetricPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.055),
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.primary.withValues(alpha: 0.92),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+enum _CompactHistoryMetricType { duration, efficiency, effective }
+
+String _compactHistoryMetricLabel(
+  BuildContext context, {
+  required _CompactHistoryMetricType type,
+  required String value,
+}) {
+  final languageCode = Localizations.localeOf(context).languageCode;
+  final prefix = switch ((languageCode, type)) {
+    ('zh', _CompactHistoryMetricType.duration) => '时长',
+    ('zh', _CompactHistoryMetricType.efficiency) => '效率',
+    ('zh', _CompactHistoryMetricType.effective) => '有效',
+    (_, _CompactHistoryMetricType.duration) => 'Time',
+    (_, _CompactHistoryMetricType.efficiency) => 'Eff.',
+    (_, _CompactHistoryMetricType.effective) => 'Effective',
+  };
+  return '$prefix $value';
 }
 
 class _SessionStatusBadge extends StatelessWidget {
@@ -1324,20 +1453,17 @@ class _SessionStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final bgColor =
-        isAbandoned ? const Color(0xFFFDECEC) : const Color(0xFFEAF6EC);
-    final borderColor =
-        isAbandoned ? const Color(0xFFF3B2B2) : const Color(0xFFB8DDBE);
+        isAbandoned ? const Color(0xFFFCEEEE) : const Color(0xFFEEF8F0);
     final textColor =
         isAbandoned ? const Color(0xFFB71C1C) : const Color(0xFF1B5E20);
     final dotColor =
         isAbandoned ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

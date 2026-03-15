@@ -383,7 +383,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     final result = await showModalBottomSheet<_HistoryEditResult>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      useSafeArea: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return _HistorySessionEditSheet(entry: entry, hierarchy: hierarchy);
       },
@@ -598,97 +600,126 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
     final l10n = AppLocalizations.of(context)!;
     final insets = MediaQuery.viewInsetsOf(context);
     final hasTargetOptions = _targetOptions.isNotEmpty;
+    final theme = Theme.of(context);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: insets.bottom),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LayoutTokens.cardPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.historyEditTitle,
-                style: Theme.of(context).textTheme.titleMedium,
+      padding: const EdgeInsets.only(top: 12),
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+        clipBehavior: Clip.antiAlias,
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: insets.bottom),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                LayoutTokens.cardPadding,
+                8,
+                LayoutTokens.cardPadding,
+                LayoutTokens.cardPadding,
               ),
-              const SizedBox(height: LayoutTokens.sectionGap),
-              if (hasTargetOptions) ...[
-                DropdownButtonFormField<_HistoryTargetOption>(
-                  value: _selectedTarget,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.historyEditTarget,
-                  ),
-                  items: [
-                    for (final option in _targetOptions)
-                      DropdownMenuItem<_HistoryTargetOption>(
-                        value: option,
-                        child: Text(
-                          option.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedTarget = value;
-                    });
-                  },
-                ),
-              ] else ...[
-                Text(
-                  l10n.goalsNoGoal,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-              const SizedBox(height: LayoutTokens.sectionGap),
-              TextField(
-                controller: _efficiencyController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: l10n.historyEditEfficiency,
-                ),
-              ),
-              const SizedBox(height: LayoutTokens.sectionGap),
-              TextField(
-                controller: _noteController,
-                minLines: 2,
-                maxLines: 4,
-                decoration: InputDecoration(labelText: l10n.historyEditNote),
-              ),
-              const SizedBox(height: LayoutTokens.sectionGap),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton.icon(
-                    onPressed: _confirmDelete,
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                    icon: const Icon(Icons.delete_outline),
-                    label: Text(l10n.commonDelete),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(l10n.commonCancel),
+                  Center(
+                    child: Container(
+                      width: 28,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.24,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
                       ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed:
-                            () => _submit(hasTargetOptions: hasTargetOptions),
-                        child: Text(l10n.commonSave),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    l10n.historyEditTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: LayoutTokens.sectionGap),
+                  if (hasTargetOptions) ...[
+                    DropdownButtonFormField<_HistoryTargetOption>(
+                      value: _selectedTarget,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.historyEditTarget,
+                      ),
+                      items: [
+                        for (final option in _targetOptions)
+                          DropdownMenuItem<_HistoryTargetOption>(
+                            value: option,
+                            child: Text(
+                              option.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedTarget = value;
+                        });
+                      },
+                    ),
+                  ] else ...[
+                    Text(
+                      l10n.goalsNoGoal,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: LayoutTokens.sectionGap),
+                  TextField(
+                    controller: _efficiencyController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.historyEditEfficiency,
+                    ),
+                  ),
+                  const SizedBox(height: LayoutTokens.sectionGap),
+                  TextField(
+                    controller: _noteController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(labelText: l10n.historyEditNote),
+                  ),
+                  const SizedBox(height: LayoutTokens.sectionGap),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        onPressed: _confirmDelete,
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.error,
+                        ),
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text(l10n.commonDelete),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(l10n.commonCancel),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed:
+                                () => _submit(hasTargetOptions: hasTargetOptions),
+                            child: Text(l10n.commonSave),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),

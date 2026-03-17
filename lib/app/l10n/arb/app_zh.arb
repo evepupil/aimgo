@@ -142,6 +142,23 @@
   "profileOverviewWeekFocus": "总预计时间",
   "profileOverviewTasksDone": "专注次数",
   "profileOverviewMilestonesDone": "专注时长",
+  "profileOverviewEstimatedDays": "预计完成天数",
+  "profileOverviewEstimatedDaysValue": "{days}天",
+  "@profileOverviewEstimatedDaysValue": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "profileOverviewRemainingDaysValue": "预计仍需{days}天",
+  "@profileOverviewRemainingDaysValue": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
   "profilePendingItems": "待处理项",
   "profilePendingNone": "全部已清空",
   "profileVersionLabel": "当前版本",

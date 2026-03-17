@@ -3,6 +3,7 @@ import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/profile/application/profile_dashboard_provider.dart';
+import 'package:aimgo/features/goals/presentation/widgets/time_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -293,7 +294,18 @@ class _ProfileSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final hasFocusData = data.focusSessionCount > 0;
+    final secondaryLabelStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    final estimatedCompletionDays =
+        data.totalEstimateMinutes > 0
+            ? (data.totalEstimateMinutes / 120).ceil().clamp(1, 999)
+            : 0;
+    final hasEstimate = data.totalEstimateMinutes > 0;
+    final progressRatio =
+        hasEstimate ? data.focusDurationMinutes / data.totalEstimateMinutes : 0.0;
+    final progressPercent = hasEstimate ? (progressRatio * 100).round() : 0;
+
     return DecoratedBox(
       decoration: LayoutTokens.tainCardDecoration(theme),
       child: Padding(
@@ -301,100 +313,94 @@ class _ProfileSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.profileTitle,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              formatMinutes(data.focusDurationMinutes),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.6,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.profileOverviewMilestonesDone,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        formatMinutes(data.focusDurationMinutes),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.profileOverviewMilestonesDone,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      hasEstimate ? formatMinutes(data.totalEstimateMinutes) : '--',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color:
+                            hasEstimate
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.profileOverviewWeekFocus,
+                      style: secondaryLabelStyle,
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: _SummaryMetric(
-                    title: l10n.profileOverviewTasksDone,
-                    value: data.focusSessionCount.toString(),
+                Text(
+                  hasEstimate ? '$progressPercent%' : '--',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.primary,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _SummaryMetric(
-                    title: l10n.profileOverviewWeekFocus,
-                    value: formatMinutes(data.totalEstimateMinutes),
-                  ),
-                ),
+                const Spacer(),
+                hasEstimate
+                    ? Text.rich(
+                      TextSpan(
+                        style: secondaryLabelStyle,
+                        children: [
+                          const TextSpan(text: '预计仍需'),
+                          TextSpan(
+                            text: estimatedCompletionDays.toString(),
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const TextSpan(text: '天'),
+                        ],
+                      ),
+                    )
+                    : Text(
+                      '--',
+                      style: secondaryLabelStyle,
+                    )
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              hasFocusData
-                  ? '${l10n.profilePendingItems}: ${data.pendingTaskCount == 0 ? l10n.profilePendingNone : data.pendingTaskCount}'
-                  : l10n.profileWelcome,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.35,
-              ),
-            ),
+            const SizedBox(height: 10),
+            TimeProgressBar(progressRatio: progressRatio),
+            const SizedBox(height: 2),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  const _SummaryMetric({required this.title, required this.value});
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.primary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
       ),
     );
   }

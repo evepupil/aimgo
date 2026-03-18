@@ -112,8 +112,7 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
         headerSliverBuilder:
             (context, innerBoxIsScrolled) => [
               SliverAppBar(
-                floating: true,
-                snap: true,
+                pinned: true,
                 title: Text(l10n.goalsMilestoneProgress),
                 actions: [
                   IconButton(

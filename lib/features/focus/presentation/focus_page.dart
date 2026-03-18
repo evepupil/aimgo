@@ -449,7 +449,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             initialGoalId: state.selectedGoalId,
             initialMilestoneId: state.selectedMilestoneId,
             initialTaskId: state.selectedTaskId,
-            initialFocusMode: state.mode,
+            initialFocusMode: FocusMode.free,
             onPickTarget: ({
               required int? selectedGoalId,
               required int? selectedMilestoneId,

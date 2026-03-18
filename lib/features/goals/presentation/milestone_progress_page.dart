@@ -1,11 +1,15 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/features/goals/application/goals_page_controller.dart';
+import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:aimgo/shared/repositories/drift_aimgo_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 
 final milestoneProgressDataProvider = FutureProvider.autoDispose
     .family<_MilestoneProgressData?, int?>((ref, goalId) async {
@@ -50,6 +54,23 @@ final milestoneProgressDataProvider = FutureProvider.autoDispose
       return _MilestoneProgressData(goal: goal, items: items);
     });
 
+final milestoneProgressGoalOptionsProvider = FutureProvider.autoDispose
+    .family<List<GoalWithMilestones>, int?>((ref, selectedGoalId) async {
+      final repository = ref.watch(aimGoRepositoryProvider);
+      final goals = await repository.listGoals();
+      if (goals.isEmpty) {
+        return const [];
+      }
+
+      final options = <GoalWithMilestones>[];
+      for (final goal in goals) {
+        options.add(
+          GoalWithMilestones(goal: goal, milestones: const []),
+        );
+      }
+      return options;
+    });
+
 class MilestoneProgressPage extends ConsumerStatefulWidget {
   const MilestoneProgressPage({required this.goalId, super.key});
 
@@ -62,11 +83,29 @@ class MilestoneProgressPage extends ConsumerStatefulWidget {
 
 class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
   _MilestoneProgressSort _sort = _MilestoneProgressSort.completionTime;
+  late int? _selectedGoalId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedGoalId = widget.goalId;
+  }
+
+  @override
+  void didUpdateWidget(covariant MilestoneProgressPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.goalId != widget.goalId) {
+      _selectedGoalId = widget.goalId;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final asyncData = ref.watch(milestoneProgressDataProvider(widget.goalId));
+    final asyncData = ref.watch(milestoneProgressDataProvider(_selectedGoalId));
+    final goalOptionsAsync = ref.watch(
+      milestoneProgressGoalOptionsProvider(_selectedGoalId),
+    );
 
     return Scaffold(
       body: NestedScrollView(
@@ -80,7 +119,7 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
                   IconButton(
                     onPressed:
                         () => ref.invalidate(
-                          milestoneProgressDataProvider(widget.goalId),
+                          milestoneProgressDataProvider(_selectedGoalId),
                         ),
                     icon: const Icon(Icons.refresh),
                   ),
@@ -133,11 +172,44 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          data.goal.title,
-                          style: Theme.of(context).textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                data.goal.title,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            TextButton.icon(
+                              onPressed:
+                                  goalOptionsAsync.valueOrNull?.isEmpty ?? true
+                                      ? null
+                                      : () => _openGoalSwitcher(
+                                        goals: goalOptionsAsync.value!,
+                                      ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                minimumSize: const Size(0, 32),
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                              ),
+                              icon: const Icon(
+                                Icons.swap_horiz_rounded,
+                                size: 16,
+                              ),
+                              label: Text(l10n.goalsSwitchTooltip),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: LayoutTokens.sectionGap),
                         Row(
@@ -246,6 +318,46 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
       return a.milestone.id.compareTo(b.milestone.id);
     });
     return [...sortedCompleted, ...sortedPending];
+  }
+
+  Future<void> _openGoalSwitcher({
+    required List<GoalWithMilestones> goals,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (sheetContext) {
+        return GoalSwitcherSheet(
+          goals: goals,
+          selectedGoalId: _selectedGoalId,
+          addGoalLabel: l10n.goalsAddGoal,
+          manageLabel: l10n.goalsManage,
+          editLabel: l10n.commonEdit,
+          deleteLabel: l10n.commonDelete,
+          onSelectGoal: (goalId) {
+            setState(() {
+              _selectedGoalId = goalId;
+            });
+            Navigator.of(sheetContext).pop();
+          },
+          onAddGoal: () {
+            Navigator.of(sheetContext).pop();
+            context.go(RoutePaths.goals);
+          },
+          onEditGoal: (_) {
+            Navigator.of(sheetContext).pop();
+            context.go(RoutePaths.goals);
+          },
+          onDeleteGoal: (_) {
+            Navigator.of(sheetContext).pop();
+            context.go(RoutePaths.goals);
+          },
+        );
+      },
+    );
   }
 }
 

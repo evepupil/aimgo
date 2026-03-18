@@ -4,6 +4,8 @@ import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/profile/application/profile_dashboard_provider.dart';
 import 'package:aimgo/features/goals/presentation/widgets/time_progress_bar.dart';
+import 'package:aimgo/features/settings/application/settings_controller.dart';
+import 'package:aimgo/features/settings/presentation/backup_restore_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +17,12 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final asyncData = ref.watch(profileDashboardProvider);
+    final settingsController = ref.read(settingsControllerProvider.notifier);
+    void showComingSoon(String label) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.commonComingSoon(label))),
+      );
+    }
 
     return Scaffold(
       body: NestedScrollView(
@@ -24,6 +32,13 @@ class ProfilePage extends ConsumerWidget {
                 floating: true,
                 snap: true,
                 title: Text(l10n.profileTitle),
+                actions: [
+                  IconButton(
+                    tooltip: l10n.settingsTitle,
+                    onPressed: () => context.push(RoutePaths.settings),
+                    icon: const Icon(Icons.settings_outlined),
+                  ),
+                ],
               ),
             ],
         body: asyncData.when(
@@ -58,11 +73,21 @@ class ProfilePage extends ConsumerWidget {
                           _ProfileNavRow(
                             icon: Icons.history,
                             title: l10n.historyTitle,
+                            trailing: _ProfileStatHint(
+                              leading: l10n.profileHistoryCountPrefix,
+                              highlight: data.focusSessionCount.toString(),
+                              trailing: l10n.profileHistoryCountSuffix,
+                            ),
                             onTap: () => context.push(RoutePaths.history),
                           ),
                           _ProfileNavRow(
                             icon: Icons.analytics_outlined,
                             title: l10n.profileAnalytics,
+                            trailing: _ProfileStatHint(
+                              leading: l10n.profileStreakPrefix,
+                              highlight: data.streakDays.toString(),
+                              trailing: l10n.profileStreakSuffix,
+                            ),
                             onTap: () => context.push(RoutePaths.analytics),
                           ),
                           _ProfileNavRow(
@@ -94,27 +119,18 @@ class ProfilePage extends ConsumerWidget {
                             onTap: () => context.go(RoutePaths.goals),
                           ),
                           _ProfileNavRow(
-                            icon: Icons.local_fire_department_outlined,
-                            title: l10n.profileStreakDays(''),
-                            value: data.streakDays.toString(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: LayoutTokens.sectionGapLarge),
-                    _ProfileSection(
-                      title: l10n.profileSectionPreferences,
-                      child: _ProfileGroupCard(
-                        children: [
-                          _ProfileNavRow(
-                            icon: Icons.settings_outlined,
-                            title: l10n.settingsTitle,
-                            onTap: () => context.push(RoutePaths.settings),
-                          ),
-                          _ProfileNavRow(
                             icon: Icons.shield_outlined,
                             title: l10n.settingsBackupRestore,
-                            onTap: () => context.push(RoutePaths.settings),
+                            onTap:
+                                () => showBackupRestoreActions(
+                                  context: context,
+                                  controller: settingsController,
+                                ),
+                          ),
+                          _ProfileNavRow(
+                            icon: Icons.cloud_sync_outlined,
+                            title: l10n.profileCloudSync,
+                            onTap: () => showComingSoon(l10n.profileCloudSync),
                           ),
                         ],
                       ),
@@ -125,14 +141,14 @@ class ProfilePage extends ConsumerWidget {
                       child: _ProfileGroupCard(
                         children: [
                           _ProfileNavRow(
+                            icon: Icons.auto_awesome_outlined,
+                            title: l10n.profileAimGoConcept,
+                            onTap: () => showComingSoon(l10n.profileAimGoConcept),
+                          ),
+                          _ProfileNavRow(
                             icon: Icons.info_outline,
                             title: l10n.profileAbout,
                             onTap: () => context.push(RoutePaths.about),
-                          ),
-                          _ProfileNavRow(
-                            icon: Icons.tag_outlined,
-                            title: l10n.profileVersionLabel,
-                            value: l10n.aboutVersion,
                           ),
                         ],
                       ),
@@ -466,12 +482,14 @@ class _ProfileNavRow extends StatelessWidget {
     required this.icon,
     required this.title,
     this.value,
+    this.trailing,
     this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String? value;
+  final Widget? trailing;
   final VoidCallback? onTap;
 
   @override
@@ -497,18 +515,25 @@ class _ProfileNavRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (value != null) ...[
+          if (value != null || trailing != null) ...[
             const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 140),
-              child: Text(
-                value!,
-                textAlign: TextAlign.right,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child:
+                    trailing ??
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 140),
+                      child: Text(
+                        value!,
+                        textAlign: TextAlign.right,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
               ),
             ),
           ],
@@ -531,6 +556,45 @@ class _ProfileNavRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
       onTap: onTap,
       child: content,
+    );
+  }
+}
+
+class _ProfileStatHint extends StatelessWidget {
+  const _ProfileStatHint({
+    required this.leading,
+    required this.highlight,
+    required this.trailing,
+  });
+
+  final String leading;
+  final String highlight;
+  final String trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseStyle = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: [
+          TextSpan(text: leading),
+          TextSpan(
+            text: highlight,
+            style: baseStyle?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(text: trailing),
+        ],
+      ),
+      textAlign: TextAlign.right,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }

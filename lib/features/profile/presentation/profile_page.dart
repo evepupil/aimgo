@@ -144,7 +144,7 @@ class ProfilePage extends ConsumerWidget {
                           _ProfileNavRow(
                             icon: Icons.auto_awesome_outlined,
                             title: l10n.profileAimGoConcept,
-                            onTap: () => showComingSoon(l10n.profileAimGoConcept),
+                            onTap: () => context.push(RoutePaths.aimgoConcept),
                           ),
                           _ProfileNavRow(
                             icon: Icons.info_outline,

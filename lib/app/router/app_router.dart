@@ -9,6 +9,7 @@ import 'package:aimgo/features/history/presentation/history_page.dart';
 import 'package:aimgo/features/analytics/presentation/analytics_page.dart';
 import 'package:aimgo/features/profile/presentation/profile_page.dart';
 import 'package:aimgo/features/evaluation/presentation/evaluation_page.dart';
+import 'package:aimgo/features/profile/presentation/aimgo_concept_page.dart';
 import 'package:aimgo/features/profile/presentation/about_page.dart';
 import 'package:aimgo/features/settings/presentation/settings_page.dart';
 import 'package:flutter/material.dart';
@@ -108,6 +109,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             (context, state) => _buildOverlayTransitionPage(
               state: state,
               child: const AboutPage(),
+            ),
+      ),
+      GoRoute(
+        path: RoutePaths.aimgoConcept,
+        pageBuilder:
+            (context, state) => _buildOverlayTransitionPage(
+              state: state,
+              child: const AimGoConceptPage(),
             ),
       ),
       GoRoute(

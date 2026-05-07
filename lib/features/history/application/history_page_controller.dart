@@ -145,10 +145,6 @@ final class HistoryPageState {
         .toList(growable: false);
   }
 
-  List<TimelineSection> _buildTimelineSections() {
-    return _buildTimelineSectionsFrom(filteredSessions);
-  }
-
   HistoryPageState copyWith({
     List<HistorySessionEntry>? allSessions,
     List<GoalModel>? goalOptions,

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/core/widgets/remaining_days_text.dart';
 import 'package:aimgo/features/home/application/home_dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -121,13 +122,33 @@ class HomeCurrentGoalCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                summary!.goal.title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      summary!.goal.title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (summary!.estimatedRemainingDays != null) ...[
+                    const SizedBox(width: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: RemainingDaysText(
+                        days: summary!.estimatedRemainingDays!,
+                        baseStyle: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        highlightColor: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 12),
               Row(

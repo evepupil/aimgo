@@ -1,3 +1,4 @@
+import 'package:aimgo/core/utils/focus_projection.dart';
 import 'package:aimgo/shared/repositories/drift_aimgo_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,6 +43,15 @@ final profileDashboardProvider =
         0,
         (sum, session) => sum + session.durationMinutes,
       );
+      final focusEffectiveMinutes = sessions.fold<double>(
+        0,
+        (sum, session) => sum + session.effectiveMinutes,
+      );
+      final estimatedRemainingDays = estimateRemainingDaysFromRecentFocus(
+        sessions: sessions,
+        remainingEffectiveMinutes: totalEstimateMinutes - focusEffectiveMinutes,
+        now: now,
+      );
 
       final sessionDays =
           sessions.map((session) => _normalizeDate(session.startedAt)).toSet();
@@ -58,6 +68,8 @@ final profileDashboardProvider =
         totalEstimateMinutes: totalEstimateMinutes,
         focusSessionCount: focusSessionCount,
         focusDurationMinutes: focusDurationMinutes,
+        focusEffectiveMinutes: focusEffectiveMinutes,
+        estimatedRemainingDays: estimatedRemainingDays,
         completedTaskCount: completedTaskCount,
         completedMilestoneCount: completedMilestoneCount,
         pendingTaskCount: pendingTaskCount,
@@ -76,6 +88,8 @@ final class ProfileDashboardData {
     required this.totalEstimateMinutes,
     required this.focusSessionCount,
     required this.focusDurationMinutes,
+    required this.focusEffectiveMinutes,
+    required this.estimatedRemainingDays,
     required this.completedTaskCount,
     required this.completedMilestoneCount,
     required this.pendingTaskCount,
@@ -87,6 +101,8 @@ final class ProfileDashboardData {
   final int totalEstimateMinutes;
   final int focusSessionCount;
   final int focusDurationMinutes;
+  final double focusEffectiveMinutes;
+  final int? estimatedRemainingDays;
   final int completedTaskCount;
   final int completedMilestoneCount;
   final int pendingTaskCount;

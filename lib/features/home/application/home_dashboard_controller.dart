@@ -1,3 +1,4 @@
+import 'package:aimgo/core/utils/focus_projection.dart';
 import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:aimgo/shared/repositories/drift_aimgo_repository.dart';
@@ -33,12 +34,14 @@ final class CurrentGoalSummary {
     required this.highlightMilestoneTitle,
     required this.completedMilestones,
     required this.totalMilestones,
+    required this.estimatedRemainingDays,
   });
 
   final GoalModel goal;
   final String? highlightMilestoneTitle;
   final int completedMilestones;
   final int totalMilestones;
+  final int? estimatedRemainingDays;
 }
 
 final class HomeDashboardState {
@@ -94,6 +97,9 @@ final class HomeDashboardController extends AsyncNotifier<HomeDashboardState> {
     CurrentGoalSummary? currentGoal;
     final milestonesById = <int, MilestoneModel>{};
     final tasksById = <int, TaskModel>{};
+    String? currentHighlightMilestoneTitle;
+    var currentCompletedMilestones = 0;
+    var currentTotalMilestones = 0;
 
     for (final goal in goals) {
       final milestones = await repository.listMilestonesByGoalId(goal.id);
@@ -112,15 +118,36 @@ final class HomeDashboardController extends AsyncNotifier<HomeDashboardState> {
               (milestone) => milestone != null && !milestone.isCompleted,
               orElse: () => milestones.isNotEmpty ? milestones.first : null,
             );
-        final completedMilestones =
+        currentHighlightMilestoneTitle = highlightMilestone?.title;
+        currentCompletedMilestones =
             milestones.where((milestone) => milestone.isCompleted).length;
-        currentGoal = CurrentGoalSummary(
-          goal: goal,
-          highlightMilestoneTitle: highlightMilestone?.title,
-          completedMilestones: completedMilestones,
-          totalMilestones: milestones.length,
-        );
+        currentTotalMilestones = milestones.length;
       }
+    }
+
+    if (currentGoalModel != null) {
+      final goalModel = currentGoalModel;
+      final estimatedRemainingDays = estimateRemainingDaysFromRecentFocus(
+        sessions: sessions.where(
+          (session) =>
+              _resolveGoalIdForSession(
+                session: session,
+                milestonesById: milestonesById,
+                tasksById: tasksById,
+              ) ==
+              goalModel.id,
+        ),
+        remainingEffectiveMinutes:
+            goalModel.estimateMinutes - goalModel.effectiveMinutes,
+        now: now,
+      );
+      currentGoal = CurrentGoalSummary(
+        goal: goalModel,
+        highlightMilestoneTitle: currentHighlightMilestoneTitle,
+        completedMilestones: currentCompletedMilestones,
+        totalMilestones: currentTotalMilestones,
+        estimatedRemainingDays: estimatedRemainingDays,
+      );
     }
 
     final sortedSessions = [...sessions]
@@ -193,5 +220,31 @@ final class HomeDashboardController extends AsyncNotifier<HomeDashboardState> {
 
   DateTime _normalizeDate(DateTime value) {
     return DateTime(value.year, value.month, value.day);
+  }
+
+  int? _resolveGoalIdForSession({
+    required FocusSessionModel session,
+    required Map<int, MilestoneModel> milestonesById,
+    required Map<int, TaskModel> tasksById,
+  }) {
+    final directGoalId = session.goalId;
+    if (directGoalId != null) {
+      return directGoalId;
+    }
+
+    final milestoneId = session.milestoneId;
+    if (milestoneId != null) {
+      return milestonesById[milestoneId]?.goalId;
+    }
+
+    final taskId = session.taskId;
+    if (taskId == null) {
+      return null;
+    }
+    final task = tasksById[taskId];
+    if (task == null) {
+      return null;
+    }
+    return milestonesById[task.milestoneId]?.goalId;
   }
 }

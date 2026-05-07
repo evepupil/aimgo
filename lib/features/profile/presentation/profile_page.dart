@@ -2,6 +2,7 @@ import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
+import 'package:aimgo/core/widgets/remaining_days_text.dart';
 import 'package:aimgo/features/profile/application/profile_dashboard_provider.dart';
 import 'package:aimgo/features/goals/presentation/widgets/time_progress_bar.dart';
 import 'package:aimgo/features/settings/application/settings_controller.dart';
@@ -313,10 +314,6 @@ class _ProfileSummaryCard extends StatelessWidget {
     final secondaryLabelStyle = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
-    final estimatedCompletionDays =
-        data.totalEstimateMinutes > 0
-            ? (data.totalEstimateMinutes / 120).ceil().clamp(1, 999)
-            : 0;
     final hasEstimate = data.totalEstimateMinutes > 0;
     final progressRatio =
         hasEstimate ? data.focusDurationMinutes / data.totalEstimateMinutes : 0.0;
@@ -389,27 +386,12 @@ class _ProfileSummaryCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                hasEstimate
-                    ? Text.rich(
-                      TextSpan(
-                        style: secondaryLabelStyle,
-                        children: [
-                          const TextSpan(text: '预计仍需'),
-                          TextSpan(
-                            text: estimatedCompletionDays.toString(),
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const TextSpan(text: '天'),
-                        ],
-                      ),
-                    )
-                    : Text(
-                      '--',
-                      style: secondaryLabelStyle,
-                    )
+                if (hasEstimate && data.estimatedRemainingDays != null)
+                  RemainingDaysText(
+                    days: data.estimatedRemainingDays!,
+                    baseStyle: secondaryLabelStyle,
+                    highlightColor: theme.colorScheme.primary,
+                  ),
               ],
             ),
             const SizedBox(height: 10),

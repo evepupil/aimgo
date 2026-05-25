@@ -113,6 +113,8 @@ final class LocalBackupService {
 
     await _database.transaction(() async {
       await _database.delete(_database.focusSessions).go();
+      await _database.delete(_database.tasks).go();
+      await _database.delete(_database.milestones).go();
       await _database.delete(_database.goals).go();
 
       if (goals.isNotEmpty) {

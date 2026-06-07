@@ -19,11 +19,6 @@ class ProfilePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final asyncData = ref.watch(profileDashboardProvider);
     final settingsController = ref.read(settingsControllerProvider.notifier);
-    void showComingSoon(String label) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.commonComingSoon(label))),
-      );
-    }
 
     return Scaffold(
       body: NestedScrollView(
@@ -94,7 +89,8 @@ class ProfilePage extends ConsumerWidget {
                           _ProfileNavRow(
                             icon: Icons.alt_route,
                             title: l10n.goalsMilestoneProgress,
-                            onTap: () => context.push(RoutePaths.goalMilestones),
+                            onTap:
+                                () => context.push(RoutePaths.goalMilestones),
                           ),
                         ],
                       ),
@@ -127,11 +123,6 @@ class ProfilePage extends ConsumerWidget {
                                   context: context,
                                   controller: settingsController,
                                 ),
-                          ),
-                          _ProfileNavRow(
-                            icon: Icons.cloud_sync_outlined,
-                            title: l10n.profileCloudSync,
-                            onTap: () => showComingSoon(l10n.profileCloudSync),
                           ),
                         ],
                       ),
@@ -199,7 +190,9 @@ class _ProfileHeroCard extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.10,
+                        ),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Icon(
@@ -278,17 +271,15 @@ class _HeroMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.34),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.34,
+        ),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(icon, size: 15, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(
             label,
@@ -316,7 +307,9 @@ class _ProfileSummaryCard extends StatelessWidget {
     );
     final hasEstimate = data.totalEstimateMinutes > 0;
     final progressRatio =
-        hasEstimate ? data.focusDurationMinutes / data.totalEstimateMinutes : 0.0;
+        hasEstimate
+            ? data.focusDurationMinutes / data.totalEstimateMinutes
+            : 0.0;
     final progressPercent = hasEstimate ? (progressRatio * 100).round() : 0;
 
     return DecoratedBox(
@@ -355,7 +348,9 @@ class _ProfileSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      hasEstimate ? formatMinutes(data.totalEstimateMinutes) : '--',
+                      hasEstimate
+                          ? formatMinutes(data.totalEstimateMinutes)
+                          : '--',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color:

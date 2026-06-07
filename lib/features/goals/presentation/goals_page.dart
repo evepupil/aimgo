@@ -157,20 +157,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                                         showChevron: true,
                                       ),
                                     ),
-                                    AnchoredMenuItem<_GoalsTopAction>(
-                                      value: _GoalsTopAction.batch,
-                                      child: _GoalsMenuActionRow(
-                                        icon: Icons.done_all_outlined,
-                                        label: l10n.goalsMenuBatchManage,
-                                      ),
-                                    ),
-                                    AnchoredMenuItem<_GoalsTopAction>(
-                                      value: _GoalsTopAction.share,
-                                      child: _GoalsMenuActionRow(
-                                        icon: Icons.ios_share_rounded,
-                                        label: l10n.goalsMenuShare,
-                                      ),
-                                    ),
                                   ],
                                 );
                                 if (!mounted || action == null) {
@@ -185,16 +171,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                                     return;
                                   case _GoalsTopAction.sort:
                                     await _openSortSheet(data);
-                                    return;
-                                  case _GoalsTopAction.batch:
-                                    _showGoalsMenuPlaceholder(
-                                      l10n.goalsMenuBatchManage,
-                                    );
-                                    return;
-                                  case _GoalsTopAction.share:
-                                    _showGoalsMenuPlaceholder(
-                                      l10n.goalsMenuShare,
-                                    );
                                     return;
                                 }
                               },
@@ -774,13 +750,6 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         );
       },
     );
-  }
-
-  void _showGoalsMenuPlaceholder(String label) {
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(l10n.commonComingSoon(label))));
   }
 
   String _completionFilterLabel(
@@ -1555,7 +1524,7 @@ class _GoalSummaryChip extends StatelessWidget {
   }
 }
 
-enum _GoalsTopAction { switchGoal, filter, sort, batch, share }
+enum _GoalsTopAction { switchGoal, filter, sort }
 
 class _GoalsMenuActionRow extends StatelessWidget {
   const _GoalsMenuActionRow({

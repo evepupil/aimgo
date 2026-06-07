@@ -82,10 +82,20 @@ class HomePage extends ConsumerWidget {
     WidgetRef ref,
     HomeDashboardState state,
   ) {
-    final goalId =
-        state.lastSession?.session.goalId ?? state.currentGoal?.goal.id;
-    ref.read(selectedGoalIdProvider.notifier).state = goalId;
-    ref.read(focusTimerControllerProvider.notifier).selectGoal(goalId);
+    final controller = ref.read(focusTimerControllerProvider.notifier);
+    final session = state.lastSession?.session;
+    final fallbackGoalId = state.currentGoal?.goal.id;
+
+    if (session != null) {
+      // Restore the full last-session context. If that session had no goal of
+      // its own, restoreFromSession applies fallbackGoalId itself, without
+      // clearing the restored milestone/task.
+      controller.restoreFromSession(session, fallbackGoalId: fallbackGoalId);
+    } else {
+      controller.selectGoal(fallbackGoalId);
+    }
+    ref.read(selectedGoalIdProvider.notifier).state =
+        session?.goalId ?? fallbackGoalId;
     context.go(RoutePaths.focus);
   }
 }

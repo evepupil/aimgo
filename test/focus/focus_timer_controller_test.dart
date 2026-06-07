@@ -4,6 +4,7 @@ import 'package:aimgo/features/focus/application/focus_evaluation_draft_controll
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:aimgo/features/focus/application/focus_timer_controller.dart';
 import 'package:aimgo/features/goals/application/selected_goal_provider.dart';
+import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:aimgo/shared/repositories/drift_aimgo_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -189,5 +190,127 @@ void main() {
       expect(sessions.single.isAbandoned, isTrue);
       expect(container.read(focusEvaluationDraftProvider), isNull);
     },
+  );
+
+  test('restoreFromSession restores the full pomodoro context', () async {
+    final container = await makeContainer();
+    final controller = container.read(focusTimerControllerProvider.notifier);
+
+    controller.restoreFromSession(
+      _focusSession(
+        goalId: 5,
+        milestoneId: 6,
+        taskId: 7,
+        focusMode: FocusSessionMode.pomodoro,
+        durationMinutes: 45,
+      ),
+    );
+
+    final state = container.read(focusTimerControllerProvider);
+    expect(state.mode, FocusMode.pomodoro);
+    expect(state.pomodoroMinutes, 45);
+    expect(state.selectedGoalId, 5);
+    expect(state.selectedMilestoneId, 6);
+    expect(state.selectedTaskId, 7);
+    expect(state.status, FocusTimerStatus.idle);
+  });
+
+  test('restoreFromSession restores free mode without treating elapsed minutes '
+      'as a pomodoro length', () async {
+    final container = await makeContainer();
+    final controller = container.read(focusTimerControllerProvider.notifier);
+
+    controller.restoreFromSession(
+      _focusSession(
+        goalId: 1,
+        focusMode: FocusSessionMode.free,
+        durationMinutes: 33,
+      ),
+    );
+
+    final state = container.read(focusTimerControllerProvider);
+    expect(state.mode, FocusMode.free);
+    expect(state.pomodoroMinutes, 25); // default preserved, not 33
+    expect(state.selectedGoalId, 1);
+    expect(state.selectedMilestoneId, isNull);
+    expect(state.selectedTaskId, isNull);
+  });
+
+  test('restoreFromSession is a no-op while a session is running', () async {
+    final container = await makeContainer();
+    final controller = container.read(focusTimerControllerProvider.notifier);
+
+    controller.selectGoal(1);
+    controller.startOrResume();
+
+    controller.restoreFromSession(
+      _focusSession(
+        goalId: 9,
+        milestoneId: 8,
+        taskId: 7,
+        focusMode: FocusSessionMode.free,
+        durationMinutes: 50,
+      ),
+    );
+
+    final state = container.read(focusTimerControllerProvider);
+    expect(state.status, FocusTimerStatus.running);
+    expect(state.selectedGoalId, 1);
+    expect(state.selectedMilestoneId, isNull);
+    expect(state.mode, FocusMode.pomodoro);
+
+    controller.terminate(isAbandoned: true);
+  });
+
+  test(
+    'restoreFromSession applies the fallback goal without wiping the restored '
+    'milestone/task',
+    () async {
+      final container = await makeContainer();
+      final controller = container.read(focusTimerControllerProvider.notifier);
+
+      // A goalless session that still targets a milestone/task: the fallback
+      // goal must be applied first so its clear-cascade does not erase them.
+      controller.restoreFromSession(
+        _focusSession(
+          goalId: null,
+          milestoneId: 8,
+          taskId: 9,
+          focusMode: FocusSessionMode.free,
+          durationMinutes: 20,
+        ),
+        fallbackGoalId: 3,
+      );
+
+      final state = container.read(focusTimerControllerProvider);
+      expect(state.selectedGoalId, 3);
+      expect(state.selectedMilestoneId, 8);
+      expect(state.selectedTaskId, 9);
+      expect(state.mode, FocusMode.free);
+    },
+  );
+}
+
+FocusSessionModel _focusSession({
+  required FocusSessionMode focusMode,
+  required int durationMinutes,
+  int? goalId,
+  int? milestoneId,
+  int? taskId,
+}) {
+  return FocusSessionModel(
+    id: 1,
+    goalId: goalId,
+    milestoneId: milestoneId,
+    taskId: taskId,
+    durationMinutes: durationMinutes,
+    efficiencyPercent: 60,
+    effectiveMinutes: durationMinutes * 0.6,
+    focusTargetLevel: FocusTargetLevel.task,
+    focusMode: focusMode,
+    startedAt: DateTime(2026, 3, 4, 20, 0),
+    endedAt: DateTime(2026, 3, 4, 20, 45),
+    isAbandoned: false,
+    createdAt: DateTime(2026, 3, 4, 20, 45),
   );
 }

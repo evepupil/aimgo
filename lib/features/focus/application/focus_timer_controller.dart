@@ -91,6 +91,36 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
     state = state.copyWith(selectedTaskId: taskId);
   }
 
+  /// Restores the full focus context (mode, pomodoro length, and the
+  /// goal/milestone/task target) from a previous [session] so "continue last
+  /// focus" resumes exactly where the user left off instead of only the goal.
+  ///
+  /// When the session has no goal of its own, [fallbackGoalId] is selected so
+  /// the timer still has a target. The goal is applied first (before milestone
+  /// and task) so its clear-cascade can never wipe the restored hierarchy.
+  ///
+  /// No-op while a session is running so an in-progress timer is never reset.
+  void restoreFromSession(FocusSessionModel session, {int? fallbackGoalId}) {
+    if (state.status == FocusTimerStatus.running) {
+      return;
+    }
+    final mode = switch (session.focusMode) {
+      FocusSessionMode.pomodoro => FocusMode.pomodoro,
+      FocusSessionMode.free => FocusMode.free,
+    };
+    setMode(mode);
+    // A free session's durationMinutes is elapsed time, not a preset length, so
+    // only restore the pomodoro length for pomodoro sessions.
+    if (mode == FocusMode.pomodoro && session.durationMinutes > 0) {
+      setPomodoroMinutes(session.durationMinutes);
+    }
+    // Order matters: selectGoal clears milestone+task and selectMilestone clears
+    // task, so restore from the top of the hierarchy down.
+    selectGoal(session.goalId ?? fallbackGoalId);
+    selectMilestone(session.milestoneId);
+    selectTask(session.taskId);
+  }
+
   void startOrResume() {
     if (state.status == FocusTimerStatus.running) {
       return;

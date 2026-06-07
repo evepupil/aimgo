@@ -62,4 +62,53 @@ void main() {
       );
     });
   });
+
+  group('ProgressCalculator guard branches', () {
+    test('calculateEffectiveMinutes rejects negative duration', () {
+      expect(
+        () => ProgressCalculator.calculateEffectiveMinutes(durationMinutes: -1),
+        throwsArgumentError,
+      );
+    });
+
+    test('calculateEffectiveMinutes rejects efficiency below 0', () {
+      expect(
+        () => ProgressCalculator.calculateEffectiveMinutes(
+          durationMinutes: 25,
+          efficiencyPercent: -1,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('calculateEffectiveMinutes rejects efficiency above 100', () {
+      expect(
+        () => ProgressCalculator.calculateEffectiveMinutes(
+          durationMinutes: 25,
+          efficiencyPercent: 101,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('calculateProgressRatio rejects negative effective minutes', () {
+      expect(
+        () => ProgressCalculator.calculateProgressRatio(
+          effectiveMinutes: -0.1,
+          estimateMinutes: 100,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('calculateProgressRatio returns zero for a negative estimate', () {
+      expect(
+        ProgressCalculator.calculateProgressRatio(
+          effectiveMinutes: 10,
+          estimateMinutes: -5,
+        ),
+        0,
+      );
+    });
+  });
 }

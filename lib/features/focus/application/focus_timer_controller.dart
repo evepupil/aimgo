@@ -21,18 +21,17 @@ final class FocusTimerController extends Notifier<FocusTimerState> {
 
   @override
   FocusTimerState build() {
-    _notificationActionSubscription ??= ref
-        .read(notificationServiceProvider)
-        .focusActionStream
+    final notificationService = ref.read(notificationServiceProvider);
+    _notificationActionSubscription ??= notificationService.focusActionStream
         .listen(_handleNotificationAction);
 
     ref.onDispose(() {
       _timer?.cancel();
       _notificationActionSubscription?.cancel();
       _notificationActionSubscription = null;
-      unawaited(
-        ref.read(notificationServiceProvider).cancelFocusOngoingNotification(),
-      );
+      // Use the captured reference: reading providers during disposal throws
+      // once the container is already torn down.
+      unawaited(notificationService.cancelFocusOngoingNotification());
     });
 
     final selectedGoalId = ref.read(selectedGoalIdProvider);

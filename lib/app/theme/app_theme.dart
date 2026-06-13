@@ -8,58 +8,64 @@ final class AppTheme {
   static ThemeData get lightTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: Color(0xFF3478F6),
+      primary: Color(0xFF4F46E5),
       onPrimary: Color(0xFFFFFFFF),
-      secondary: Color(0xFF5B9BF8),
+      secondary: Color(0xFF6366F1),
       onSecondary: Color(0xFFFFFFFF),
-      error: Color(0xFFB00020),
+      error: Color(0xFFDC2626),
       onError: Color(0xFFFFFFFF),
       surface: Color(0xFFFFFFFF),
-      onSurface: Color(0xFF111111),
-      surfaceContainerLowest: Color(0xFFF6F9FF),
-      surfaceContainerLow: Color(0xFFF0F5FF),
-      surfaceContainer: Color(0xFFE8F0FE),
-      surfaceContainerHigh: Color(0xFFDDE6F9),
-      surfaceContainerHighest: Color(0xFFD0DDEF),
+      onSurface: Color(0xFF18181B),
+      onSurfaceVariant: Color(0xFF71717A),
+      outline: Color(0xFFD4D4D8),
+      outlineVariant: Color(0xFFE4E4E7),
+      surfaceContainerLowest: Color(0xFFFFFFFF),
+      surfaceContainerLow: Color(0xFFFAFAFA),
+      surfaceContainer: Color(0xFFF4F4F5),
+      surfaceContainerHigh: Color(0xFFECECEE),
+      surfaceContainerHighest: Color(0xFFE4E4E7),
     );
 
     return _buildTheme(
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFF4F7FC),
-      appBarBackground: const Color(0xFFF4F7FC),
-      appBarForeground: const Color(0xFF111111),
+      scaffoldBackgroundColor: const Color(0xFFF5F5F4),
+      appBarBackground: const Color(0xFFF5F5F4),
+      appBarForeground: const Color(0xFF18181B),
       navigationBarBackground: const Color(0xFFFFFFFF),
-      textColor: const Color(0xFF111111),
-      secondaryTextColor: const Color(0xFF6B7280),
+      textColor: const Color(0xFF18181B),
+      secondaryTextColor: const Color(0xFF71717A),
     );
   }
 
   static ThemeData get darkTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: Color(0xFF6EA8FE),
-      onPrimary: Color(0xFF101010),
-      secondary: Color(0xFF93C0FF),
-      onSecondary: Color(0xFF101010),
-      error: Color(0xFFCF6679),
-      onError: Color(0xFF101010),
-      surface: Color(0xFF141414),
-      onSurface: Color(0xFFF5F5F5),
-      surfaceContainerLowest: Color(0xFF1A1A1A),
-      surfaceContainerLow: Color(0xFF1E1E1E),
-      surfaceContainer: Color(0xFF222222),
-      surfaceContainerHigh: Color(0xFF282828),
-      surfaceContainerHighest: Color(0xFF303030),
+      primary: Color(0xFF818CF8),
+      onPrimary: Color(0xFF1B1B20),
+      secondary: Color(0xFFA5B4FC),
+      onSecondary: Color(0xFF1B1B20),
+      error: Color(0xFFF87171),
+      onError: Color(0xFF1B1B20),
+      surface: Color(0xFF18181B),
+      onSurface: Color(0xFFFAFAFA),
+      onSurfaceVariant: Color(0xFFA1A1AA),
+      outline: Color(0xFF3F3F46),
+      outlineVariant: Color(0xFF27272A),
+      surfaceContainerLowest: Color(0xFF131316),
+      surfaceContainerLow: Color(0xFF1C1C1F),
+      surfaceContainer: Color(0xFF202023),
+      surfaceContainerHigh: Color(0xFF27272A),
+      surfaceContainerHighest: Color(0xFF3F3F46),
     );
 
     return _buildTheme(
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF101010),
-      appBarBackground: const Color(0xFF141414),
-      appBarForeground: const Color(0xFFF5F5F5),
-      navigationBarBackground: const Color(0xFF161616),
-      textColor: const Color(0xFFF5F5F5),
-      secondaryTextColor: const Color(0xFFCFCFCF),
+      scaffoldBackgroundColor: const Color(0xFF0F0F11),
+      appBarBackground: const Color(0xFF0F0F11),
+      appBarForeground: const Color(0xFFFAFAFA),
+      navigationBarBackground: const Color(0xFF161619),
+      textColor: const Color(0xFFFAFAFA),
+      secondaryTextColor: const Color(0xFFA1A1AA),
     );
   }
 
@@ -73,30 +79,52 @@ final class AppTheme {
     required Color secondaryTextColor,
   }) {
     final textTheme = TextTheme(
+      displaySmall: TextStyle(
+        color: textColor,
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+        letterSpacing: -0.5,
+      ),
+      headlineMedium: TextStyle(
+        color: textColor,
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+        letterSpacing: -0.4,
+      ),
+      headlineSmall: TextStyle(
+        color: textColor,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        height: 1.2,
+        letterSpacing: -0.2,
+      ),
       titleLarge: TextStyle(
         color: textColor,
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontSize: 21,
+        fontWeight: FontWeight.w700,
         height: 1.2,
+        letterSpacing: -0.2,
       ),
       titleMedium: TextStyle(
         color: textColor,
         fontSize: 17,
         fontWeight: FontWeight.w600,
-        height: 1.2,
+        height: 1.25,
       ),
       titleSmall: TextStyle(
         color: textColor,
         fontSize: 15,
         fontWeight: FontWeight.w600,
-        height: 1.25,
+        height: 1.3,
       ),
-      bodyLarge: TextStyle(color: textColor, fontSize: 15, height: 1.3),
-      bodyMedium: TextStyle(color: textColor, fontSize: 14, height: 1.3),
+      bodyLarge: TextStyle(color: textColor, fontSize: 15, height: 1.4),
+      bodyMedium: TextStyle(color: textColor, fontSize: 14, height: 1.4),
       bodySmall: TextStyle(
         color: secondaryTextColor,
-        fontSize: 12,
-        height: 1.25,
+        fontSize: 12.5,
+        height: 1.35,
       ),
       labelLarge: TextStyle(
         color: textColor,
@@ -116,20 +144,30 @@ final class AppTheme {
         backgroundColor: appBarBackground,
         foregroundColor: appBarForeground,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: textTheme.titleMedium,
+        scrolledUnderElevation: 0,
+        titleTextStyle: textTheme.titleLarge,
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: navigationBarBackground,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.12),
+        labelTextStyle: WidgetStatePropertyAll(textTheme.labelSmall),
+      ),
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant,
+        thickness: 1,
+        space: 1,
       ),
       cardTheme: CardThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_radiusMedium),
+          borderRadius: BorderRadius.circular(_radiusLarge),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 42),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_radiusMedium),
           ),
@@ -138,8 +176,9 @@ final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 42),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          side: BorderSide(color: colorScheme.outline),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_radiusMedium),
           ),
@@ -158,12 +197,15 @@ final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
+        filled: true,
+        fillColor: colorScheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
+          horizontal: 14,
+          vertical: 12,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(_radiusMedium),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(_radiusMedium),
@@ -171,7 +213,7 @@ final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(_radiusMedium),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
@@ -203,8 +245,16 @@ final class AppTheme {
         visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
       ),
       bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_radiusLarge),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radiusMedium),
         ),
       ),
     );

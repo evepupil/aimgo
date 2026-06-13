@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final class AppTheme {
   static const _radiusSmall = 6.0;
@@ -78,7 +79,7 @@ final class AppTheme {
     required Color textColor,
     required Color secondaryTextColor,
   }) {
-    final textTheme = TextTheme(
+    final baseTextTheme = TextTheme(
       displaySmall: TextStyle(
         color: textColor,
         fontSize: 32,
@@ -133,6 +134,23 @@ final class AppTheme {
       ),
       labelMedium: TextStyle(color: textColor, fontSize: 12),
       labelSmall: TextStyle(color: secondaryTextColor, fontSize: 11),
+    );
+
+    // 套用 Inter 字形，保留上面调好的字号/字重/字距。
+    final interTextTheme = GoogleFonts.interTextTheme(baseTextTheme);
+    // 大数字/标题用等宽数字，专注时长、百分比等数值不会左右跳动。
+    final tabular = <FontFeature>[const FontFeature.tabularFigures()];
+    final textTheme = interTextTheme.copyWith(
+      displaySmall: interTextTheme.displaySmall?.copyWith(
+        fontFeatures: tabular,
+      ),
+      headlineMedium: interTextTheme.headlineMedium?.copyWith(
+        fontFeatures: tabular,
+      ),
+      headlineSmall: interTextTheme.headlineSmall?.copyWith(
+        fontFeatures: tabular,
+      ),
+      titleLarge: interTextTheme.titleLarge?.copyWith(fontFeatures: tabular),
     );
 
     return ThemeData(

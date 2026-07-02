@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/core/widgets/remaining_days_text.dart';
@@ -29,25 +30,21 @@ class HomeTodayOverviewCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              dateLabel,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              dateLabel.toUpperCase(),
+              style: LayoutTokens.daybookEyebrow(context),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
-              l10n.homeTodayEffectiveFocus,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              formatMinutes(effectiveMinutes),
+              style: theme.textTheme.displaySmall?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontSize: 40,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              formatMinutes(effectiveMinutes),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
-              ),
+              l10n.homeTodayEffectiveFocus,
+              style: theme.textTheme.bodySmall,
             ),
           ],
         ),
@@ -81,10 +78,8 @@ class HomeCurrentGoalCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.homeCurrentGoal,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  l10n.homeCurrentGoal.toUpperCase(),
+                  style: LayoutTokens.daybookEyebrow(context),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -116,12 +111,10 @@ class HomeCurrentGoalCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                l10n.homeCurrentGoal,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                l10n.homeCurrentGoal.toUpperCase(),
+                style: LayoutTokens.daybookEyebrow(context),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -215,10 +208,8 @@ class HomeLastSessionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.homeLastFocus,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              l10n.homeLastFocus.toUpperCase(),
+              style: LayoutTokens.daybookEyebrow(context),
             ),
             const SizedBox(height: 10),
             if (entry == null) ...[
@@ -300,15 +291,13 @@ class HomeLastSessionCard extends StatelessWidget {
               child: FilledButton(
                 onPressed: onContinue,
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 36),
+                  minimumSize: const Size(0, 38),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-                  backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.10,
-                  ),
-                  foregroundColor: theme.colorScheme.primary,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   elevation: 0,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
@@ -318,7 +307,8 @@ class HomeLastSessionCard extends StatelessWidget {
                   ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 child: Text(
@@ -384,14 +374,9 @@ class _HomeHeatmapCardState extends State<HomeHeatmapCard> {
         weeks.isEmpty
             ? 0.0
             : weeks.length * _cellSize + (weeks.length - 1) * _gap;
-    final heatmapSectionColor =
-        theme.brightness == Brightness.dark
-            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.34)
-            : colorScheme.primary.withValues(alpha: 0.035);
-    final infoSectionColor =
-        theme.brightness == Brightness.dark
-            ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.28)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
+    final daybook = DaybookColors.of(context);
+    final heatmapSectionColor = daybook.paperWell;
+    final infoSectionColor = daybook.accentSofter;
 
     return _HomePanel(
       child: Padding(
@@ -737,7 +722,10 @@ class _OverflowProgressBar extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.orange.shade300, Colors.orange.shade700],
+                      colors: [
+                        theme.colorScheme.primary,
+                        DaybookColors.of(context).overflow,
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(999),
                   ),
@@ -758,17 +746,20 @@ class _MetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final daybook = DaybookColors.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        color: daybook.accentSoft,
+        borderRadius: BorderRadius.circular(LayoutTokens.radiusSmall),
+        border: Border.all(color: daybook.rule),
       ),
       child: Text(
         label,
         style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary.withValues(alpha: 0.92),
-          fontWeight: FontWeight.w500,
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.1,
         ),
       ),
     );
@@ -785,12 +776,8 @@ class _HeatmapLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    const colors = [
-      Color(0xFFE7F0FF),
-      Color(0xFFC8DCFF),
-      Color(0xFF8FB7FC),
-      Color(0xFF2563EB),
-    ];
+    final daybook = DaybookColors.of(context);
+    final ramp = daybook.heatmapRamp;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -815,18 +802,16 @@ class _HeatmapLegend extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        for (var index = 0; index < colors.length; index++)
+        for (var index = 0; index < ramp.length; index++)
           Padding(
-            padding: EdgeInsets.only(right: index == colors.length - 1 ? 0 : 3),
+            padding: EdgeInsets.only(right: index == ramp.length - 1 ? 0 : 3),
             child: Container(
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: colors[index],
+                color: ramp[index],
                 borderRadius: BorderRadius.circular(2.5),
-                border: Border.all(
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.28),
-                ),
+                border: Border.all(color: daybook.rule),
               ),
             ),
           ),
@@ -904,22 +889,28 @@ class _HeatCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final daybook = DaybookColors.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final dayDate = DateTime(day.date.year, day.date.month, day.date.day);
     final isFuture = dayDate.isAfter(today);
     final isToday = dayDate == today;
-    final emptyPastColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
-    final emptyFutureColor =
-        isDark ? Colors.grey.shade900 : Colors.grey.shade100;
     final value = day.effectiveMinutes;
+    final ramp = daybook.heatmapRamp;
     final color = switch (_level(value)) {
-      0 => isFuture ? emptyFutureColor : emptyPastColor,
-      1 => const Color(0xFFDBE8FE),
-      2 => const Color(0xFFA3C4FD),
-      3 => const Color(0xFF5B9BF8),
-      _ => const Color(0xFF2563EB),
+      0 => daybook.heatmapEmpty,
+      1 => ramp[0],
+      2 => ramp[1],
+      3 => ramp[2],
+      4 => ramp[3],
+      _ => ramp[4],
     };
+    // 未来日期淡化，不参与「已完成」暖阶。
+    final resolvedColor =
+        isFuture
+            ? daybook.heatmapEmpty.withValues(alpha: isDark ? 0.5 : 0.6)
+            : color;
 
     return Tooltip(
       message: tooltipMessage,
@@ -932,7 +923,7 @@ class _HeatCell extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: color,
+            color: resolvedColor,
             borderRadius: BorderRadius.circular(3.5),
             border: Border.all(
               color:
@@ -963,16 +954,19 @@ class _HeatCell extends StatelessWidget {
     if (value <= 0) {
       return 0;
     }
-    if (value < 30) {
+    if (value < 20) {
       return 1;
     }
-    if (value < 60) {
+    if (value < 45) {
       return 2;
     }
-    if (value < 120) {
+    if (value < 90) {
       return 3;
     }
-    return 4;
+    if (value < 150) {
+      return 4;
+    }
+    return 5;
   }
 }
 

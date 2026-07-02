@@ -99,7 +99,9 @@ Future<void> showBackupRestoreActions({
         allowedExtensions: const ['json'],
       );
       final path =
-          result == null || result.files.isEmpty ? null : result.files.first.path;
+          result == null || result.files.isEmpty
+              ? null
+              : result.files.first.path;
       if (path == null || path.isEmpty) {
         return;
       }

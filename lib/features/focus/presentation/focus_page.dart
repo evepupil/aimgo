@@ -1,5 +1,6 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/services/local_storage_service.dart';
 import 'package:aimgo/core/widgets/app_confirm_dialog.dart';
 import 'package:aimgo/core/widgets/anchored_action_menu.dart';
@@ -159,21 +160,13 @@ class _FocusPageState extends ConsumerState<FocusPage>
               layoutMetrics.bottomPadding,
             ),
             children: [
-              // 鈹€鈹€ Mode switch in a white card 鈹€鈹€
+              // ── 模式切换（番茄 / 自由），装在一张 Daybook 卡里 ──
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+                decoration: LayoutTokens.daybookSurface(theme).copyWith(
+                  borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(5),
                   child: FocusSessionModeTabs(
                     mode: focusState.mode,
                     onChange: canSwitchMode ? focusController.setMode : null,
@@ -185,7 +178,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ),
               SizedBox(height: layoutMetrics.modeToTargetSpacing),
 
-              // 鈹€鈹€ Target selector in a white card 鈹€鈹€
+              // ── 目标选择器 ──
               Hero(
                 tag: FocusSessionHeroTags.targetEntry,
                 child: FocusSessionTargetEntry(
@@ -202,7 +195,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ),
               SizedBox(height: layoutMetrics.targetToTimerSpacing),
 
-              // 鈹€鈹€ Timer ring 鈹€鈹€
+              // ── 专注计时环 ──
               GestureDetector(
                 onTap:
                     focusState.mode == FocusMode.pomodoro &&
@@ -220,7 +213,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ),
               SizedBox(height: layoutMetrics.timerToControlSpacing),
 
-              // 鈹€鈹€ Control buttons 鈹€鈹€
+              // ── 控制按钮 ──
               Hero(
                 tag: FocusSessionHeroTags.controls,
                 child: FocusSessionControls(
@@ -639,17 +632,9 @@ class _PickerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+      decoration: LayoutTokens.daybookSurface(
+        theme,
+      ).copyWith(borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge)),
       child: Column(children: children),
     );
   }
@@ -680,7 +665,7 @@ class _FocusTargetPickerSheet extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       child: Column(
         children: [
-          // 鈹€鈹€ Header 鈹€鈹€
+          // ── Header ──
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
             child: Row(
@@ -705,7 +690,7 @@ class _FocusTargetPickerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // 鈹€鈹€ Content 鈹€鈹€
+          // ── Content ──
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),

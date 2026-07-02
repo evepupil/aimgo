@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -92,6 +93,7 @@ class _AnchoredActionMenuSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final daybook = DaybookColors.of(context);
     return Material(
       type: MaterialType.transparency,
       child: Stack(
@@ -102,12 +104,7 @@ class _AnchoredActionMenuSheet<T> extends StatelessWidget {
               onTap: () => Navigator.of(context).pop(),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: ColoredBox(
-                  color:
-                      theme.brightness == Brightness.dark
-                          ? Colors.black.withValues(alpha: 0.18)
-                          : Colors.white.withValues(alpha: 0.12),
-                ),
+                child: ColoredBox(color: daybook.scrim),
               ),
             ),
           ),
@@ -118,27 +115,23 @@ class _AnchoredActionMenuSheet<T> extends StatelessWidget {
             child: Material(
               color: theme.colorScheme.surface,
               surfaceTintColor: Colors.transparent,
-              borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+              borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
               elevation: 0,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+                  borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
+                  border: Border.all(color: daybook.rule),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.16),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 28,
+                      offset: const Offset(0, 12),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+                  borderRadius: BorderRadius.circular(LayoutTokens.radiusLarge),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -150,9 +143,7 @@ class _AnchoredActionMenuSheet<T> extends StatelessWidget {
                             thickness: 1,
                             indent: 14,
                             endIndent: 14,
-                            color: theme.colorScheme.outlineVariant.withValues(
-                              alpha: 0.20,
-                            ),
+                            color: daybook.rule,
                           ),
                       ],
                     ],

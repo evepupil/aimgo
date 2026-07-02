@@ -30,10 +30,7 @@ class AboutPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.appTitle,
-                      style: theme.textTheme.headlineSmall,
-                    ),
+                    Text(l10n.appTitle, style: theme.textTheme.headlineSmall),
                     const SizedBox(height: 8),
                     Text(
                       l10n.aboutVersion,

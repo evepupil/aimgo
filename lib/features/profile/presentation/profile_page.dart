@@ -1,5 +1,6 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/core/widgets/remaining_days_text.dart';
@@ -190,10 +191,13 @@ class _ProfileHeroCard extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.10,
+                        color: DaybookColors.of(context).accentSoft,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.34,
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: Icon(
                         Icons.person_rounded,
@@ -328,9 +332,8 @@ class _ProfileSummaryCard extends StatelessWidget {
                     children: [
                       Text(
                         formatMinutes(data.focusDurationMinutes),
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.6,
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          fontSize: 38,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -407,17 +410,14 @@ class _ProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          padding: const EdgeInsets.only(left: 6, bottom: 10),
           child: Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            title.toUpperCase(),
+            style: LayoutTokens.daybookEyebrow(context),
           ),
         ),
         child,

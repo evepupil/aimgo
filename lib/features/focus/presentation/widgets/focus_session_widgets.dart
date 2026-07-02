@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/utils/duration_formatter.dart';
 import 'package:aimgo/features/focus/application/focus_models.dart';
 import 'package:flutter/material.dart';
@@ -80,47 +81,29 @@ class FocusSessionModeTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final inactiveColor = theme.colorScheme.onSurfaceVariant;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
+    // 外层卡片由页面提供（避免双层卡片），这里只画分段本身。
+    return Row(
+      children: [
+        Expanded(
+          child: _FocusModeTabItem(
+            label: pomodoroLabel,
+            selected: mode == FocusMode.pomodoro,
+            inactiveColor: inactiveColor,
+            enabled: enabled,
+            onTap:
+                onChange == null ? null : () => onChange!(FocusMode.pomodoro),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Row(
-          children: [
-            Expanded(
-              child: _FocusModeTabItem(
-                label: pomodoroLabel,
-                selected: mode == FocusMode.pomodoro,
-                inactiveColor: inactiveColor,
-                enabled: enabled,
-                onTap:
-                    onChange == null
-                        ? null
-                        : () => onChange!(FocusMode.pomodoro),
-              ),
-            ),
-            Expanded(
-              child: _FocusModeTabItem(
-                label: freeLabel,
-                selected: mode == FocusMode.free,
-                inactiveColor: inactiveColor,
-                enabled: enabled,
-                onTap:
-                    onChange == null ? null : () => onChange!(FocusMode.free),
-              ),
-            ),
-          ],
         ),
-      ),
+        Expanded(
+          child: _FocusModeTabItem(
+            label: freeLabel,
+            selected: mode == FocusMode.free,
+            inactiveColor: inactiveColor,
+            enabled: enabled,
+            onTap: onChange == null ? null : () => onChange!(FocusMode.free),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -148,23 +131,23 @@ class _FocusModeTabItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
           color:
               selected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.10)
+                  ? DaybookColors.of(context).accentSoft
                   : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
+          style: theme.textTheme.labelLarge?.copyWith(
             color:
                 selected
                     ? theme.colorScheme.primary
                     : inactiveColor.withValues(alpha: enabled ? 1 : 0.72),
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
       ),
@@ -322,10 +305,20 @@ class FocusSessionTimerRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final timerTextStyle = theme.textTheme.headlineMedium?.copyWith(
-      fontSize: metrics.timerTextSize,
-      height: 1.05,
+    final daybook = DaybookColors.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final timerTextStyle = theme.textTheme.displaySmall?.copyWith(
+      fontSize: metrics.timerTextSize + 6,
+      color: theme.colorScheme.onSurface,
+      height: 1.0,
     );
+    // 番茄钟按进度走弧；自由模式一旦开始就走满弧（作稳定的「进行中」环）。
+    final ringProgress =
+        state.mode == FocusMode.pomodoro
+            ? state.progressRatio.clamp(0.0, 1.0)
+            : (state.status == FocusTimerStatus.idle ? 0.0 : 1.0);
+    final isPaused = state.status == FocusTimerStatus.paused;
+
     return Center(
       child: SizedBox(
         width: metrics.timerSize,
@@ -333,48 +326,43 @@ class FocusSessionTimerRing extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
+            // 暖纸圆盘 + 内嵌细环底盘，替代原来看不见的幽灵阴影。
             SizedBox.expand(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: theme.colorScheme.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: daybook.rule, width: 1),
+                  boxShadow:
+                      isDark
+                          ? null
+                          : [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.08,
+                              ),
+                              blurRadius: 28,
+                              spreadRadius: -6,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                 ),
               ),
             ),
+            // 自绘进度弧：圆头端点、accent 主色，暂停时降透明度。
             SizedBox.expand(
-              child: CircularProgressIndicator(
-                value: 1,
-                strokeWidth: metrics.timerStrokeWidth,
-                backgroundColor: Colors.transparent,
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              child: CustomPaint(
+                painter: _FocusRingPainter(
+                  progress: ringProgress,
+                  strokeWidth: metrics.timerStrokeWidth,
+                  trackColor: daybook.accentSoft,
+                  progressColor:
+                      isPaused
+                          ? theme.colorScheme.primary.withValues(alpha: 0.42)
+                          : theme.colorScheme.primary,
+                ),
               ),
             ),
-            if (state.mode == FocusMode.pomodoro)
-              SizedBox.expand(
-                child: CircularProgressIndicator(
-                  value: state.progressRatio,
-                  strokeWidth: metrics.timerStrokeWidth,
-                  backgroundColor: Colors.transparent,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            if (state.mode == FocusMode.free &&
-                state.status != FocusTimerStatus.idle)
-              SizedBox.expand(
-                child: CircularProgressIndicator(
-                  value: 1,
-                  strokeWidth: metrics.timerStrokeWidth,
-                  backgroundColor: Colors.transparent,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -386,15 +374,14 @@ class FocusSessionTimerRing extends StatelessWidget {
                 ),
                 SizedBox(height: metrics.timerLabelSpacing),
                 Text(
-                  state.mode == FocusMode.pomodoro
-                      ? (state.status == FocusTimerStatus.paused
-                          ? l10n.focusPause
-                          : l10n.focusRemaining)
-                      : (state.status == FocusTimerStatus.paused
-                          ? l10n.focusPause
-                          : l10n.focusElapsed),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  (state.mode == FocusMode.pomodoro
+                          ? (isPaused ? l10n.focusPause : l10n.focusRemaining)
+                          : (isPaused ? l10n.focusPause : l10n.focusElapsed))
+                      .toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: daybook.eyebrow,
+                    letterSpacing: 1.6,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -403,6 +390,57 @@ class FocusSessionTimerRing extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// 专注环画笔：底盘细环 + 圆头进度弧，从 12 点方向顺时针推进。
+class _FocusRingPainter extends CustomPainter {
+  const _FocusRingPainter({
+    required this.progress,
+    required this.strokeWidth,
+    required this.trackColor,
+    required this.progressColor,
+  });
+
+  final double progress;
+  final double strokeWidth;
+  final Color trackColor;
+  final Color progressColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final track =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..color = trackColor;
+    canvas.drawCircle(center, radius, track);
+
+    if (progress <= 0) {
+      return;
+    }
+    final arc =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..color = progressColor;
+    const start = -math.pi / 2;
+    final sweep = 2 * math.pi * progress.clamp(0.0, 1.0);
+    canvas.drawArc(rect, start, sweep, false, arc);
+  }
+
+  @override
+  bool shouldRepaint(_FocusRingPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.progressColor != progressColor;
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/core/widgets/app_confirm_dialog.dart';
@@ -8,6 +9,7 @@ import 'package:aimgo/features/goals/application/goals_page_controller.dart';
 import 'package:aimgo/features/goals/presentation/widgets/goal_switcher_sheet.dart';
 import 'package:aimgo/features/goals/presentation/widgets/milestone_card.dart';
 import 'package:aimgo/features/goals/presentation/widgets/planning_entry_sheet.dart';
+import 'package:aimgo/features/goals/presentation/widgets/time_progress_bar.dart';
 import 'package:aimgo/shared/models/planning_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1309,29 +1311,17 @@ class _GoalSummaryPanel extends StatelessWidget {
         dueAt == null ? null : DateFormat.yMMMd(locale).format(dueAt);
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.045),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: LayoutTokens.daybookSurface(theme),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Text(
-                  l10n.homeCurrentGoal,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  l10n.homeCurrentGoal.toUpperCase(),
+                  style: LayoutTokens.daybookEyebrow(context),
                 ),
                 const Spacer(),
                 TextButton.icon(
@@ -1386,8 +1376,7 @@ class _GoalSummaryPanel extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '$progressPercent%',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       color: colorScheme.primary,
                     ),
                   ),
@@ -1396,27 +1385,25 @@ class _GoalSummaryPanel extends StatelessWidget {
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
-                    child: Text(
-                      '${formatMinutes(goal.effectiveMinutes)} / ${formatMinutes(goal.estimateMinutes)}',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: colorScheme.primary.withValues(alpha: 0.88),
-                        fontWeight: FontWeight.w600,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${formatMinutes(goal.effectiveMinutes)} / ${formatMinutes(goal.estimateMinutes)}',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.right,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: goal.progressRatio.clamp(0, 1).toDouble(),
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(999),
-              backgroundColor: colorScheme.primary.withValues(alpha: 0.10),
-            ),
+            const SizedBox(height: 10),
+            TimeProgressBar(progressRatio: goal.progressRatio),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -1476,12 +1463,18 @@ class _GoalSummaryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final daybook = DaybookColors.of(context);
     final chip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: (highlighted ? colorScheme.primary : colorScheme.primary)
-            .withValues(alpha: highlighted ? 0.10 : 0.07),
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        color: highlighted ? daybook.accentSoft : Colors.transparent,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color:
+              highlighted
+                  ? colorScheme.primary.withValues(alpha: 0.30)
+                  : daybook.rule,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1492,7 +1485,7 @@ class _GoalSummaryChip extends StatelessWidget {
             color:
                 highlighted
                     ? colorScheme.primary
-                    : colorScheme.primary.withValues(alpha: 0.72),
+                    : colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 5),
           Text(
@@ -1502,7 +1495,7 @@ class _GoalSummaryChip extends StatelessWidget {
                   highlighted
                       ? colorScheme.primary
                       : colorScheme.onSurfaceVariant,
-              fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+              fontWeight: highlighted ? FontWeight.w700 : FontWeight.w600,
             ),
           ),
         ],
@@ -1516,7 +1509,7 @@ class _GoalSummaryChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(LayoutTokens.radiusMedium),
+        borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: chip,
       ),
@@ -1679,12 +1672,14 @@ class _GoalsBrowseStateBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final daybook = DaybookColors.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.045),
+        color: daybook.accentSofter,
         borderRadius: BorderRadius.circular(LayoutTokens.radiusCard),
+        border: Border.all(color: daybook.rule),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1696,14 +1691,13 @@ class _GoalsBrowseStateBar extends StatelessWidget {
               for (final chip in chips)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 5,
+                    horizontal: 10,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: chip.accentColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(
-                      LayoutTokens.radiusMedium,
-                    ),
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: daybook.rule),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1758,15 +1752,12 @@ class _GoalsEmptyStatePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: LayoutTokens.daybookSurface(theme),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+        padding: const EdgeInsets.fromLTRB(16, 22, 16, 20),
         child: Column(
           children: [
-            Icon(icon, color: theme.colorScheme.onSurfaceVariant, size: 26),
+            Icon(icon, color: theme.colorScheme.primary, size: 28),
             const SizedBox(height: 10),
             Text(
               title,

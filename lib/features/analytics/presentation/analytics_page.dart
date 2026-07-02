@@ -1,4 +1,5 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:aimgo/core/utils/time_formatter.dart';
 import 'package:aimgo/features/analytics/application/analytics_page_controller.dart';
@@ -234,13 +235,15 @@ class AnalyticsPage extends ConsumerWidget {
     final entries =
         contribution.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
+    // Daybook 暖色系分类色板：从古铜领衔，依次松绿、赤陶、李紫、青灰、玫红，
+    // 6 个可区分的大地色相，跟整套主题同源。
     final colors = [
-      const Color(0xFF2F6FED),
-      const Color(0xFF19A974),
-      const Color(0xFFFF8C42),
-      const Color(0xFF5E60CE),
-      const Color(0xFF1B9AAA),
-      const Color(0xFFD94862),
+      const Color(0xFFA6701E),
+      const Color(0xFF5E7A3A),
+      const Color(0xFFC0552A),
+      const Color(0xFF7B5A86),
+      const Color(0xFF3F7C82),
+      const Color(0xFFB2506A),
     ];
     final total = entries.fold<double>(0, (sum, entry) => sum + entry.value);
 
@@ -786,8 +789,14 @@ class _TrendChart extends StatelessWidget {
                     end: Alignment.topCenter,
                     colors:
                         buckets[i].isCurrent
-                            ? const [Color(0xFFAFC6FF), Color(0xFF5A8BFF)]
-                            : const [Color(0xFF8FB1FF), Color(0xFF2F6FED)],
+                            ? [
+                              theme.colorScheme.primary.withValues(alpha: 0.55),
+                              theme.colorScheme.primary,
+                            ]
+                            : [
+                              theme.colorScheme.primary.withValues(alpha: 0.34),
+                              theme.colorScheme.primary.withValues(alpha: 0.82),
+                            ],
                   ),
                 ),
               ],
@@ -859,7 +868,10 @@ class _HeatLegend extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               gradient: LinearGradient(
-                colors: [Colors.grey.shade200, const Color(0xFFFF8C42)],
+                colors: [
+                  DaybookColors.of(context).heatmapEmpty,
+                  theme.colorScheme.primary,
+                ],
               ),
             ),
           ),
@@ -922,7 +934,12 @@ class _HeatCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Color.lerp(Colors.grey.shade200, Colors.orange, intensity);
+    final daybook = DaybookColors.of(context);
+    final color = Color.lerp(
+      daybook.heatmapEmpty,
+      Theme.of(context).colorScheme.primary,
+      intensity,
+    );
 
     return Container(
       width: 32,

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:flutter/material.dart';
 
 class TimeProgressBar extends StatelessWidget {
@@ -11,6 +12,7 @@ class TimeProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final daybook = DaybookColors.of(context);
     final primaryColor = theme.colorScheme.primary;
     final clamped = progressRatio.isNaN ? 0.0 : progressRatio;
     final normalPart = clamped.clamp(0, 1).toDouble();
@@ -28,7 +30,7 @@ class TimeProgressBar extends StatelessWidget {
           borderRadius: borderRadius,
           child: Container(
             height: 6,
-            color: theme.colorScheme.primary.withValues(alpha: 0.12),
+            color: daybook.accentSoft,
             child: Stack(
               children: [
                 Positioned(
@@ -47,7 +49,7 @@ class TimeProgressBar extends StatelessWidget {
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [primaryColor, const Color(0xFFF57C00)],
+                          colors: [primaryColor, daybook.overflow],
                         ),
                       ),
                     ),

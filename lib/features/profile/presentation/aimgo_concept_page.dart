@@ -1,5 +1,6 @@
 import 'package:aimgo/app/l10n/generated/app_localizations.dart';
 import 'package:aimgo/app/router/route_paths.dart';
+import 'package:aimgo/app/theme/daybook_extension.dart';
 import 'package:aimgo/core/constants/layout_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -874,7 +875,7 @@ class _OverflowProgressBar extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       theme.colorScheme.primary,
-                      const Color(0xFFF57C00),
+                      DaybookColors.of(context).overflow,
                     ],
                   ),
                 ),

@@ -64,9 +64,7 @@ final milestoneProgressGoalOptionsProvider = FutureProvider.autoDispose
 
       final options = <GoalWithMilestones>[];
       for (final goal in goals) {
-        options.add(
-          GoalWithMilestones(goal: goal, milestones: const []),
-        );
+        options.add(GoalWithMilestones(goal: goal, milestones: const []));
       }
       return options;
     });
@@ -196,8 +194,7 @@ class _MilestoneProgressPageState extends ConsumerState<MilestoneProgressPage> {
                                   vertical: 6,
                                 ),
                                 minimumSize: const Size(0, 32),
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 visualDensity: VisualDensity.compact,
                                 foregroundColor:
                                     Theme.of(context).colorScheme.primary,
@@ -405,7 +402,8 @@ class _MilestoneTimelineTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final completed = item.isCompleted;
-    final accentColor = completed ? theme.colorScheme.primary : theme.colorScheme.outline;
+    final accentColor =
+        completed ? theme.colorScheme.primary : theme.colorScheme.outline;
 
     return IntrinsicHeight(
       child: Row(
@@ -445,46 +443,46 @@ class _MilestoneTimelineTile extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(LayoutTokens.cardPadding),
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.milestone.title,
-                      style: theme.textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      completed
-                          ? l10n.historyStatusCompleted
-                          : l10n.milestoneProgressInProgress,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color:
-                            completed
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurfaceVariant,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.milestone.title,
+                        style: theme.textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${l10n.milestoneProgressTasks}: ${item.completedTaskCount}/${item.taskCount}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    Text(
-                      '${formatMinutes(item.milestone.effectiveMinutes)} / ${formatMinutes(item.milestone.estimateMinutes)}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    if (item.completionAt != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        completed
+                            ? l10n.historyStatusCompleted
+                            : l10n.milestoneProgressInProgress,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color:
+                              completed
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       Text(
-                        '${l10n.milestoneProgressCompletedAt}: ${DateFormat('yyyy-MM-dd HH:mm').format(item.completionAt!)}',
+                        '${l10n.milestoneProgressTasks}: ${item.completedTaskCount}/${item.taskCount}',
                         style: theme.textTheme.bodySmall,
                       ),
+                      Text(
+                        '${formatMinutes(item.milestone.effectiveMinutes)} / ${formatMinutes(item.milestone.estimateMinutes)}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      if (item.completionAt != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          '${l10n.milestoneProgressCompletedAt}: ${DateFormat('yyyy-MM-dd HH:mm').format(item.completionAt!)}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
             ),
           ),
         ],

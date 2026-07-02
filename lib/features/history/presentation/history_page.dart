@@ -555,10 +555,7 @@ class _SearchResultsView extends StatelessWidget {
       itemCount: results.length,
       itemBuilder: (context, index) {
         final entry = results[index];
-        return _HistorySessionCard(
-          entry: entry,
-          onEdit: () => onEdit(entry),
-        );
+        return _HistorySessionCard(entry: entry, onEdit: () => onEdit(entry));
       },
     );
   }
@@ -714,10 +711,7 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
                       },
                     ),
                   ] else ...[
-                    Text(
-                      l10n.goalsNoGoal,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    Text(l10n.goalsNoGoal, style: theme.textTheme.bodySmall),
                   ],
                   const SizedBox(height: LayoutTokens.sectionGap),
                   TextField(
@@ -732,7 +726,9 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
                     controller: _noteController,
                     minLines: 2,
                     maxLines: 4,
-                    decoration: InputDecoration(labelText: l10n.historyEditNote),
+                    decoration: InputDecoration(
+                      labelText: l10n.historyEditNote,
+                    ),
                   ),
                   const SizedBox(height: LayoutTokens.sectionGap),
                   Row(
@@ -756,7 +752,8 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
                           const SizedBox(width: 8),
                           FilledButton(
                             onPressed:
-                                () => _submit(hasTargetOptions: hasTargetOptions),
+                                () =>
+                                    _submit(hasTargetOptions: hasTargetOptions),
                             child: Text(l10n.commonSave),
                           ),
                         ],

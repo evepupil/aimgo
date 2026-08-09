@@ -1126,7 +1126,7 @@ class _TaskEntrySheetState extends State<TaskEntrySheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<int>(
-            value: _milestoneId,
+            initialValue: _milestoneId,
             isExpanded: true,
             decoration: InputDecoration(labelText: l10n.goalsAddMilestone),
             items: widget.availableMilestones

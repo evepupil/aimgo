@@ -216,7 +216,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(LayoutTokens.cardPadding),
                     child: DropdownButtonFormField<int?>(
-                      value: data.goalFilterId,
+                      initialValue: data.goalFilterId,
                       items: [
                         DropdownMenuItem(
                           value: null,
@@ -688,7 +688,7 @@ class _HistorySessionEditSheetState extends State<_HistorySessionEditSheet> {
                   const SizedBox(height: LayoutTokens.sectionGap),
                   if (hasTargetOptions) ...[
                     DropdownButtonFormField<_HistoryTargetOption>(
-                      value: _selectedTarget,
+                      initialValue: _selectedTarget,
                       isExpanded: true,
                       decoration: InputDecoration(
                         labelText: l10n.historyEditTarget,
